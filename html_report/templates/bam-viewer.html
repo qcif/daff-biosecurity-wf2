@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BAM Viewer</title>
+    <script src="https://cdn.jsdelivr.net/npm/igv/dist/igv.min.js"></script>
+  </head>
+  <body>
+    <h1>BAM Alignment Viewer</h1>
+    <div id="igv-container" style="width: 100%; height: 500px"></div>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        igv.createBrowser(document.getElementById("igv-container"), {
+          genome: "hg19",
+          tracks: [
+            {
+              type: "alignment",
+              format: "bam",
+              name: "Embedded BAM",
+              url: "data:application/octet-stream;base64,{{ bam_data }}",
+              indexURL: "data:application/octet-stream;base64,{{ bai_data }}",
+            },
+          ],
+        });
+      });
+    </script>
+  </body>
+</html>

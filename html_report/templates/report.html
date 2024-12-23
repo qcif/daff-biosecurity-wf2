@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ title }}</title>
+  </head>
+
+  <body>
+    <h1>{{ title }}</h1>
+    <label for="subjective-input">Subjective Conclusion:</label>
+    <br />
+    <br />
+    <label for="subject-input"></label>
+    <input id="subject-input" type="text" />
+    <br />
+    <br />
+    <textarea
+      id="subjective-textarea"
+      placeholder="Enter your conclusion here"
+      rows="3"
+      cols="100"
+    ></textarea>
+  </body>
+
+  <script>
+    const FULL_DATA_PATH = window.location.pathname.split("/").slice(0, -1).join("/") + "/"
+    async function saveCurrentPage() {
+      alert(`Please save this document in the same location as the original file:\n${FULL_DATA_PATH}`);
+
+      // Clone the current document's HTML
+      const clone = document.documentElement.cloneNode(true);
+
+      // Update all input and textarea values
+      const inputs = clone.querySelectorAll('input, textarea');
+      inputs.forEach(input => {
+        if (input.tagName === 'TEXTAREA') {
+          input.textContent = input.value;
+        } else if (input.type === 'text' || input.type === 'password') {
+          input.setAttribute('value', input.value);
+        } else if (input.type === 'checkbox' || input.type === 'radio') {
+          if (input.checked) {
+            input.setAttribute('checked', 'checked');
+          } else {
+            input.removeAttribute('checked');
+          }
+        }
+      });
+
+      // Create a Blob with the modified HTML
+      const doctype = '<!DOCTYPE html>';
+      const htmlContent = doctype + '\n' + clone.outerHTML;
+
+      try {
+        const handle = await window.showSaveFilePicker({
+          suggestedName: 'report.html',
+          types: [
+            {
+              description: 'HTML Files',
+              accept: { 'text/html': ['.html'] }
+            }
+          ]
+        });
+        const writable = await handle.createWritable();
+        await writable.write(htmlContent);
+        await writable.close();
+        console.log('File saved successfully');
+      } catch (err) {
+        console.error('Save canceled or failed:', err);
+      }
+    }
+
+    // Add a button to trigger the save function for demonstration
+    const saveButton = document.createElement('button');
+    saveButton.textContent = 'Save Page';
+    saveButton.style.position = 'fixed';
+    saveButton.style.bottom = '10px';
+    saveButton.style.right = '10px';
+    saveButton.onclick = saveCurrentPage;
+    document.body.appendChild(saveButton);
+  </script>
+
+</html>
