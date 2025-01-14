@@ -48,13 +48,28 @@ from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
 from pathlib import Path
 
-TBD = "TBD"
-# TODO: consider if the FORWARE_STRAND can be > 0 and REVERSE_STRAND can be < 0
-FORWARD_STRAND = 1
-REVERSE_STRAND = -1
+
+def calculate_hit_score(hsps):
+    """Calculate the total scores of all hsps for a hit."""
+    return sum(hsp.score for hsp in hsps)
 
 
-def calculate_query_coverage(alignment_length, query_length):
+def calculate_hit_e_value(hit, effective_search_space):
+    """Calculate the e_value for a hit."""
+    if len(hit.hsps) == 1:
+        return hit.hsps[0].expect
+    total_bit_score = sum(hsp.bits for hsp in hit.hsps)
+    return effective_search_space * 2 ** (-total_bit_score)
+
+
+def calculate_hit_identity_percent(hsps, alignment_length):
+    """Calculate the total identity of all hsps for a hit."""
+    total_hsps_identity = sum(hsp.identities for hsp in hsps)
+    hit_identity_percent = (total_hsps_identity / alignment_length) * 100
+    return hit_identity_percent if alignment_length > 0 else 0
+
+
+def calculate_hit_query_coverage_percent(alignment_length, query_length):
     """Calculate query coverage as a percentage."""
     return (alignment_length / query_length) * 100 if query_length > 0 else 0
 
@@ -79,9 +94,19 @@ def parse_blast_xml(blast_xml_path: str, output_dir: str = None):
                 "length": blast_record.query_length,
                 "hits": []
             }
+
+            effective_search_space = blast_record.effective_search_space
             # each alignment is a "hit":
             for alignment in blast_record.alignments:
-                query_coverage = calculate_query_coverage(
+                hit_score = calculate_hit_score(alignment.hsps)
+                hit_e_value = calculate_hit_e_value(
+                    alignment,
+                    effective_search_space)
+                hit_identity_percent = calculate_hit_identity_percent(
+                    alignment.hsps,
+                    alignment.length,
+                )
+                hit_query_coverage = calculate_hit_query_coverage_percent(
                     alignment.length,
                     blast_record.query_length
                 )
@@ -93,32 +118,22 @@ def parse_blast_xml(blast_xml_path: str, output_dir: str = None):
                     "hit_def": alignment.hit_def,
                     "hit_accession": alignment.accession,
                     "subject_length": alignment.length,
-                    "query_coverage_percent": query_coverage,
-                    "score": TBD,
-                    "e_value": TBD,
-                    "identity_percent": TBD,
+                    "query_coverage_percent": hit_query_coverage,
+                    "score": hit_score,
+                    "e_value": hit_e_value,
+                    "identity_percent": hit_identity_percent,
                     "hits": [],
                 }
 
                 # each hsp is a high-scoring pair (matching chunk of DNA):
                 for hsp in alignment.hsps:
-                    if hsp.query_start < hsp.query_end:
-                        query_frame = FORWARD_STRAND
-                    else:
-                        query_frame = REVERSE_STRAND
-
-                    if hsp.sbjct_start < hsp.sbjct_end:
-                        hit_frame = FORWARD_STRAND
-                    else:
-                        hit_frame = REVERSE_STRAND
                     hsp_record = {
                         # use this to pull taxon info using blastdbcmd tool:
                         "score": hsp.score,
                         "e_value": hsp.expect,
                         "identity": hsp.identities,
-                        "query_frame": query_frame,
-                        "hit_frame": hit_frame,
-                        "positive": hsp.positives,
+                        "strand_query": hsp.strand[0],
+                        "strand_subject": hsp.strand[1],
                         "gaps": hsp.gaps,
                         "query_start": hsp.query_start,
                         "query_end": hsp.query_end,
