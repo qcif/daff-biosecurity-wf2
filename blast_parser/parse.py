@@ -93,7 +93,7 @@ def parse_blast_xml(blast_xml_path: str, output_dir: str = None):
                     "hit_def": alignment.hit_def,
                     "hit_accession": alignment.accession,
                     "subject_length": alignment.length,
-                    "query_coverage": query_coverage,
+                    "query_coverage_percent": query_coverage,
                     "score": TBD,
                     "e_value": TBD,
                     "identity_percent": TBD,
