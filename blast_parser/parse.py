@@ -1,43 +1,5 @@
 """Parse BLAST XML output file.
-
-This script parses a BLAST XML output file and writes the extracted data
-to JSON and FASTA (DNA sequence) files.
-
-JSON data should look something like this (* indicates value that may need to
-be calculated):
-
-records:
-- query:
-  length: int
-  sequence: str (DNA sequence)
-  title: str
-  alignments:
-  - *alignment_length: int
-    *query_coverage: float
-    *identity: float
-    *score: float
-    subject:
-      *length: int
-      *sequence: str (DNA sequence)
-      title: str
-      *taxon:
-        *kingdom: str
-        *phylum: str
-        *class: str
-        *order: str
-        *family: str
-        *genus: str
-        *species: str
-    hsps:
-    - score: float
-      e_value: float
-      identity: float
-      query_start: int
-      query_end: int
-      subject_start: int
-      subject_end: int
-      *length: int
-
+JSON data refer to blast_output_example.json.
 """
 
 import argparse
@@ -58,20 +20,20 @@ def calculate_hit_e_value(hit, effective_search_space):
     """Calculate the e_value for a hit."""
     if len(hit.hsps) == 1:
         return hit.hsps[0].expect
-    total_bit_score = sum(hsp.bits for hsp in hit.hsps)
-    return effective_search_space * 2 ** (-total_bit_score)
+    return effective_search_space * 2 ** (-sum(hsp.bits for hsp in hit.hsps))
 
 
 def calculate_hit_identity_percent(hsps, alignment_length):
     """Calculate the total identity of all hsps for a hit."""
     total_hsps_identity = sum(hsp.identities for hsp in hsps)
-    hit_identity_percent = (total_hsps_identity / alignment_length) * 100
-    return hit_identity_percent if alignment_length > 0 else 0
+    total_hsp_align_length = sum(hsp.length for hsp in hsps)
+    hit_identity_percent = round(((total_hsps_identity / total_hsp_align_length) * 100), 2)
+    return hit_identity_percent if total_hsp_align_length > 0 else 0
 
 
 def calculate_hit_query_coverage_percent(alignment_length, query_length):
     """Calculate query coverage as a percentage."""
-    return (alignment_length / query_length) * 100 if query_length > 0 else 0
+    return round(((alignment_length / query_length) * 100), 2) if query_length > 0 else 0
 
 
 def parse_blast_xml(blast_xml_path: str, output_dir: str = None):
