@@ -1,6 +1,7 @@
 """docstring"""
 import subprocess
 
+
 class NCBITaxonomy:
     """docstring"""
 
@@ -9,11 +10,13 @@ class NCBITaxonomy:
         self.taxonomy = taxonomy
 
     @staticmethod
-    def _get_taxid_from_blastdbcmd(accessions: list[str],db_name: str) -> list[str]:
-        '''Use blastdbcmd to retrieve the taxonomy ID associated with the accession number.'''
+    def _retrieve_taxid(accessions: list[str], db_name: str) -> list[str]:
+        '''Use blastdbcmd to retrieve the taxonomy ID
+        associated with the accession number.'''
         accession_list = ",".join(accessions)
         result = subprocess.run(
-            ['blastdbcmd', '-db', db_name, '-entry', accession_list, '-outfmt', '%T'],
+            ['blastdbcmd', '-db', db_name, '-entry',
+                accession_list, '-outfmt', '%T'],
             capture_output=True,
             text=True
         )
@@ -21,38 +24,49 @@ class NCBITaxonomy:
         taxids = result.stdout.strip().split('\n')
         return taxids
 
-
-    def _get_lineage_from_taxonkit():
+    def _get_taxon_details(taxids: list[str]) -> list[dict[str, str]]:
         '''Use taxonkit lineage to extract the taxonomy details.'''
-        return 
-    
+        taxid_list = "\n".join(taxids)
+        result = subprocess.run(
+            ['taxonkit', 'lineage', '-R'],
+            input=taxid_list,
+            capture_output=True,
+            text=True
+        )
+        taxon_details = []
+        for line in result.stdout.strip().split('\n'):
+            taxid, taxon_details, ranks = line.split('  ')
+            lineage_list = taxon_details.split(';')
+            ranks_list = ranks.split(';')
+            taxonomy = {rank: name for rank,
+                        name in zip(ranks_list, lineage_list)}
+            taxon_details.append(taxonomy)
 
-    def _parse_taxon_details():
-        '''The result written to stdout can be parsed in Python and taxonomy information extracted.'''
-        return
-
+        return taxon_details
 
     @classmethod
     def extract(cls, accessions: list[str]) -> list['NCBITaxonomy']:
-        """Extract taxonomy information from NCBI given a list of accessions."""
+        """Extract taxonomy information from NCBI
+        given a list of accessions."""
 
         # Extract things
         db = "your_database_name"
-        
-        # Extract taxid
-        taxids = cls._get_taxid_from_blastdbcmd(accessions, db)
-        # Extract lineage
-
-        # Parse lineage to taxonomy dict
-
-
-        return [
+        taxids = cls._retrieve_taxid(accessions, db)
+        taxonomy_details = cls._get_taxon_details(taxids)
+        taxonomies = [
             cls(
-                species=None,
-                taxonomy=None,
+                species=taxonomy.get('species'),
+                taxonomy=taxonomy,
             )
-            for accession in taxonomies  # TODO
+            for taxonomy in taxonomy_details  # TODO
         ]
-    
 
-    
+        return taxonomies
+
+
+# Example usage
+# if __name__ == "__main__":
+#     accessions = ["ABC123"]
+#     taxonomies = NCBITaxonomy.extract(accessions)
+#     for taxonomy in taxonomies:
+#         print(f"Species: {taxonomy.species}, Taxonomy: {taxonomy.taxonomy}")
