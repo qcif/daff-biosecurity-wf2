@@ -62,11 +62,3 @@ class NCBITaxonomy:
         ]
 
         return taxonomies
-
-
-# Example usage
-# if __name__ == "__main__":
-#     accessions = ["ABC123"]
-#     taxonomies = NCBITaxonomy.extract(accessions)
-#     for taxonomy in taxonomies:
-#         print(f"Species: {taxonomy.species}, Taxonomy: {taxonomy.taxonomy}")
