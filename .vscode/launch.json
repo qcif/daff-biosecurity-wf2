@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "debugpy",
+            "request": "launch",
+            "name": "Launch BLAST Parser",
+            "program": "${workspaceFolder}/blast_parser/parse.py",
+            "cwd": "${workspaceFolder}/blast_parser",
+            "args": [
+                "output.xml",
+            ]
+        }
+    ]
+}
