@@ -10,6 +10,8 @@ from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
 from pathlib import Path
 
+from ncbi_taxonomy import NCBITaxonomy
+
 
 def calculate_hit_score(hsps):
     """Calculate the total scores of all hsps for a hit."""
@@ -27,13 +29,19 @@ def calculate_hit_identity_percent(hsps, alignment_length):
     """Calculate the total identity of all hsps for a hit."""
     total_hsps_identity = sum(hsp.identities for hsp in hsps)
     total_hsp_align_length = sum(hsp.length for hsp in hsps)
-    hit_identity_percent = round(((total_hsps_identity / total_hsp_align_length) * 100), 2)
+    hit_identity_percent = round(
+        total_hsps_identity / total_hsp_align_length * 100,
+        2,
+    )
     return hit_identity_percent if total_hsp_align_length > 0 else 0
 
 
 def calculate_hit_query_coverage_percent(alignment_length, query_length):
     """Calculate query coverage as a percentage."""
-    return round(((alignment_length / query_length) * 100), 2) if query_length > 0 else 0
+    return round(
+        alignment_length / query_length * 100,
+        2,
+    ) if query_length > 0 else 0
 
 
 def parse_blast_xml(blast_xml_path: str, output_dir: str = None):
@@ -116,6 +124,17 @@ def parse_blast_xml(blast_xml_path: str, output_dir: str = None):
                         description=alignment.hit_def))
                 query_record["hits"].append(hit_record)
             results.append(query_record)
+
+        all_accessions = list({
+            hit["hit_accession"]
+            for query in results
+            for hit in query["hits"]
+        })
+        taxonomies = NCBITaxonomy.extract(all_accessions)
+        for query in results:
+            for hit in query["hits"]:
+                if hit["hit_accession"] in taxonomies:
+                    hit["taxonomy"] = taxonomies[hit["hit_accession"]].json()
 
         output_dir.mkdir(exist_ok=True, parents=True)
 
