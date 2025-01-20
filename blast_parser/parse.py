@@ -44,11 +44,12 @@ def calculate_hit_query_coverage_percent(alignment_length, query_length):
     ) if query_length > 0 else 0
 
 
-def parse_blast_xml(blast_xml_path: str, output_dir: str = None):
+def parse_blast_xml(blast_xml_path: str, input_db: str, output_dir: str = None):
     """Parse BLAST XML output file and extract information about alignments.
 
     Args:
         xml_file (str): Path to the BLAST XML file.
+        input_db (str): Database path to use for retrieving taxon ID.
         output_file (str): Optional path to save parsed output.
     """
     with open(blast_xml_path, "r") as handle:
@@ -130,7 +131,7 @@ def parse_blast_xml(blast_xml_path: str, output_dir: str = None):
             for query in results
             for hit in query["hits"]
         })
-        taxonomies = NCBITaxonomy.extract(all_accessions)
+        taxonomies = NCBITaxonomy.extract(input_db, all_accessions)
         for query in results:
             for hit in query["hits"]:
                 if hit["hit_accession"] in taxonomies:
@@ -157,11 +158,18 @@ def main():
         help="Path to the BLAST XML file to parse.",
     )
     parser.add_argument(
+        "--input-db",
+        type=Path,
+        help="Database path to use for retrieving taxon ID.",
+        default="input",
+    )
+    parser.add_argument(
         "--output_dir",
         type=Path,
         help="Directory to save parsed output files (JSON and FASTA).",
         default="output",
     )
+
     args = parser.parse_args()
     parse_blast_xml(args.blast_xml_path, args.output_dir)
 
