@@ -135,7 +135,7 @@ def parse_blast_xml(blast_xml_path: str, input_db: str, output_dir: str = None):
         for query in results:
             for hit in query["hits"]:
                 if hit["hit_accession"] in taxonomies:
-                    hit["taxonomy"] = taxonomies[hit["hit_accession"]].json()
+                    hit["taxonomy"] = taxonomies[hit["hit_accession"]]
 
         output_dir.mkdir(exist_ok=True, parents=True)
 

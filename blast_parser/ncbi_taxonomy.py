@@ -58,8 +58,16 @@ class NCBITaxonomy:
 
         return taxon_details
 
+    def as_dict(self) -> dict:
+        """Convert The NCBITaxonomy to dictionary format."""
+        return {
+            "species": self.species,
+            "taxonomy": self.taxonomy,
+            "taxid": self.taxid
+        }
+
     @classmethod
-    def extract(cls, db, accessions: list[str]) -> list['NCBITaxonomy']:
+    def extract(cls, db, accessions: list[str]) -> dict[str, dict]:
         """Extract taxonomy information from NCBI
         given a list of accessions."""
 
