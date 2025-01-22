@@ -3,12 +3,19 @@
         {
             "type": "debugpy",
             "request": "launch",
-            "name": "Launch BLAST Parser",
+            "name": "BLAST Parser",
             "program": "${workspaceFolder}/blast_parser/parse.py",
             "cwd": "${workspaceFolder}/blast_parser",
             "args": [
                 "output.xml",
             ]
+        },
+        {
+            "type": "debugpy",
+            "request": "launch",
+            "name": "GBIF species fetch",
+            "program": "${workspaceFolder}/gbif/fetch_species.py",
+            "cwd": "${workspaceFolder}/gbif",
         }
     ]
 }
