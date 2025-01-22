@@ -44,7 +44,7 @@ class NCBITaxonomy:
             capture_output=True,
             text=True
         )
-        
+
         taxon_details_list = []
         for line in result.stdout.strip().split('\n'):
             fields = line.split('\t')
