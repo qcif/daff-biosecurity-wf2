@@ -44,19 +44,23 @@ class NCBITaxonomy:
             capture_output=True,
             text=True
         )
-        taxon_details = []
+        
+        taxon_details_list = []
         for line in result.stdout.strip().split('\n'):
-            taxid, taxon_details, ranks = line.split('  ')
-            lineage_list = taxon_details.split(';')
-            ranks_list = ranks.split(';')
-            taxonomy = {
-                rank: name for rank,
-                name in zip(ranks_list, lineage_list)
-                if rank in TAXONOMIC_RANKS
-            }
-            taxon_details.append((taxid, taxonomy))
-
-        return taxon_details
+            fields = line.split('\t')
+            if len(fields) == 3:
+                taxid, taxon_details, ranks = fields[0], fields[1], fields[2]
+                lineage_list = taxon_details.split(';')
+                ranks_list = ranks.split(';')
+                taxonomy = {
+                    rank: name for rank,
+                    name in zip(ranks_list, lineage_list)
+                    if rank in TAXONOMIC_RANKS
+                }
+                taxon_details_list.append((taxid, taxonomy))
+            else:
+                print(f"Warning: Unexpected format in line: {line}")
+        return taxon_details_list
 
     def as_dict(self) -> dict:
         """Convert The NCBITaxonomy to dictionary format."""
@@ -73,14 +77,15 @@ class NCBITaxonomy:
 
         # Extract things
         taxids = cls._retrieve_taxid(accessions, db)
-        taxonomy_details = cls._get_taxon_details(taxids)
+        taxonomy_details_list = cls._get_taxon_details(taxids)
         taxonomies = [
             cls(
                 species=taxonomy.get('species'),
                 taxonomy=taxonomy,
                 taxid=taxid
             )
-            for taxid, taxonomy in taxonomy_details
+            for taxid, taxonomy in taxonomy_details_list
         ]
 
-        return taxonomies
+        taxonomies_as_dict = [tax.as_dict() for tax in taxonomies]
+        return taxonomies_as_dict
