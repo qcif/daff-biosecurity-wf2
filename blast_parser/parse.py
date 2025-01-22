@@ -28,7 +28,7 @@ def calculate_hit_e_value(hit, effective_search_space):
 def calculate_hit_identity_percent(hsps, alignment_length):
     """Calculate the total identity of all hsps for a hit."""
     total_hsps_identity = sum(hsp.identities for hsp in hsps)
-    total_hsp_align_length = sum(hsp.length for hsp in hsps)
+    total_hsp_align_length = sum((hsp.sbjct_end - hsp.sbjct_start) for hsp in hsps)
     hit_identity_percent = round(
         total_hsps_identity / total_hsp_align_length * 100,
         2,
@@ -131,11 +131,24 @@ def parse_blast_xml(blast_xml_path: str, input_db: str, output_dir: str = None):
             for query in results
             for hit in query["hits"]
         })
+
+        # print("Accessions:", all_accessions)
+
         taxonomies = NCBITaxonomy.extract(input_db, all_accessions)
+        # print("Extracted Taxonomies:", taxonomies)
+
+        print("Checking hits and taxonomies")
         for query in results:
             for hit in query["hits"]:
+                print(f"Hit accession: {hit['hit_accession']}")
                 if hit["hit_accession"] in taxonomies:
-                    hit["taxonomy"] = taxonomies[hit["hit_accession"]]
+                    taxonomy = taxonomies[hit["hit_accession"]]
+                    hit['hit_species'] = taxonomy["species"]
+                    hit["hit_taxonomy"] = taxonomy["taxonomy"]
+                    print("Hit species:", hit["hit_species"])
+                    print("Hit taxonomy:", hit["hit_taxonomy"])
+                else:
+                    print(f"Taxonomy not found for accession: {hit['hit_accession']}")
 
         output_dir.mkdir(exist_ok=True, parents=True)
 
@@ -171,7 +184,7 @@ def main():
     )
 
     args = parser.parse_args()
-    parse_blast_xml(args.blast_xml_path, args.output_dir)
+    parse_blast_xml(args.blast_xml_path, args.input_db, args.output_dir)
 
 
 if __name__ == "__main__":
