@@ -29,6 +29,7 @@ def calculate_hit_identity_percent(hsps, alignment_length):
     """Calculate the total identity of all hsps for a hit."""
     total_hsps_identity = sum(hsp.identities for hsp in hsps)
     total_hsp_align_length = sum((hsp.sbjct_end - hsp.sbjct_start) for hsp in hsps)
+    total_hsp_align_length = sum((hsp.sbjct_end - hsp.sbjct_start) for hsp in hsps)
     hit_identity_percent = round(
         total_hsps_identity / total_hsp_align_length * 100,
         2,
@@ -179,6 +180,7 @@ def main():
     )
 
     args = parser.parse_args()
+    parse_blast_xml(args.blast_xml_path, args.input_db, args.output_dir)
     parse_blast_xml(args.blast_xml_path, args.input_db, args.output_dir)
 
 

@@ -85,6 +85,7 @@ class NCBITaxonomy:
                 taxid=taxid
             )
             for taxid, taxonomy in taxonomy_details_list
+            for taxid, taxonomy in taxonomy_details_list
         ]
 
         taxonomies_as_dict = [tax.as_dict() for tax in taxonomies]
