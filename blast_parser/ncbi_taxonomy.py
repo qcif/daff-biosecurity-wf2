@@ -65,7 +65,7 @@ class NCBITaxonomy:
 
         taxon_details_list = []
         for line in result.stdout.strip().split('\n'):
-            fields = line.split('\t')
+            fields = line.split('\t')[1:]
             if len(fields) == 3:
                 taxid, taxon_details, ranks = fields[0], fields[1], fields[2]
                 lineage_list = taxon_details.split(';')
