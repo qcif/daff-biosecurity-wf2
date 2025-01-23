@@ -45,3 +45,5 @@ if __name__ == '__main__':
     species = fetch_species(taxon, 'species')
     print(json.dumps(species[:3], indent=2))
     print(f"Found {len(species)} records in {time() - t0:.2f} seconds.")
+
+    # Can we do pygbif.species.name_lookup(country='CA')?
