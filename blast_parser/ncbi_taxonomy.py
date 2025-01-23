@@ -1,4 +1,3 @@
-"""docstring"""
 import subprocess
 
 TAXONOMIC_RANKS = [
@@ -15,7 +14,12 @@ TAXONOMIC_RANKS = [
 class NCBITaxonomy:
     """Use retrieving taxonomy ID to extract taxonomy details."""
 
-    def __init__(self, species: str, taxonomy: dict[str, str], taxid: list[str]):
+    def __init__(
+            self,
+            species: str,
+            taxonomy: dict[str, str],
+            taxid: list[str]
+    ):
         self.species = species
         self.taxonomy = taxonomy
         self.taxid = taxid
@@ -44,7 +48,7 @@ class NCBITaxonomy:
             capture_output=True,
             text=True
         )
-        
+
         taxon_details_list = []
         for line in result.stdout.strip().split('\n'):
             fields = line.split('\t')
@@ -84,7 +88,6 @@ class NCBITaxonomy:
                 taxonomy=taxonomy,
                 taxid=taxid
             )
-            for taxid, taxonomy in taxonomy_details_list
             for taxid, taxonomy in taxonomy_details_list
         ]
 

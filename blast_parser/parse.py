@@ -25,11 +25,11 @@ def calculate_hit_e_value(hit, effective_search_space):
     return effective_search_space * 2 ** (-sum(hsp.bits for hsp in hit.hsps))
 
 
-def calculate_hit_identity_percent(hsps, alignment_length):
+def calculate_hit_identity_percent(hsps):
     """Calculate the total identity of all hsps for a hit."""
     total_hsps_identity = sum(hsp.identities for hsp in hsps)
-    total_hsp_align_length = sum((hsp.sbjct_end - hsp.sbjct_start) for hsp in hsps)
-    total_hsp_align_length = sum((hsp.sbjct_end - hsp.sbjct_start) for hsp in hsps)
+    total_hsp_align_length = sum((hsp.sbjct_end - hsp.sbjct_start)
+                                 for hsp in hsps)
     hit_identity_percent = round(
         total_hsps_identity / total_hsp_align_length * 100,
         2,
@@ -45,7 +45,10 @@ def calculate_hit_query_coverage_percent(alignment_length, query_length):
     ) if query_length > 0 else 0
 
 
-def parse_blast_xml(blast_xml_path: str, input_db: str, output_dir: str = None):
+def parse_blast_xml(
+        blast_xml_path: str,
+        input_db: str,
+        output_dir: str = None):
     """Parse BLAST XML output file and extract information about alignments.
 
     Args:
@@ -75,8 +78,7 @@ def parse_blast_xml(blast_xml_path: str, input_db: str, output_dir: str = None):
                     alignment,
                     effective_search_space)
                 hit_identity_percent = calculate_hit_identity_percent(
-                    alignment.hsps,
-                    alignment.length,
+                    alignment.hsps
                 )
                 hit_query_coverage = calculate_hit_query_coverage_percent(
                     alignment.length,
@@ -88,13 +90,13 @@ def parse_blast_xml(blast_xml_path: str, input_db: str, output_dir: str = None):
                 hit_record = {
                     "hit_id": alignment.hit_id,
                     "hit_def": alignment.hit_def,
-                    "hit_accession": alignment.accession,
+                    "accession": alignment.accession,
                     "subject_length": alignment.length,
                     "query_coverage_percent": hit_query_coverage,
                     "score": hit_score,
                     "e_value": hit_e_value,
                     "identity_percent": hit_identity_percent,
-                    "hits": [],
+                    "hsps": [],
                 }
 
                 # each hsp is a high-scoring pair (matching chunk of DNA):
@@ -118,7 +120,7 @@ def parse_blast_xml(blast_xml_path: str, input_db: str, output_dir: str = None):
                             "midline": hsp.match,
                         }
                     }
-                    hit_record["hits"].append(hsp_record)
+                    hit_record["hsps"].append(hsp_record)
 
                     fasta_results.append(SeqRecord(
                         Seq(hsp.sbjct),
@@ -128,7 +130,7 @@ def parse_blast_xml(blast_xml_path: str, input_db: str, output_dir: str = None):
             results.append(query_record)
 
         all_accessions = list({
-            hit["hit_accession"]
+            hit["accession"]
             for query in results
             for hit in query["hits"]
         })
@@ -138,13 +140,14 @@ def parse_blast_xml(blast_xml_path: str, input_db: str, output_dir: str = None):
         for query in results:
             for hit in query["hits"]:
 
-                if hit["hit_accession"] in taxonomies:
-                    taxonomy = taxonomies[hit["hit_accession"]]
-                    hit['hit_species'] = taxonomy["species"]
-                    hit["hit_taxonomy"] = taxonomy["taxonomy"]
+                if hit["accession"] in taxonomies:
+                    taxonomy = taxonomies[hit["accession"]]
+                    hit['species'] = taxonomy["species"]
+                    hit["taxonomy"] = taxonomy["taxonomy"]
 
                 else:
-                    print(f"Taxonomy not found for accession: {hit['hit_accession']}")
+                    print(f"Taxonomy not found for accession: "
+                          f"{hit['accession']}")
 
         output_dir.mkdir(exist_ok=True, parents=True)
 
@@ -180,7 +183,6 @@ def main():
     )
 
     args = parser.parse_args()
-    parse_blast_xml(args.blast_xml_path, args.input_db, args.output_dir)
     parse_blast_xml(args.blast_xml_path, args.input_db, args.output_dir)
 
 
