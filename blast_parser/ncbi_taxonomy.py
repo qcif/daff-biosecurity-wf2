@@ -32,8 +32,12 @@ class NCBITaxonomy:
         associated with the accession number.'''
         accession_list = ",".join(accessions)
         result = subprocess.run(
-            ['blastdbcmd', '-db', db_name, '-entry',
-                accession_list, '-outfmt', '%T'],
+            [
+                'blastdbcmd',
+                '-db', db_name,
+                '-entry', accession_list,
+                '-outfmt', '%T',
+            ],
             capture_output=True,
             text=True
         )
@@ -48,7 +52,12 @@ class NCBITaxonomy:
             temp_file.flush()
             temp_file_name = temp_file.name
             result = subprocess.run(
-                ['taxonkit', 'lineage', '-R', temp_file_name],
+                [
+                    'taxonkit',
+                    'lineage',
+                    '-R',
+                    '-c', temp_file_name,
+                ],
                 capture_output=True,
                 text=True
             )
