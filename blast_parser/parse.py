@@ -58,20 +58,17 @@ def parse_blast_xml(
     """
     with open(blast_xml_path, "r") as handle:
         blast_records = NCBIXML.parse(handle)
-
         results = []
         fasta_results = []
-        # Each record is for a different query - in practice this needs to work
-        # with up to 200 query sequences
+
         for blast_record in blast_records:
             query_record = {
                 "query_title": blast_record.query,
                 "length": blast_record.query_length,
                 "hits": []
             }
-
             effective_search_space = blast_record.effective_search_space
-            # each alignment is a "hit":
+
             for alignment in blast_record.alignments:
                 hit_score = calculate_hit_score(alignment.hsps)
                 hit_e_value = calculate_hit_e_value(
@@ -84,9 +81,6 @@ def parse_blast_xml(
                     alignment.length,
                     blast_record.query_length
                 )
-                # get alignment length by adding length of each hsp
-                # get query coverage by dividing alignment length
-                # by query length
                 hit_record = {
                     "hit_id": alignment.hit_id,
                     "hit_def": alignment.hit_def,
@@ -99,10 +93,8 @@ def parse_blast_xml(
                     "hsps": [],
                 }
 
-                # each hsp is a high-scoring pair (matching chunk of DNA):
                 for hsp in alignment.hsps:
                     hsp_record = {
-                        # use this to pull taxon info using blastdbcmd tool:
                         "score": hsp.score,
                         "e_value": hsp.expect,
                         "identity": hsp.identities,
@@ -121,11 +113,11 @@ def parse_blast_xml(
                         }
                     }
                     hit_record["hsps"].append(hsp_record)
-
                     fasta_results.append(SeqRecord(
                         Seq(hsp.sbjct),
                         id=alignment.accession,
                         description=alignment.hit_def))
+
                 query_record["hits"].append(hit_record)
             results.append(query_record)
 
@@ -134,17 +126,14 @@ def parse_blast_xml(
             for query in results
             for hit in query["hits"]
         })
-
         taxonomies = NCBITaxonomy.extract(input_db, all_accessions)
 
         for query in results:
             for hit in query["hits"]:
-
                 if hit["accession"] in taxonomies:
                     taxonomy = taxonomies[hit["accession"]]
                     hit['species'] = taxonomy["species"]
                     hit["taxonomy"] = taxonomy["taxonomy"]
-
                 else:
                     print(f"Taxonomy not found for accession: "
                           f"{hit['accession']}")
