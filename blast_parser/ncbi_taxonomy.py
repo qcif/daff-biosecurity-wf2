@@ -1,4 +1,6 @@
+import os
 import subprocess
+import tempfile
 
 TAXONOMIC_RANKS = [
     'kingdom',
@@ -41,13 +43,16 @@ class NCBITaxonomy:
 
     def _get_taxon_details(taxids: list[str]) -> list[dict[str, str]]:
         '''Use taxonkit lineage to extract the taxonomy details.'''
-        taxid_list = "\n".join(taxids)
-        result = subprocess.run(
-            ['taxonkit', 'lineage', '-R'],
-            input=taxid_list,
-            capture_output=True,
-            text=True
-        )
+        with tempfile.NamedTemporaryFile(mode='w+', delete=False) as temp_file:
+            temp_file.write("\n".join(taxids))
+            temp_file.flush()
+            temp_file_name = temp_file.name
+            result = subprocess.run(
+                ['taxonkit', 'lineage', '-R', temp_file_name],
+                capture_output=True,
+                text=True
+            )
+        os.remove(temp_file_name)
 
         taxon_details_list = []
         for line in result.stdout.strip().split('\n'):
