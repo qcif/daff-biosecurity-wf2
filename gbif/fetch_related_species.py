@@ -127,7 +127,7 @@ class RelatedTaxaGBIF:
 
     INCLUDE_EXTINCT = False
 
-    def __init__(self, taxon, rank):
+    def __init__(self, taxon, rank='species'):
         self.taxon = taxon
         self.rank = rank
         self.genus_key = self._get_genus_key(taxon, rank)
@@ -140,7 +140,7 @@ class RelatedTaxaGBIF:
             limit=20,
         )
         for record in res:
-            if self._is_accepted(record):
+            if self._is_accepted(record) and 'genusKey' in record:
                 logger.info(f"Genus key found for taxon {taxon}:"
                             f" {record['genusKey']}")
                 return record['genusKey']

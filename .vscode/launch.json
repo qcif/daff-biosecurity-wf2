@@ -21,6 +21,20 @@
                 "--country", "AU",
                 "--output", "output/relatives.json"
             ]
+        },
+        {
+            "name": "Unit tests",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "unittest",
+            "args": [
+                "discover",
+                "-s", ".",
+                "-p", "test*.py",
+                "-b"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
         }
     ]
 }
