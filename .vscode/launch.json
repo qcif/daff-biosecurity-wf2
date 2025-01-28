@@ -3,12 +3,38 @@
         {
             "type": "debugpy",
             "request": "launch",
-            "name": "Launch BLAST Parser",
+            "name": "BLAST Parser",
             "program": "${workspaceFolder}/blast_parser/parse.py",
             "cwd": "${workspaceFolder}/blast_parser",
             "args": [
                 "output.xml",
             ]
+        },
+        {
+            "type": "debugpy",
+            "request": "launch",
+            "name": "GBIF species fetch",
+            "program": "${workspaceFolder}/gbif/fetch_related_species.py",
+            "cwd": "${workspaceFolder}/gbif",
+            "args": [
+                "Cheiloxena aitori",
+                "--country", "AU",
+                "--output", "output/relatives.json"
+            ]
+        },
+        {
+            "name": "Unit tests",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "unittest",
+            "args": [
+                "discover",
+                "-s", ".",
+                "-p", "test*.py",
+                "-b"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
         }
     ]
 }

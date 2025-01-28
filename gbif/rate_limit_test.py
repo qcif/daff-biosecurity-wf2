@@ -4,8 +4,8 @@ from pygbif import occurrences as occ
 from time import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-TOTAL_REQUESTS = 50
-MAX_THREADS = 50
+TOTAL_REQUESTS = 5
+MAX_THREADS = 5
 
 
 def make_request():
