@@ -14,7 +14,7 @@
             "type": "debugpy",
             "request": "launch",
             "name": "GBIF species fetch",
-            "program": "${workspaceFolder}/gbif/fetch_species.py",
+            "program": "${workspaceFolder}/gbif/fetch_related_species.py",
             "cwd": "${workspaceFolder}/gbif",
             "args": [
                 "Cheiloxena aitori",
