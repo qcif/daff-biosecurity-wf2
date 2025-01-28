@@ -16,6 +16,11 @@
             "name": "GBIF species fetch",
             "program": "${workspaceFolder}/gbif/fetch_species.py",
             "cwd": "${workspaceFolder}/gbif",
+            "args": [
+                "Cheiloxena aitori",
+                "--country", "AU",
+                "--output", "output/relatives.json"
+            ]
         }
     ]
 }
