@@ -83,7 +83,7 @@ def _write_output(
 ):
     fields = [
         'canonicalName',
-        ('GBIF URL', '_get_gbif_url'),
+        ('GBIF URL', _get_gbif_url),
         'kingdom',
         'phylum',
         'class',
@@ -91,7 +91,7 @@ def _write_output(
         'family',
         'genus',
         'species',
-        ('status', '_get_status'),
+        ('status', _get_status),
         'rank',
         'synonym',
     ]
