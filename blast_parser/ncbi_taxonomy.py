@@ -1,15 +1,31 @@
+"""Extract taxids and taxonomic information from NCBI databases.
+
+This requires access to both the BLAST databases and taxdump files.
+
+When running this as a container, the BLAST image must be mounted to the
+container so that it can be run from within the container e.g.
+'-B /home/ubuntu/soft_images'.
+
+TODO: binding the singularity binary might work for Linux hosts, but will
+      never work for Windows! Docker will probably do this more cleanly.
+
+"""
+
 import os
 import subprocess
 import tempfile
 
+BLAST_DB = '/home/ubuntu/blastdbs/core_nt'
+BLAST_IMAGE_PATH = '/home/ubuntu/soft_images/ncbi-blast-2.16.0.img'
+TAXONKIT_DATA = '/home/ubuntu/.taxonkit'
 BLAST_CONTAINER_RUN_COMMAND = [
     'singularity',
-    'exec'
-    '-B', '/home/ubuntu/blastdbs/core_nt'
-    '/home/ubuntu/soft_images/ncbi-blast-2.16.0.img'
+    'exec',
+    '-B', BLAST_DB,
+    '-B', f'{TAXONKIT_DATA}:/root/.taxonkit',
+    BLAST_IMAGE_PATH,
 ]
 TAXONOMIC_RANKS = [
-    'superkingdom',
     'kingdom',
     'phylum',
     'class',
@@ -24,10 +40,10 @@ class NCBITaxonomy:
     """Use retrieving taxonomy ID to extract taxonomy details."""
 
     def __init__(
-            self,
-            species: str,
-            taxonomy: dict[str, str],
-            taxid: list[str]
+        self,
+        species: str,
+        taxonomy: dict[str, str],
+        taxid: list[str]
     ):
         self.species = species
         self.taxonomy = taxonomy

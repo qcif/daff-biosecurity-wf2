@@ -17,7 +17,7 @@ class TestNCBITaxonomy(unittest.TestCase):
     @patch('subprocess.run')
     def test_it_can_extract_taxonomic_data_for_accessions(self, mock_run):
         def mock_run_side_effect(args, **kwargs):
-            if args[0] == "blastdbcmd":
+            if "blastdbcmd" in args:
                 return SimpleNamespace(stdout=BLASTDBCMD_STDOUT, returncode=0)
             elif args[0] == "taxonkit":
                 return SimpleNamespace(stdout=TAXONKIT_STDOUT, returncode=0)
