@@ -74,9 +74,6 @@ class TestSubprocessRun(unittest.TestCase):
 
         # import and run NCBITaxonomy.extract here
         output = NCBITaxonomy.extract(db_name, accessions)
-
-        print("Actual Output:", output)
-        print("Expected Output:", expected_output)
         # Make some assertions on the return value here
         self.assertEqual(output, expected_output)
 
