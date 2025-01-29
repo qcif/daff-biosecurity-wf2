@@ -2,6 +2,12 @@ import os
 import subprocess
 import tempfile
 
+BLAST_CONTAINER_RUN_COMMAND = [
+    'singularity',
+    'exec'
+    '-B', '/home/ubuntu/blastdbs/core_nt'
+    '/home/ubuntu/soft_images/ncbi-blast-2.16.0.img'
+]
 TAXONOMIC_RANKS = [
     'superkingdom',
     'kingdom',
@@ -29,27 +35,24 @@ class NCBITaxonomy:
 
     @staticmethod
     def _retrieve_taxid(accessions: list[str], db_name: str) -> list[str]:
-        '''Use blastdbcmd to retrieve the taxonomy ID
-        associated with the accession number.'''
+        """Use blastdbcmd to retrieve the taxid for accessions."""
         accession_list = ",".join(accessions)
         result = subprocess.run(
-            [
+            BLAST_CONTAINER_RUN_COMMAND + [
                 'blastdbcmd',
-                '-db', db_name,
+                '-db', os.path.abspath(db_name),
                 '-entry', accession_list,
                 '-outfmt', '%T',
             ],
             capture_output=True,
             text=True
         )
-
         taxids = result.stdout.strip().split('\n')
         return taxids
 
     @staticmethod
     def _get_taxon_details(taxids: list[str]) -> list[dict[str, str]]:
-        '''Use taxonkit lineage to extract the taxonomy details.'''
-
+        """Use taxonkit lineage to extract taxonomic data for taxids."""
         with tempfile.NamedTemporaryFile(mode='w+', delete=False) as temp_file:
             temp_file.write("\n".join(taxids))
             temp_file.flush()
@@ -93,10 +96,7 @@ class NCBITaxonomy:
 
     @classmethod
     def extract(cls, db, accessions: list[str]) -> dict[str, dict]:
-        """Extract taxonomy information from NCBI
-        given a list of accessions."""
-
-        # Extract things
+        """Extract taxonomic data for a list of accessions."""
         taxids = cls._retrieve_taxid(accessions, db)
         taxonomy_details_list = cls._get_taxon_details(taxids)
         taxonomies = {
