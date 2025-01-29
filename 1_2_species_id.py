@@ -1,4 +1,4 @@
-"""Run logic for pipeline phase 1-3.
+"""Run logic for pipeline phase 1-2.
 
 - Attempt species ID from BLAST results.json
 - Detect Taxon of concern?
@@ -23,7 +23,9 @@ config = Config(args.output_dir)
 
 def main():
     """Run phase 1-3 logic."""
-    pass
+    hits = config.read_blast_hits_json()
+    sequences = config.read_blast_hits_fasta()
+    _assign_species_id(hits)
 
 
 def _assign_species_id():
