@@ -76,10 +76,7 @@ class NCBITaxonomy:
 
     @classmethod
     def extract(cls, db, accessions: list[str]) -> dict[str, dict]:
-        """Extract taxonomy information from NCBI
-        given a list of accessions."""
-
-        # Extract things
+        """Extract taxonomy information from DB for a list of accession IDs."""
         taxids = cls._retrieve_taxid(accessions, db)
         taxonomy_details_list = cls._get_taxon_details(taxids)
         taxonomies = [
