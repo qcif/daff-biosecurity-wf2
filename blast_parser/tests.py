@@ -1,8 +1,10 @@
 import unittest
 from unittest.mock import patch
 from types import SimpleNamespace
-
-from ncbi_taxonomy import NCBITaxonomy
+if __name__ == '__main__':
+    from ncbi_taxonomy import NCBITaxonomy
+else:
+    from .ncbi_taxonomy import NCBITaxonomy
 
 BLASTDBCMD_STDOUT = '1529436\n2711157\n1529435\n'
 TAXONKIT_STDOUT = """1529436	1529436	cellular organisms;Eukaryota;Opisthokonta;Metazoa;Eumetazoa;Bilateria;Deuterostomia;Echinodermata;Pelmatozoa;Crinoidea;Articulata;Comatulida;Comatulidae;Comatulinae;Anneissia;Anneissia japonica	no rank;superkingdom;clade;kingdom;clade;clade;clade;phylum;clade;class;subclass;order;family;subfamily;genus;species
