@@ -1,4 +1,7 @@
+"""Extract taxonomic data for given NCBI records using taxonkit."""
+
 import subprocess
+import sys
 
 TAXONOMIC_RANKS = [
     'kingdom',
@@ -15,10 +18,10 @@ class NCBITaxonomy:
     """Use retrieving taxonomy ID to extract taxonomy details."""
 
     def __init__(
-            self,
-            species: str,
-            taxonomy: dict[str, str],
-            taxid: list[str]
+        self,
+        species: str,
+        taxonomy: dict[str, str],
+        taxid: list[str]
     ):
         self.species = species
         self.taxonomy = taxonomy
@@ -26,8 +29,7 @@ class NCBITaxonomy:
 
     @staticmethod
     def _retrieve_taxid(accessions: list[str], db_name: str) -> list[str]:
-        '''Use blastdbcmd to retrieve the taxonomy ID
-        associated with the accession number.'''
+        """Use blastdbcmd to retrieve the taxonomy ID for accession."""
         accession_list = ",".join(accessions)
         result = subprocess.run(
             ['blastdbcmd', '-db', db_name, '-entry',
@@ -40,7 +42,7 @@ class NCBITaxonomy:
         return taxids
 
     def _get_taxon_details(taxids: list[str]) -> list[dict[str, str]]:
-        '''Use taxonkit lineage to extract the taxonomy details.'''
+        """Use taxonkit lineage to extract taxonomy for accessions."""
         taxid_list = "\n".join(taxids)
         result = subprocess.run(
             ['taxonkit', 'lineage', '-R'],
@@ -63,11 +65,12 @@ class NCBITaxonomy:
                 }
                 taxon_details_list.append((taxid, taxonomy))
             else:
-                print(f"Warning: Unexpected format in line: {line}")
+                print(f"Warning: Unexpected format in line: {line}",
+                      file=sys.stderr)
         return taxon_details_list
 
     def as_dict(self) -> dict:
-        """Convert The NCBITaxonomy to dictionary format."""
+        """Convert to dictionary format."""
         return {
             "species": self.species,
             "taxonomy": self.taxonomy,
