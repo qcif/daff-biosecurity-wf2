@@ -43,10 +43,6 @@ class NCBITaxonomy:
             text=True
         )
 
-        # #! REVERT THIS
-        # stdout = "1529436\n2711157\n1529435\n"
-        # result = SimpleNamespace(stdout=stdout)
-
         taxids = result.stdout.strip().split('\n')
         return taxids
 
@@ -113,13 +109,4 @@ class NCBITaxonomy:
                 accessions, taxonomy_details_list
             )
         }
-        # taxonomies_as_dict = [tax.as_dict() for tax in taxonomies]
         return taxonomies
-
-
-# if __name__ == '__main__':
-#     taxonomies = NCBITaxonomy.extract(
-#         db='input',
-#         accessions=['A', 'B', 'C'],
-#     )
-#     print()
