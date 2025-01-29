@@ -9,13 +9,6 @@
             "args": [
                 "output.xml",
             ]
-        },
-        {
-            "type": "debugpy",
-            "request": "launch",
-            "name": "Run taxonomy extractor",
-            "program": "${workspaceFolder}/blast_parser/ncbi_taxonomy.py",
-            "cwd": "${workspaceFolder}/blast_parser",
         }
     ]
 }
