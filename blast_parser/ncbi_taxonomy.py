@@ -4,6 +4,7 @@ import tempfile
 from types import SimpleNamespace
 
 TAXONOMIC_RANKS = [
+    'superkingdom',
     'kingdom',
     'phylum',
     'class',
