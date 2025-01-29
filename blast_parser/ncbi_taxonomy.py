@@ -1,7 +1,6 @@
 import os
 import subprocess
 import tempfile
-from types import SimpleNamespace
 
 TAXONOMIC_RANKS = [
     'superkingdom',
@@ -54,13 +53,6 @@ class NCBITaxonomy:
     @staticmethod
     def _get_taxon_details(taxids: list[str]) -> list[dict[str, str]]:
         '''Use taxonkit lineage to extract the taxonomy details.'''
-
-        #! REVERT THIS
-#         stdout = """1529436	1529436	cellular organisms;Eukaryota;Opisthokonta;Metazoa;Eumetazoa;Bilateria;Deuterostomia;Echinodermata;Pelmatozoa;Crinoidea;Articulata;Comatulida;Comatulidae;Comatulinae;Anneissia;Anneissia japonica	no rank;superkingdom;clade;kingdom;clade;clade;clade;phylum;clade;class;subclass;order;family;subfamily;genus;species
-# 2711157	2711157	cellular organisms;Eukaryota;Opisthokonta;Metazoa;Eumetazoa;Bilateria;Deuterostomia;Echinodermata;Pelmatozoa;Crinoidea;Articulata;Comatulida;Comatulidae;Comatulinae;Anneissia;Anneissia pinguisno rank;superkingdom;clade;kingdom;clade;clade;clade;phylum;clade;class;subclass;order;family;subfamily;genus;species
-# 1529435	1529435	cellular organisms;Eukaryota;Opisthokonta;Metazoa;Eumetazoa;Bilateria;Deuterostomia;Echinodermata;Pelmatozoa;Crinoidea;Articulata;Comatulida;Comatulidae;Comatulinae;Anneissia;Anneissia bennetti	no rank;superkingdom;clade;kingdom;clade;clade;clade;phylum;clade;class;subclass;order;family;subfamily;genus;species
-# """
-#         result = SimpleNamespace(stdout=stdout)
 
         with tempfile.NamedTemporaryFile(mode='w+', delete=False) as temp_file:
             temp_file.write("\n".join(taxids))
