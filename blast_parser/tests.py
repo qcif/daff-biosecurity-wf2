@@ -1,84 +1,112 @@
 import unittest
-from unittest.mock import patch
+from pathlib import Path
 from types import SimpleNamespace
-if __name__ == '__main__':
-    from ncbi_taxonomy import NCBITaxonomy
-else:
-    from .ncbi_taxonomy import NCBITaxonomy
+from unittest.mock import call, mock_open, patch
+from .ncbi_taxonomy import main, extract_taxonomies
 
-BLASTDBCMD_STDOUT = '1529436\n2711157\n1529435\n'
-TAXONKIT_STDOUT = """1529436	1529436	cellular organisms;Eukaryota;Opisthokonta;Metazoa;Eumetazoa;Bilateria;Deuterostomia;Echinodermata;Pelmatozoa;Crinoidea;Articulata;Comatulida;Comatulidae;Comatulinae;Anneissia;Anneissia japonica	no rank;superkingdom;clade;kingdom;clade;clade;clade;phylum;clade;class;subclass;order;family;subfamily;genus;species
-2711157	2711157	cellular organisms;Eukaryota;Opisthokonta;Metazoa;Eumetazoa;Bilateria;Deuterostomia;Echinodermata;Pelmatozoa;Crinoidea;Articulata;Comatulida;Comatulidae;Comatulinae;Anneissia;Anneissia pinguis	no rank;superkingdom;clade;kingdom;clade;clade;clade;phylum;clade;class;subclass;order;family;subfamily;genus;species
-1529435	1529435	cellular organisms;Eukaryota;Opisthokonta;Metazoa;Eumetazoa;Bilateria;Deuterostomia;Echinodermata;Pelmatozoa;Crinoidea;Articulata;Comatulida;Comatulidae;Comatulinae;Anneissia;Anneissia bennetti	no rank;superkingdom;clade;kingdom;clade;clade;clade;phylum;clade;class;subclass;order;family;subfamily;genus;species
+TAXONKIT_STDOUT = Path(__file__).parent / "test-data/taxonkit.stdout"
+ACCESSION_TAXIDS = {
+    'ACC1': '1529436',
+    'ACC2': '2711157',
+    'ACC3': '1529435',
+}
+INPUT_CSV_DATA = """accession,taxid
+ACC1,1529436
+ACC2,2711157
+ACC3,1529435
 """
+TAXONOMIES_RETURN_VALUE = {
+    '1529436': {
+        "superkingdom": "Eukaryota",
+        "kingdom": "Metazoa",
+        "phylum": "Echinodermata",
+        "class": "Crinoidea",
+        "order": "Comatulida",
+        "family": "Comatulidae",
+        "genus": "Anneissia",
+        "species": "Anneissia japonica"
+    },
+    '2711157': {
+        "superkingdom": "Eukaryota",
+        "kingdom": "Metazoa",
+        "phylum": "Echinodermata",
+        "class": "Crinoidea",
+        "order": "Comatulida",
+        "family": "Comatulidae",
+        "genus": "Anneissia",
+        "species": "Anneissia pinguis"
+    },
+    '1529435': {
+        "superkingdom": "Eukaryota",
+        "kingdom": "Metazoa",
+        "phylum": "Echinodermata",
+        "class": "Crinoidea",
+        "order": "Comatulida",
+        "family": "Comatulidae",
+        "genus": "Anneissia",
+        "species": "Anneissia bennetti"
+    }
+}
+EXPECTED_WRITE_CALLS = [
+    call('w'),
+    call().__enter__(),
+    call().write(
+        'accession,taxid,superkingdom,kingdom,phylum,class,order'
+        ',family,genus,species\r\n'),
+    call().write(
+        'ACC1,1529436,Eukaryota,Metazoa,Echinodermata,Crinoidea'
+        ',Comatulida,Comatulidae,Anneissia,Anneissia japonica\r\n'),
+    call().write(
+        'ACC2,2711157,Eukaryota,Metazoa,Echinodermata,Crinoidea'
+        ',Comatulida,Comatulidae,Anneissia,Anneissia pinguis\r\n'),
+    call().write(
+        'ACC3,1529435,Eukaryota,Metazoa,Echinodermata,Crinoidea'
+        ',Comatulida,Comatulidae,Anneissia,Anneissia bennetti\r\n'),
+    call().__exit__(None, None, None),
+]
 
 
-class TestNCBITaxonomy(unittest.TestCase):
+def mock_subprocess_run(args, **kwargs):
+    if args[0] == "taxonkit":
+        return SimpleNamespace(
+            stdout=TAXONKIT_STDOUT.read_text(),
+            returncode=0,
+        )
+    raise NotImplementedError(
+        f"Command not implemented for mock: {args[0]}")
+
+
+class TestNcbiTaxonomy(unittest.TestCase):
     @patch('subprocess.run')
     def test_it_can_extract_taxonomic_data_for_accessions(self, mock_run):
-        def mock_run_side_effect(args, **kwargs):
-            if "blastdbcmd" in args:
-                return SimpleNamespace(stdout=BLASTDBCMD_STDOUT, returncode=0)
-            elif args[0] == "taxonkit":
-                return SimpleNamespace(stdout=TAXONKIT_STDOUT, returncode=0)
-            raise NotImplementedError(
-                f"Command not implemented for mock: {args[0]}")
+        mock_run.side_effect = mock_subprocess_run
+        taxids = sorted(ACCESSION_TAXIDS.values())
+        output = extract_taxonomies(taxids)
+        self.assertEqual(output, TAXONOMIES_RETURN_VALUE)
 
-        # Assign the side effect function to the mock
-        mock_run.side_effect = mock_run_side_effect
+    @patch('subprocess.run')
+    @patch("blast_parser.ncbi_taxonomy._parse_args")
+    def test_main(self, mock_parse_args, mock_run):
+        """Test main() using mock_open for both read and write operations."""
+        mock_run.side_effect = mock_subprocess_run
 
-        accessions = ['A', 'B', 'C']
-        db_name = 'input'
-        expected_output = {
-            'A': {
-                "species": "Anneissia japonica",
-                "taxonomy": {
-                    "superkingdom": "Eukaryota",
-                    "kingdom": "Metazoa",
-                    "phylum": "Echinodermata",
-                    "class": "Crinoidea",
-                    "order": "Comatulida",
-                    "family": "Comatulidae",
-                    "genus": "Anneissia",
-                    "species": "Anneissia japonica"
-                },
-                "taxid": "1529436"
-            },
-            'B': {
-                "species": "Anneissia pinguis",
-                "taxonomy": {
-                    "superkingdom": "Eukaryota",
-                    "kingdom": "Metazoa",
-                    "phylum": "Echinodermata",
-                    "class": "Crinoidea",
-                    "order": "Comatulida",
-                    "family": "Comatulidae",
-                    "genus": "Anneissia",
-                    "species": "Anneissia pinguis"
-                },
-                "taxid": "2711157"
-            },
-            'C': {
-                "species": "Anneissia bennetti",
-                "taxonomy": {
-                    "superkingdom": "Eukaryota",
-                    "kingdom": "Metazoa",
-                    "phylum": "Echinodermata",
-                    "class": "Crinoidea",
-                    "order": "Comatulida",
-                    "family": "Comatulidae",
-                    "genus": "Anneissia",
-                    "species": "Anneissia bennetti"
-                },
-                "taxid": "1529435"
-            }
-        }
+        # Mock file handling using mock_open
+        mock_input_open = mock_open(read_data=INPUT_CSV_DATA)
+        mock_output_open = mock_open()
 
-        # import and run NCBITaxonomy.extract here
-        output = NCBITaxonomy.extract(db_name, accessions)
-        # Make some assertions on the return value here
-        self.assertEqual(output, expected_output)
+        # Mock arguments with taxids_csv and output_csv
+        mock_args = unittest.mock.MagicMock()
+        mock_args.taxdb_path = "mock_taxdb"
+        mock_args.taxids_csv.open = mock_input_open
+        mock_args.output_csv.open = mock_output_open
+        mock_parse_args.return_value = mock_args
 
+        m = mock_open(read_data=INPUT_CSV_DATA)
+        with patch("builtins.open", m):
+            main()
 
-if __name__ == '__main__':
-    unittest.main()
+        # Verify that the expected write calls happened
+        mock_args.output_csv.open.assert_has_calls(
+            EXPECTED_WRITE_CALLS,
+            any_order=True,
+        )

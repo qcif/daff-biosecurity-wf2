@@ -10,8 +10,6 @@ from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
 from pathlib import Path
 
-from ncbi_taxonomy import NCBITaxonomy
-
 
 def calculate_hit_score(hsps):
     """Calculate the total scores of all hsps for a hit."""
@@ -126,27 +124,20 @@ def parse_blast_xml(
             for query in results
             for hit in query["hits"]
         })
-        taxonomies = NCBITaxonomy.extract(input_db, all_accessions)
-
-        for query in results:
-            for hit in query["hits"]:
-                if hit["accession"] in taxonomies:
-                    taxonomy = taxonomies[hit["accession"]]
-                    hit['species'] = taxonomy["species"]
-                    hit["taxonomy"] = taxonomy["taxonomy"]
-                else:
-                    print(f"Taxonomy not found for accession: "
-                          f"{hit['accession']}")
 
         output_dir.mkdir(exist_ok=True, parents=True)
 
         blast_hits_json_path = output_dir / "blast_hits.json"
-        with open(blast_hits_json_path, "w") as json_file:
-            json.dump(results, json_file, indent=4)
+        with open(blast_hits_json_path, "w") as f:
+            json.dump(results, f, indent=4)
 
         blast_hits_fasta_path = output_dir / "blast_hits.fasta"
-        with open(blast_hits_fasta_path, "w") as fasta_file:
-            SeqIO.write(fasta_results, fasta_file, "fasta")
+        with open(blast_hits_fasta_path, "w") as f:
+            SeqIO.write(fasta_results, f, "fasta")
+
+        hit_accesssions_path = output_dir / "accessions.txt"
+        with open(hit_accesssions_path, "w") as f:
+            f.write('\n'.join(all_accessions) + '\n')
 
 
 def main():
