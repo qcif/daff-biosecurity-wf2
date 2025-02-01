@@ -12,7 +12,7 @@ import tempfile
 from pathlib import Path
 
 DEFAULT_OUTPUT_CSV = 'taxonomy.csv'
-TAXONKIT_DATA = '/home/ubuntu/.taxonkit'
+TAXONKIT_DATA = Path('~/.taxonkit').expanduser()
 TAXONOMIC_RANKS = [
     "superkingdom",
     'kingdom',
@@ -29,8 +29,8 @@ def main():
     args = _parse_args()
     with args.taxids_csv.open() as taxids_file:
         accession_taxids = {
-            row['accession']: row['taxid']
-            for row in csv.DictReader(taxids_file)
+            row[0]: row[1]
+            for row in csv.reader(taxids_file)
         }
     taxids = sorted(set(accession_taxids.values()))
     taxonomies = extract_taxonomies(taxids, taxdb=args.taxdb_path)
