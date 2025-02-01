@@ -99,7 +99,7 @@ def extract_taxonomies(
                 'lineage',
                 '-R',
                 '-c', temp_file_name,
-                '-d', taxdb,
+                '--data-dir', taxdb,
             ],
             capture_output=True,
             text=True
