@@ -33,7 +33,37 @@ def main():
         }
     taxids = sorted(set(accession_taxids.values()))
     taxonomies = extract_taxonomies(taxids, taxdb=args.taxdb_path)
-    with args.output_csv.open('w') as output_file:
+    _write_csv(taxonomies, accession_taxids, args.output_csv)
+
+
+def _parse_args():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        'taxids_csv',
+        type=Path,
+        help='CSV file with columns (accession,taxid) to extract taxonomy'
+             ' information for.',
+    )
+    parser.add_argument(
+        '--output',
+        dest='output_csv',
+        type=Path,
+        help='CSV file where taxonomy data will be written.',
+        default='taxonomy.csv',
+    )
+    parser.add_argument(
+        '--taxdb',
+        dest='taxdb_path',
+        type=Path,
+        help='Path to directory containing NCBI taxdump files for taxonkit.',
+        default=Path(TAXONKIT_DATA),
+    )
+    return parser.parse_args()
+
+
+def _write_csv(taxonomies, accession_taxids, output_csv):
+    output_csv.parent.mkdir(parents=True, exist_ok=True)
+    with output_csv.open('w') as output_file:
         writer = csv.DictWriter(
             output_file,
             fieldnames=['accession', 'taxid'] + TAXONOMIC_RANKS,
@@ -49,22 +79,6 @@ def main():
             if taxid in taxonomies
         ]
         writer.writerows(rows)
-
-
-def _parse_args():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        'taxids_csv',
-        type=Path,
-        help='CSV file with columns (accession,taxid) to extract taxonomy'
-             ' information for.',
-    )
-    parser.add_argument(
-        'output_csv',
-        type=Path,
-        help='CSV file where taxonomy data will be written.',
-    )
-    return parser.parse_args()
 
 
 def extract_taxonomies(
