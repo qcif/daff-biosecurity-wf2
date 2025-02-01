@@ -10,3 +10,5 @@ RUN wget https://github.com/shenwei356/taxonkit/releases/latest/download/taxonki
 COPY . /app
 
 RUN find /app -name "requirements.txt" -exec pip install -r {} \;
+
+WORKDIR /working
