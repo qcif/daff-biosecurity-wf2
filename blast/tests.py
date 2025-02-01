@@ -84,7 +84,7 @@ class TestNcbiTaxonomy(unittest.TestCase):
         self.assertEqual(output, TAXONOMIES_RETURN_VALUE)
 
     @patch('subprocess.run')
-    @patch("blast_parser.ncbi_taxonomy._parse_args")
+    @patch("blast.ncbi_taxonomy._parse_args")
     def test_main(self, mock_parse_args, mock_run):
         """Test main() using mock_open for both read and write operations."""
         mock_run.side_effect = mock_subprocess_run
