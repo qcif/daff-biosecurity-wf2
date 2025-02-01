@@ -11,6 +11,7 @@ import sys
 import tempfile
 from pathlib import Path
 
+DEFAULT_OUTPUT_CSV = 'taxonomy.csv'
 TAXONKIT_DATA = '/home/ubuntu/.taxonkit'
 TAXONOMIC_RANKS = [
     "superkingdom",
@@ -48,14 +49,16 @@ def _parse_args():
         '--output',
         dest='output_csv',
         type=Path,
-        help='CSV file where taxonomy data will be written.',
-        default='taxonomy.csv',
+        help='CSV file where taxonomy data will be written. Defaults to'
+             f' {DEFAULT_OUTPUT_CSV}',
+        default=DEFAULT_OUTPUT_CSV,
     )
     parser.add_argument(
         '--taxdb',
         dest='taxdb_path',
         type=Path,
-        help='Path to directory containing NCBI taxdump files for taxonkit.',
+        help='Path to directory containing NCBI taxdump files for taxonkit.'
+             f' Defaults to {TAXONKIT_DATA}',
         default=Path(TAXONKIT_DATA),
     )
     return parser.parse_args()
