@@ -11,7 +11,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-DEFAULT_OUTPUT_CSV = 'taxonomy.csv'
+DEFAULT_OUTPUT_CSV = 'output/taxonomy.csv'
 TAXONKIT_DATA = Path('~/.taxonkit').expanduser()
 TAXONOMIC_RANKS = [
     "superkingdom",
