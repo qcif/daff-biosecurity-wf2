@@ -106,3 +106,7 @@ def extract_taxonomies(
                   f" This may result in missing taxonomy information:\n{line}",
                   file=sys.stderr)
     return taxonomy_data
+
+
+if __name__ == '__main__':
+    main()
