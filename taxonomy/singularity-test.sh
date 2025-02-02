@@ -2,7 +2,5 @@
 
 singularity exec \
     docker://neoformit/daff-taxonomic-assignment \
-    -B .:/working \
-    -B /home/ubuntu/.taxonkit:/root/.taxonkit \
-    python /app/taxonomy/ncbi_taxonomy.py \
+    python taxonkit.py \
     test-data/blast-output.txt
