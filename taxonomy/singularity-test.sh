@@ -3,4 +3,4 @@
 singularity exec \
     docker://neoformit/daff-taxonomic-assignment \
     python taxonkit.py \
-    test-data/blast-output.txt
+    test-data/taxids.csv
