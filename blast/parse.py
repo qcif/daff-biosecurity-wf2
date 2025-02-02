@@ -4,13 +4,34 @@ JSON data refer to blast_output_example.json.
 
 import argparse
 import json
+import logging
 from Bio.Blast import NCBIXML
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
 from pathlib import Path
 
-from ncbi_taxonomy import NCBITaxonomy
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+def _parse_args():
+    parser = argparse.ArgumentParser(
+        description="Parse BLAST XML output file."
+    )
+    parser.add_argument(
+        "blast_xml_path",
+        type=str,
+        help="Path to the BLAST XML file to parse.",
+    )
+    parser.add_argument(
+        "--output_dir",
+        type=Path,
+        help="Directory to save parsed output files (JSON and FASTA).",
+        default=".",
+    )
+    return parser.parse_args()
 
 
 def calculate_hit_score(hsps):
@@ -46,14 +67,13 @@ def calculate_hit_query_coverage_percent(alignment_length, query_length):
 
 
 def parse_blast_xml(
-        blast_xml_path: str,
-        input_db: str,
-        output_dir: str = None):
+    blast_xml_path: str,
+    output_dir: str = None,
+):
     """Parse BLAST XML output file and extract information about alignments.
 
     Args:
         xml_file (str): Path to the BLAST XML file.
-        input_db (str): Database path to use for retrieving taxon ID.
         output_file (str): Optional path to save parsed output.
     """
     with open(blast_xml_path, "r") as handle:
@@ -126,53 +146,31 @@ def parse_blast_xml(
             for query in results
             for hit in query["hits"]
         })
-        taxonomies = NCBITaxonomy.extract(input_db, all_accessions)
-
-        for query in results:
-            for hit in query["hits"]:
-                if hit["accession"] in taxonomies:
-                    taxonomy = taxonomies[hit["accession"]]
-                    hit['species'] = taxonomy["species"]
-                    hit["taxonomy"] = taxonomy["taxonomy"]
-                else:
-                    print(f"Taxonomy not found for accession: "
-                          f"{hit['accession']}")
 
         output_dir.mkdir(exist_ok=True, parents=True)
 
         blast_hits_json_path = output_dir / "blast_hits.json"
-        with open(blast_hits_json_path, "w") as json_file:
-            json.dump(results, json_file, indent=4)
+        with open(blast_hits_json_path, "w") as f:
+            json.dump(results, f, indent=4)
+            logger.info(
+                f"BLAST hits alignments written to {blast_hits_json_path}")
 
         blast_hits_fasta_path = output_dir / "blast_hits.fasta"
-        with open(blast_hits_fasta_path, "w") as fasta_file:
-            SeqIO.write(fasta_results, fasta_file, "fasta")
+        with open(blast_hits_fasta_path, "w") as f:
+            SeqIO.write(fasta_results, f, "fasta")
+            logger.info(
+                f"BLAST hits sequences written to {blast_hits_fasta_path}")
+
+        hit_accesssions_path = output_dir / "accessions.txt"
+        with open(hit_accesssions_path, "w") as f:
+            f.write('\n'.join(all_accessions) + '\n')
+            logger.info(
+                f"BLAST hit accession IDs written to {hit_accesssions_path}")
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Parse BLAST XML output file."
-    )
-    parser.add_argument(
-        "blast_xml_path",
-        type=str,
-        help="Path to the BLAST XML file to parse.",
-    )
-    parser.add_argument(
-        "--input-db",
-        type=Path,
-        help="Database path to use for retrieving taxon ID.",
-        default="input",
-    )
-    parser.add_argument(
-        "--output_dir",
-        type=Path,
-        help="Directory to save parsed output files (JSON and FASTA).",
-        default="output",
-    )
-
-    args = parser.parse_args()
-    parse_blast_xml(args.blast_xml_path, args.input_db, args.output_dir)
+    args = _parse_args()
+    parse_blast_xml(args.blast_xml_path, args.output_dir)
 
 
 if __name__ == "__main__":
