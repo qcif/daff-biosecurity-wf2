@@ -29,7 +29,7 @@
             "module": "unittest",
             "args": [
                 "discover",
-                "-s", ".",
+                "-s", "tests",
                 "-p", "test*.py",
                 "-b"
             ],

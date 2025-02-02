@@ -3,10 +3,7 @@ import logging
 import unittest
 from pathlib import Path
 from unittest.mock import patch
-if __name__ == '__main__':
-    from fetch_related_species import RelatedTaxaGBIF
-else:
-    from .fetch_related_species import RelatedTaxaGBIF
+from scripts.gbif.fetch_related_species import RelatedTaxaGBIF
 
 TEST_DATA_DIR = Path(__file__).parent / 'test-data'
 GBIF_NAME_LOOKUP_RESPONSE = TEST_DATA_DIR / 'gbif_related_species.json'

@@ -10,7 +10,15 @@
 
 import argparse
 from pathlib import Path
+from types import SimpleNamespace
 from utils.config import Config
+
+MIN_IDENTITY_STRICT = 0.985
+MIN_IDENTITY = 0.95
+ALIGN_CRITERA = SimpleNamespace(
+    nt=400,
+    query_coverage=0.85,
+)
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument(
@@ -28,8 +36,8 @@ def main():
     _assign_species_id(hits)
 
 
-def _assign_species_id():
-    """Attempt species ID from BLAST results.json."""
+def _assign_species_id(hits):
+    """Attempt species ID from BLAST hits.json data."""
     pass
 
 
