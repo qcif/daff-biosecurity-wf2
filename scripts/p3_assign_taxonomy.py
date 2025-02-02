@@ -38,7 +38,16 @@ def main():
 
 def _assign_species_id(hits):
     """Attempt species ID from BLAST hits.json data."""
-    pass
+    for query in hits:
+        candidates = []
+        candidates_strict = []
+        for hit in hits[query]:
+            if hit["identity"] >= MIN_IDENTITY_STRICT:
+                hit["taxonomic_assignment"] = hit["subject"]
+            elif hit["identity"] >= MIN_IDENTITY:
+                hit["species_id"] = hit["subject"]
+            else:
+                hit["species_id"] = None
 
 
 def _detect_taxa_of_concern():
