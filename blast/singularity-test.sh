@@ -4,5 +4,5 @@ singularity exec \
     docker://neoformit/daff-taxonomic-assignment \
     -B .:/working \
     -B /home/ubuntu/.taxonkit:/root/.taxonkit \
-    python /app/taxonomy/ncbi_taxonomy.py \
-    test-data/blast-output.txt
+    python /app/blast/parse.py \
+    test-data/output.xml
