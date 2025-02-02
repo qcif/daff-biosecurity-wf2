@@ -4,11 +4,16 @@ JSON data refer to blast_output_example.json.
 
 import argparse
 import json
+import logging
 from Bio.Blast import NCBIXML
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
 from pathlib import Path
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 def _parse_args():
@@ -147,14 +152,20 @@ def parse_blast_xml(
         blast_hits_json_path = output_dir / "blast_hits.json"
         with open(blast_hits_json_path, "w") as f:
             json.dump(results, f, indent=4)
+            logger.info(
+                f"BLAST hits alignments written to {blast_hits_json_path}")
 
         blast_hits_fasta_path = output_dir / "blast_hits.fasta"
         with open(blast_hits_fasta_path, "w") as f:
             SeqIO.write(fasta_results, f, "fasta")
+            logger.info(
+                f"BLAST hits sequences written to {blast_hits_fasta_path}")
 
         hit_accesssions_path = output_dir / "accessions.txt"
         with open(hit_accesssions_path, "w") as f:
             f.write('\n'.join(all_accessions) + '\n')
+            logger.info(
+                f"BLAST hit accession IDs written to {hit_accesssions_path}")
 
 
 def main():

@@ -6,10 +6,14 @@ This requires access to the NCBI taxdump files via a CLI argument.
 
 import argparse
 import csv
+import logging
 import subprocess
-import sys
 import tempfile
 from pathlib import Path
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 DEFAULT_OUTPUT_CSV = 'output/taxonomy.csv'
 TAXONKIT_DATA = Path('~/.taxonkit').expanduser()
@@ -82,6 +86,7 @@ def _write_csv(taxonomies, accession_taxids, output_csv):
             if taxid in taxonomies
         ]
         writer.writerows(rows)
+    logger.info(f"Taxonomy records written to {output_csv}")
 
 
 def extract_taxonomies(
@@ -119,9 +124,9 @@ def extract_taxonomies(
             }
             taxonomy_data[taxid] = taxonomy
         else:
-            print("Warning: Unexpected format in taxonkit stdout."
-                  f" This may result in missing taxonomy information:\n{line}",
-                  file=sys.stderr)
+            logger.warning(
+                "Warning: Unexpected format in taxonkit stdout."
+                f" This may result in missing taxonomy information:\n{line}")
     return taxonomy_data
 
 
