@@ -11,6 +11,24 @@ from Bio.Seq import Seq
 from pathlib import Path
 
 
+def _parse_args():
+    parser = argparse.ArgumentParser(
+        description="Parse BLAST XML output file."
+    )
+    parser.add_argument(
+        "blast_xml_path",
+        type=str,
+        help="Path to the BLAST XML file to parse.",
+    )
+    parser.add_argument(
+        "--output_dir",
+        type=Path,
+        help="Directory to save parsed output files (JSON and FASTA).",
+        default=".",
+    )
+    return parser.parse_args()
+
+
 def calculate_hit_score(hsps):
     """Calculate the total scores of all hsps for a hit."""
     return sum(hsp.score for hsp in hsps)
@@ -140,21 +158,7 @@ def parse_blast_xml(
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Parse BLAST XML output file."
-    )
-    parser.add_argument(
-        "blast_xml_path",
-        type=str,
-        help="Path to the BLAST XML file to parse.",
-    )
-    parser.add_argument(
-        "--output_dir",
-        type=Path,
-        help="Directory to save parsed output files (JSON and FASTA).",
-        default=".",
-    )
-    args = parser.parse_args()
+    args = _parse_args()
     parse_blast_xml(args.blast_xml_path, args.output_dir)
 
 
