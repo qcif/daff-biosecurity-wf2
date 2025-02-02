@@ -7,7 +7,7 @@
             "program": "${workspaceFolder}/blast/parse.py",
             "cwd": "${workspaceFolder}/blast",
             "args": [
-                "output.xml",
+                "test-data/output.xml",
             ]
         },
         {

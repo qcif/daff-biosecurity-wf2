@@ -23,6 +23,25 @@ options:
                         Directory to save parsed output files (JSON and FASTA).
 ```
 
+Output is in per-query directories corresponding to the sequence index in
+the query FASTA file:
+
+```
+output/
+├── accessions.txt  # input file for taxonkit
+├── query_1
+│   ├── blast_hits.fasta
+│   ├── blast_hits.json
+│   └── query_title.txt
+├── query_2
+│   ├── blast_hits.fasta
+│   ├── blast_hits.json
+│   └── query_title.txt
+├── query_N
+...
+```
+
+
 ## NCBI Taxonomy extractor
 
 This script is used for fetching taxonomy information for a list of taxids. The
