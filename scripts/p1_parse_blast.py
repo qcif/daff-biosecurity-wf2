@@ -41,7 +41,7 @@ def _parse_args():
         "--output_dir",
         type=Path,
         help="Directory to save parsed output files (JSON and FASTA).",
-        default=".",
+        default="output",
     )
     return parser.parse_args()
 
@@ -50,23 +50,23 @@ def _get_query_dirname(i):
     return f"query_{i + 1}"
 
 
-def _create_query_dir(query, output_dir, query_dirname):
+def _create_query_dir(query_hits, output_dir, query_dirname):
     """Create a directory for this query and write the query title to file."""
     query_path = output_dir / query_dirname / 'query_title.txt'
     query_path.parent.mkdir(exist_ok=True, parents=True)
     with query_path.open("w") as f:
-        f.write(query['query_title'])
+        f.write(query_hits['query_title'])
         logger.info(f"BLAST query title written to {query_path}")
 
 
 def _write_hits(hits, output_dir):
     """Write a JSON file of BLAST hits for each query sequence."""
-    for i, query in enumerate(hits):
+    for i, query_hits in enumerate(hits):
         query_dirname = _get_query_dirname(i)
-        _create_query_dir(query, output_dir, query_dirname)
+        _create_query_dir(query_hits, output_dir, query_dirname)
         path = output_dir / query_dirname / BLAST_HITS_FILENAME
         with path.open("w") as f:
-            json.dump(hits, f, indent=2)
+            json.dump(query_hits, f, indent=2)
             logger.info(f"BLAST hits for query [{i}] written to {path}")
 
 

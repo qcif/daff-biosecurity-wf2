@@ -4,18 +4,16 @@
             "type": "debugpy",
             "request": "launch",
             "name": "BLAST Parser",
-            "program": "${workspaceFolder}/blast/parse.py",
-            "cwd": "${workspaceFolder}/blast",
+            "program": "${workspaceFolder}/scripts/p1_parse_blast.py",
             "args": [
-                "test-data/output.xml",
+                "tests/test-data/output.xml",
             ]
         },
         {
             "type": "debugpy",
             "request": "launch",
             "name": "GBIF species fetch",
-            "program": "${workspaceFolder}/gbif/fetch_related_species.py",
-            "cwd": "${workspaceFolder}/gbif",
+            "program": "${workspaceFolder}/scripts/gbif/fetch_related_species.py",
             "args": [
                 "Cheiloxena aitori",
                 "--country", "AU",
