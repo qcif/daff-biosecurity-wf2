@@ -9,12 +9,12 @@ CANDIDATE_CSV_HEADER = [
     "species",
     "taxid",
     "accession",
-    "subject_title",
-    "identity",
-    "query_coverage",
-    "alignment_length",
-    "evalue",
-    "bitscore",
+    "hit_subject",  # rename
+    "identity",  # rename, recalc
+    "query_coverage",    # rename, recalc
+    "alignment_length",  # TODO
+    "e_value",
+    "bitscore",  # rename
 ]
 
 

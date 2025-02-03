@@ -51,7 +51,15 @@ def _assign_species_id(hits):
             ) and hit["identity"] >= MIN_IDENTITY
         ]
         for hit in candidate_hits:
-            hit["species"] = _get_species(hit, taxonomies)
+            tax = taxonomies.get(hit["accession"])
+            if tax:
+                hit["species"] = tax.get('species')
+                hit['taxid'] = tax.get('taxid')
+            else:
+                logger.warning(
+                    f"Taxonomy record not found for {hit['accession']} -"
+                    " this hit could not be included in the candidate"
+                    " species list.")
         candidate_hits_strict = [
             hit for hit in candidate_hits
             if hit["identity"] >= MIN_IDENTITY_STRICT
@@ -72,17 +80,6 @@ def _assign_species_id(hits):
             candidate_hits_strict or candidate_hits,
             candidate_species_strict or candidate_species,
         )
-
-
-def _get_species(hit, taxonomies):
-    """Retrieve species name for given hit."""
-    tax = taxonomies.get(hit["accession"])
-    if not tax:
-        logger.warning(f"Taxonomy record not found for {hit['accession']} -"
-                       " this hit could not be included in the candidate"
-                       " species list.")
-        return None
-    return tax["species"]
 
 
 def _detect_taxa_of_interest():
