@@ -6,7 +6,7 @@ import logging
 from Bio import SeqIO
 from pathlib import Path
 
-from blast import parse_xml
+from blast.parse_xml import parse_blast_xml
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
@@ -22,7 +22,7 @@ BLAST_FASTA_FILENAME = "blast_hits.fasta"
 def main():
     args = _parse_args()
     args.output_dir.mkdir(exist_ok=True, parents=True)
-    hits, fastas = parse_xml(args.blast_xml_path)
+    hits, fastas = parse_blast_xml(args.blast_xml_path)
     _write_hits(hits, args.output_dir)
     _write_fastas(fastas, args.output_dir)
     _write_accessions(hits, args.output_dir)
