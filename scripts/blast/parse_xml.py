@@ -28,24 +28,52 @@ def calculate_hit_e_value(hit, effective_search_space):
     return effective_search_space * 2 ** (-sum(hsp.bits for hsp in hit.hsps))
 
 
-def calculate_hit_identity_percent(hsps):
+def calculate_hit_identity(hsps):
     """Calculate the total identity of all hsps for a hit."""
     total_hsps_identity = sum(hsp.identities for hsp in hsps)
     total_hsp_align_length = sum((hsp.sbjct_end - hsp.sbjct_start)
                                  for hsp in hsps)
-    hit_identity_percent = round(
-        total_hsps_identity / total_hsp_align_length * 100,
+    hit_identity = round(
+        total_hsps_identity / total_hsp_align_length,
         2,
     )
-    return hit_identity_percent if total_hsp_align_length > 0 else 0
+    return max(hit_identity, 1) if total_hsp_align_length > 0 else 0
 
 
-def calculate_hit_query_coverage_percent(alignment_length, query_length):
+def calculate_hit_query_coverage(alignment_length, query_length):
     """Calculate query coverage as a percentage."""
-    return round(
-        alignment_length / query_length * 100,
+    return max(round(
+        alignment_length / query_length,
         2,
-    ) if query_length > 0 else 0
+    ), 1) if query_length > 0 else 0
+
+
+def calculate_alignment_length(hsps: list[NCBIXML.HSP]) -> int:
+    regions = [
+        (
+            min(hsp.query_start, hsp.query_end),
+            max(hsp.query_start, hsp.query_end),
+        )
+        for hsp in hsps
+    ]
+    regions.sort(key=lambda x: x[0])
+
+    # Merge overlapping regions
+    merged_regions = []
+    for start, end in regions:
+        if not merged_regions or merged_regions[-1][1] < start:
+            merged_regions.append((start, end))
+        else:
+            # Overlapping region: merge with the last region
+            merged_regions[-1] = (
+                merged_regions[-1][0],
+                max(merged_regions[-1][1], end),
+            )
+
+    return sum(
+        end - start + 1
+        for start, end in merged_regions
+    )
 
 
 def parse_blast_xml(blast_xml_path: str) -> tuple[
@@ -62,7 +90,7 @@ def parse_blast_xml(blast_xml_path: str) -> tuple[
             fastas = []
             query_record = {
                 "query_title": blast_record.query,
-                "length": blast_record.query_length,
+                "query_length": blast_record.query_length,
                 "hits": []
             }
             effective_search_space = blast_record.effective_search_space
@@ -72,28 +100,30 @@ def parse_blast_xml(blast_xml_path: str) -> tuple[
                 hit_e_value = calculate_hit_e_value(
                     alignment,
                     effective_search_space)
-                hit_identity_percent = calculate_hit_identity_percent(
+                hit_identity = calculate_hit_identity(
                     alignment.hsps
                 )
-                hit_query_coverage = calculate_hit_query_coverage_percent(
-                    alignment.length,
-                    blast_record.query_length
+                alignment_length = calculate_alignment_length(alignment.hsps)
+                hit_query_coverage = calculate_hit_query_coverage(
+                    alignment_length,
+                    blast_record.query_length,
                 )
                 hit_record = {
                     "hit_id": alignment.hit_id,
-                    "hit_def": alignment.hit_def,
+                    "hit_subject": alignment.hit_def,
                     "accession": alignment.accession,
-                    "subject_length": alignment.length,
-                    "query_coverage_percent": hit_query_coverage,
-                    "score": hit_score,
+                    "alignment_length": alignment_length,
+                    "subject_length": alignment.length,  # poor naming Bio?
+                    "query_coverage": hit_query_coverage,
+                    "bitscore": hit_score,
                     "e_value": hit_e_value,
-                    "identity_percent": hit_identity_percent,
+                    "identity": hit_identity,
                     "hsps": [],
                 }
 
                 for hsp in alignment.hsps:
                     hsp_record = {
-                        "score": hsp.score,
+                        "bitscore": hsp.score,
                         "e_value": hsp.expect,
                         "identity": hsp.identities,
                         "strand_query": hsp.strand[0],
