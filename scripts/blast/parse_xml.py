@@ -124,6 +124,8 @@ def parse_blast_xml(blast_xml_path: str) -> tuple[
                     f" [{query_record['query_title']}]"
                 )
 
+            logger.info(f"Query [{i}] - collected {len(query_record["hits"])}"
+                        f" BLAST hits")
             fasta_results.append(fastas)
             results.append(query_record)
 
