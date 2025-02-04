@@ -2,5 +2,5 @@
 
 singularity exec \
     docker://neoformit/daff-taxonomic-assignment \
-    python taxonkit.py \
+    python /app/scripts/p2_extract_taxonomy.py \
     test-data/taxids.csv

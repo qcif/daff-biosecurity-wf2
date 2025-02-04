@@ -1,26 +1,6 @@
 {
     "configurations": [
         {
-            "type": "debugpy",
-            "request": "launch",
-            "name": "BLAST Parser",
-            "program": "${workspaceFolder}/scripts/p1_parse_blast.py",
-            "args": [
-                "tests/test-data/output.xml",
-            ]
-        },
-        {
-            "type": "debugpy",
-            "request": "launch",
-            "name": "GBIF species fetch",
-            "program": "${workspaceFolder}/scripts/gbif/fetch_related_species.py",
-            "args": [
-                "Cheiloxena aitori",
-                "--country", "AU",
-                "--output", "output/relatives.json"
-            ]
-        },
-        {
             "name": "Unit tests",
             "type": "debugpy",
             "request": "launch",
@@ -33,6 +13,35 @@
             ],
             "console": "integratedTerminal",
             "justMyCode": true
+        },
+        {
+            "type": "debugpy",
+            "request": "launch",
+            "name": "BLAST Parser",
+            "program": "${workspaceFolder}/scripts/p1_parse_blast.py",
+            "args": [
+                "tests/test-data/output.xml",
+            ]
+        },
+        {
+            "type": "debugpy",
+            "request": "launch",
+            "name": "Assign taxonomy",
+            "program": "${workspaceFolder}/scripts/p3_assign_taxonomy.py",
+            "args": [
+                "tests/test-data/query_1",
+            ]
+        },
+        {
+            "type": "debugpy",
+            "request": "launch",
+            "name": "GBIF species fetch",
+            "program": "${workspaceFolder}/scripts/gbif/fetch_related_species.py",
+            "args": [
+                "Cheiloxena aitori",
+                "--country", "AU",
+                "--output", "output/relatives.json"
+            ]
         }
     ]
 }
