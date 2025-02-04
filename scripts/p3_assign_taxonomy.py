@@ -42,6 +42,7 @@ config = Config()
 
 def main():
     args = _parse_args()
+    config.set_output_dir(args.output_dir)
     query = config.read_blast_hits_json(args.query_dir)
     candidate_species = _assign_species_id(query['hits'], args.query_dir)
     _detect_taxa_of_interest(candidate_species, args.query_dir)
@@ -51,6 +52,10 @@ def _parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "query_dir", type=Path, help="Path to query output directory")
+    parser.add_argument(
+        "--output_dir",
+        type=Path,
+        help=f"Path to output directory. Defaults to {config.output_dir}.")
     return parser.parse_args()
 
 
