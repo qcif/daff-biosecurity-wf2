@@ -1,6 +1,6 @@
 """Extract taxids and taxonomic information from NCBI databases.
 
-This requires access to the NCBI taxdump files via a CLI argument.
+This requires access to the NCBI taxdump files (configurable by CLI param).
 
 """
 
@@ -11,11 +11,12 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+from .utils.config import Config
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-DEFAULT_OUTPUT_CSV = 'output/taxonomy.csv'
 TAXONKIT_DATA = Path('~/.taxonkit').expanduser()
 TAXONOMIC_RANKS = [
     "superkingdom",
@@ -27,6 +28,8 @@ TAXONOMIC_RANKS = [
     'genus',
     'species',
 ]
+
+config = Config()
 
 
 def main():
@@ -42,6 +45,7 @@ def main():
 
 
 def _parse_args():
+    default_output_csv = config.output_dir / config.TAXONOMY_FILE
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         'taxids_csv',
@@ -50,20 +54,20 @@ def _parse_args():
              ' information for.',
     )
     parser.add_argument(
-        '--output',
-        dest='output_csv',
-        type=Path,
-        help='CSV file where taxonomy data will be written. Defaults to'
-             f' {DEFAULT_OUTPUT_CSV}',
-        default=DEFAULT_OUTPUT_CSV,
-    )
-    parser.add_argument(
         '--taxdb',
         dest='taxdb_path',
         type=Path,
         help='Path to directory containing NCBI taxdump files for taxonkit.'
              f' Defaults to {TAXONKIT_DATA}',
         default=Path(TAXONKIT_DATA),
+    )
+    parser.add_argument(
+        '--output',
+        dest='output_csv',
+        type=Path,
+        help='CSV file where taxonomy data will be written. Defaults to'
+             f' {default_output_csv}',
+        default=default_output_csv,
     )
     return parser.parse_args()
 
