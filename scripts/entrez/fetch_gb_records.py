@@ -9,7 +9,7 @@ config = Config()
 # Set your email (required by NCBI for API usage)
 # This should be set from user input
 # consider using a class to encapsulate this
-Entrez.email = config.ENTREZ_EMAIL
+Entrez.email = config.USER_EMAIL
 # Entrez.email = "your_email@example.au"
 
 

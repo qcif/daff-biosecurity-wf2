@@ -28,18 +28,34 @@ the query FASTA file:
 
 ```
 output/
-├── accessions.txt  # input file for taxonkit
+├── accessions.txt  # input file for blastdbcmd
 ├── query_1
-│   ├── blast_hits.fasta
-│   ├── blast_hits.json
+│   ├── hits.fasta
+│   ├── hits.json
 │   └── query_title.txt
 ├── query_2
-│   ├── blast_hits.fasta
-│   ├── blast_hits.json
+│   ├── hits.fasta
+│   ├── hits.json
 │   └── query_title.txt
 ├── query_N
 ...
 ```
+
+## BLASTDBCMD
+
+This is not a Python module but is a required intermediate step between modules
+1 and 2. The `blastdbcmd` tool should be used to extract taxids for each
+accession as follows:
+
+```sh
+blastdbcmd -entry_batch output/accessions.txt -db </path/to/blastdb> -outfmt "%a,%T" > output/taxids.csv
+```
+
+NOTE: Some weird behaviour observed by this tool - it seems to extract more
+accessions than it is provided. I passed a file of 1830 taxids and found that
+2169 were written. There were no duplicates, just extra accessions that weren't
+in the input list! For the purpose of this pipeline it's a no-op, but worth
+noting the unexpected behaviour (bug).
 
 
 ## NCBI Taxonomy extractor

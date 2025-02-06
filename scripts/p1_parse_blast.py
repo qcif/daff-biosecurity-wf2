@@ -7,25 +7,22 @@ from Bio import SeqIO
 from pathlib import Path
 
 from blast.parse_xml import parse_blast_xml
+from utils.config import Config
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Number of accessions to collect per query for fetching taxonomy data:
-COLLECT_N_ACCESSIONS = 10
-BLAST_HITS_ACCESSIONS_FILENAME = "accessions.txt"
-BLAST_HITS_FILENAME = "blast_hits.json"
-BLAST_FASTA_FILENAME = "blast_hits.fasta"
+config = Config()
 
 
 def main():
     args = _parse_args()
-    args.output_dir.mkdir(exist_ok=True, parents=True)
+    config.set_output_dir(args.output_dir)
     hits, fastas = parse_blast_xml(args.blast_xml_path)
-    _write_hits(hits, args.output_dir)
-    _write_fastas(fastas, args.output_dir)
-    _write_accessions(hits, args.output_dir)
+    _write_hits(hits)
+    _write_fastas(fastas)
+    _write_accessions(hits)
 
 
 def _parse_args():
@@ -40,59 +37,55 @@ def _parse_args():
     parser.add_argument(
         "--output_dir",
         type=Path,
-        help="Directory to save parsed output files (JSON and FASTA).",
-        default="output",
+        help="Directory to save parsed output files (JSON and FASTA). Defaults"
+             f" to env variable 'OUTPUT_DIR' or '{config.output_dir}'.",
+        default=config.output_dir,
     )
     return parser.parse_args()
 
 
-def _get_query_dirname(i):
-    return f"query_{i + 1}"
-
-
-def _create_query_dir(query_hits, output_dir, query_dirname):
+def _create_query_dir(query_ix, query_hits):
     """Create a directory for this query and write the query title to file."""
-    query_path = output_dir / query_dirname / 'query_title.txt'
-    query_path.parent.mkdir(exist_ok=True, parents=True)
-    with query_path.open("w") as f:
+    query_dir = config.get_query_dir(query_ix)
+    query_title_path = query_dir / config.QUERY_TITLE_FILE
+    with query_title_path.open("w") as f:
         f.write(query_hits['query_title'])
-        logger.info(f"BLAST query title written to {query_path}")
+        logger.info(f"BLAST query title written to {query_title_path}")
+    return query_dir
 
 
-def _write_hits(hits, output_dir):
+def _write_hits(hits):
     """Write a JSON file of BLAST hits for each query sequence."""
     for i, query_hits in enumerate(hits):
-        query_dirname = _get_query_dirname(i)
-        _create_query_dir(query_hits, output_dir, query_dirname)
-        path = output_dir / query_dirname / BLAST_HITS_FILENAME
+        query_dir = _create_query_dir(i, query_hits)
+        path = query_dir / config.HITS_JSON
         with path.open("w") as f:
             json.dump(query_hits, f, indent=2)
             logger.info(f"BLAST hits for query [{i}] written to {path}")
 
 
-def _write_fastas(query_fastas, output_dir):
+def _write_fastas(query_fastas):
     """Write a fasta file of hit subjects for each query sequence."""
     for i, fastas in enumerate(query_fastas):
         if not fastas:
             continue
-        query_dirname = _get_query_dirname(i)
-        path = output_dir / query_dirname / BLAST_FASTA_FILENAME
+        path = config.get_query_dir(i) / config.HITS_FASTA
         with open(path, "w") as f:
             SeqIO.write(fastas, f, "fasta")
             logger.info(
                 f"BLAST hit sequences for query [{i}] written to {path}")
 
 
-def _write_accessions(hits, output_dir):
+def _write_accessions(hits):
     """Write a unique list of BLAST hit accession IDs to a file.
 
     These will be used for extracting taxonomy data.
     """
-    hit_accesssions_path = output_dir / BLAST_HITS_ACCESSIONS_FILENAME
+    hit_accesssions_path = config.output_dir / config.ACCESSIONS_FILENAME
     all_accessions = list({
         hit["accession"]
         for query in hits
-        for hit in query["hits"][:COLLECT_N_ACCESSIONS]
+        for hit in query["hits"]
     })
     with open(hit_accesssions_path, "w") as f:
         f.write('\n'.join(all_accessions) + '\n')

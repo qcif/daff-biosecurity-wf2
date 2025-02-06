@@ -9,12 +9,6 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Number of accessions to collect per query for fetching taxonomy data:
-COLLECT_N_ACCESSIONS = 10
-BLAST_HITS_ACCESSIONS_FILENAME = "accessions.txt"
-BLAST_HITS_FILENAME = "blast_hits.json"
-BLAST_FASTA_FILENAME = "blast_hits.fasta"
-
 
 def calculate_hit_score(hsps):
     """Calculate the total scores of all hsps for a hit."""

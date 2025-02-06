@@ -2,5 +2,5 @@
 
 singularity exec \
     docker://neoformit/daff-taxonomic-assignment \
-    python parse.py \
-    test-data/output.xml
+    python /app/scripts/p1_parse_blast.py \
+    tests/test-data/output.xml
