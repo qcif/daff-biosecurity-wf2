@@ -15,6 +15,7 @@ class Config:
         self.ID_FILE = getenv("ID_FILE")
         self.CANDIDATES_FASTA = getenv("CANDIDATES_FASTA")
         self.CANDIDATES_CSV = getenv("CANDIDATES_CSV")
+        self.ENTREZ_EMAIL = getenv("ENTRZ_EMAIL")
 
     def read_blast_hits_json(self):
         """Read BLAST hits from JSON file."""
