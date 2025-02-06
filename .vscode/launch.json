@@ -3,12 +3,6 @@
         {
             "type": "debugpy",
             "request": "launch",
-            "name": "Fetch Records",
-            "program": "${workspaceFolder}/scripts/entrez/fetch_gb_records.py",
-        },
-        {
-            "type": "debugpy",
-            "request": "launch",
             "name": "BLAST Parser",
             "program": "${workspaceFolder}/scripts/p1_parse_blast.py",
             "args": [
@@ -39,6 +33,13 @@
             ],
             "console": "integratedTerminal",
             "justMyCode": true
-        }
+        },
+        {
+            "type": "debugpy",
+            "request": "launch",
+            "name": "Fetch Records",
+            "module": "entrez.fetch_gb_records",
+            "cwd": "${workspaceFolder}/scripts"
+        },
     ]
 }
