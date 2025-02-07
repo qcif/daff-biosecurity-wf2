@@ -1,16 +1,15 @@
 """Example usage of the Entrez module from Biopython to fetch sequence data
 from NCBI/Genbank."""
 
+import sys
+import time
 from Bio import Entrez
 import re
 from utils.config import Config
 config = Config()
 
-# Set your email (required by NCBI for API usage)
-# This should be set from user input
-# consider using a class to encapsulate this
 Entrez.email = config.USER_EMAIL
-# Entrez.email = "your_email@example.au"
+# Entrez.email = "your-email@example.com"
 
 
 # Fetch the FASTA sequence
@@ -72,7 +71,7 @@ def parse_metadata(metadata):
 
 
 def fetch_sources(accessions) -> dict[str, dict]:
-    '''Fetch a list of publication srouces for each accession.'''
+    '''Fetch a list of publication sources for each accession.'''
     sources = {}
     for accession in accessions:
         metadata = fetch_metadata(accession)
@@ -89,7 +88,7 @@ def fetch_gb_records(locus: str, taxid: int) -> list[dict]:
 
 
 # Example usage: fetch FASTA and metadata -------------------------------------
-
+start_time = time.time()
 # GI number for the record you want to fetch
 gi_number = "34577062"
 
@@ -117,6 +116,8 @@ search_term = "COI"
 
 # Fetch IDs
 record_ids = search_nuccore_mrna(taxid, search_term)
+payload_size = sys.getsizeof(record_ids)
+print(f"Payload size: {payload_size} bytes")
 
 # Display results
 if record_ids:
@@ -124,3 +125,7 @@ if record_ids:
     print(record_ids)
 else:
     print("No records found.")
+
+end_time = time.time()
+execute_time = end_time - start_time
+print(f"Request time: {execute_time:.2f} seconds")
