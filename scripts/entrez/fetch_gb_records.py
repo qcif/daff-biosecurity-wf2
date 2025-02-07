@@ -53,11 +53,11 @@ def parse_metadata(metadata):
                 publications.append(current_publications)
             current_publications = {}
         elif line.startswith("  AUTHORS"):
-            current_publications['authors'] = line.replace("  AUTHORS   ", "")\
-                .strip().split(", ")
+            current_publications['authors'] = line.replace(
+                "  AUTHORS   ", "").strip().split(", ")
         elif line.startswith("  TITLE"):
-            current_publications['title'] = line.replace("  TITLE     ", "")\
-                .strip()
+            current_publications['title'] = line.replace(
+                "  TITLE     ", "").strip()
         elif line.startswith("  JOURNAL"):
             journal_line = line.replace("  JOURNAL   ", "").strip()
             current_publications['journal'] = journal_line
