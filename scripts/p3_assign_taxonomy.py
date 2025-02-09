@@ -19,6 +19,8 @@ import json
 import logging
 from Bio import SeqIO
 from pathlib import Path
+
+from utils.flags import Flag, FLAGS
 from utils.config import Config
 from utils import deduplicate
 
@@ -55,6 +57,7 @@ def _parse_args():
     parser.add_argument(
         "--output_dir",
         type=Path,
+        default=config.output_dir,
         help=f"Path to output directory. Defaults to {config.output_dir}.")
     return parser.parse_args()
 
@@ -91,6 +94,8 @@ def _assign_species_id(hits, query_dir):
     candidate_species_strict = deduplicate([
         hit for hit in candidate_hits_strict
     ], key=lambda x: x.get("species"))
+
+    _write_taxonomic_id(query_ix, candidate_hits_strict)
     _write_candidate_flags(
         query_ix,
         candidate_species_strict,
@@ -104,18 +109,29 @@ def _assign_species_id(hits, query_dir):
     return candidate_species_strict or candidate_species
 
 
+def _write_taxonomic_id(query_ix, candidate_hits_strict):
+    if len(candidate_hits_strict) != 1:
+        logger.info(f"Query {query_ix} - not writing {config.TAXONOMY_ID_CSV}:"
+                    " no taxonomic identification could be made.")
+    else:
+        query_dir = config.get_query_dir(query_ix)
+        src = query_dir / config.CANDIDATES_CSV
+        dest = query_dir / config.TAXONOMY_ID_CSV
+        dest.write_text(src.read_text())
+
+
 def _write_candidate_flags(query_ix, candidates_strict, candidates):
     if len(candidates_strict) == 1:
-        flag = config.FLAGS.A
+        value = FLAGS.A
     elif len(candidates_strict) > 1 and len(candidates_strict) < 4:
-        flag = config.FLAGS.B
+        value = FLAGS.B
     elif len(candidates_strict) >= 4:
-        flag = config.FLAGS.C
+        value = FLAGS.C
     elif len(candidates):
-        flag = config.FLAGS.D
+        value = FLAGS.D
     else:
-        flag = config.FLAGS.E
-    config.write_flag(query_ix, config.FLAGS.CANDIDATES, flag)
+        value = FLAGS.E
+    Flag.write(query_ix, FLAGS.POSITIVE_ID, value)
 
 
 def _write_candidates(
@@ -135,7 +151,7 @@ def _write_candidates_json(query_ix, hits, species):
         json.dump({
             "hits": hits,
             "species": species,
-        }, f)
+        }, f, indent=2)
 
 
 def _write_candidates_csv(query_ix, species):
@@ -173,15 +189,21 @@ def _detect_taxa_of_interest(candidate_species, query_dir):
     taxa_of_interest = config.read_taxa_of_interest()
     candidate_taxa_flattened = [
         {
-            'species': hit['species'],
-            'accession': hit['accession'],
             'rank': rank,
             'taxon': taxon,
+            'species': hit['species'],
+            'accession': hit['accession'],
+            'identity': hit['identity'],
         }
         for hit in candidate_species
         for rank, taxon in hit["taxonomy"].items()
     ]
     write_flag = True
+
+    with (query_dir / config.TOI_DETECTED_CSV).open("w") as f:
+        writer = csv.writer(f)
+        writer.writerow(config.OUTPUTS.TOI_DETECTED_HEADER)
+
     for toi in taxa_of_interest:
         try:
             detected_taxon = [
@@ -202,28 +224,17 @@ def _detect_taxa_of_interest(candidate_species, query_dir):
 
 def _write_toi_detected(query_dir, toi, detected, write_flag=True):
     """Record whether a given TOI was detected and set flag."""
-    path = query_dir / config.TOI_DETECTED_CSV
     if write_flag:
         if detected:
-            flag = config.FLAGS.A
+            value = FLAGS.A
         else:
-            flag = config.FLAGS.B
-        config.write_flag(
+            value = FLAGS.B
+        Flag.write(
             config.ix_from_query_dir(query_dir),
-            config.FLAGS.TOI,
-            flag,
+            FLAGS.TOI,
+            value,
         )
-    if not path.exists():
-        with path.open("w") as f:
-            writer = csv.writer(f)
-            writer.writerow([
-                "Taxon of interest",
-                "Match rank",
-                "Match taxon",
-                "Match species",
-                "Match accession",
-            ])
-    with path.open("a") as f:
+    with (query_dir / config.TOI_DETECTED_CSV).open("a") as f:
         writer = csv.writer(f)
         writer.writerow([
             toi,
@@ -231,6 +242,7 @@ def _write_toi_detected(query_dir, toi, detected, write_flag=True):
             detected.get('taxon', ''),
             detected.get('species', ''),
             detected.get('accession', ''),
+            detected.get('identity', ''),
         ])
 
 

@@ -1,0 +1,203 @@
+"""Entrypoint for rendering a workflow report."""
+
+import csv
+import logging
+import os
+from datetime import datetime
+from jinja2 import Environment, FileSystemLoader
+from pathlib import Path
+
+from utils import config
+from utils.flags import Flag, FLAGS  # , TARGETS
+from .outcomes import DetectedTaxon
+
+logger = logging.getLogger(__name__)
+config = config.Config()
+
+TEMPLATE_DIR = Path(__file__).parent / 'templates'
+STATIC_DIR = Path(__file__).parent / 'static'
+
+
+def render(query_ix):
+    """Render to HTML report to the configured output directory."""
+    j2 = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
+    template = j2.get_template('index.html')
+    context = _get_report_context(query_ix)
+
+    path = config.output_dir / 'example_report_context.json'
+    with path.open('w') as f:
+        import json
+        from utils.utils import serialize
+        print(f"Writing report context to {path}")
+        json.dump(context, f, default=serialize, indent=2)
+
+    static_files = _get_static_file_contents()
+    rendered_html = template.render(**context, **static_files)
+
+    with open(config.report_path, 'w') as f:
+        f.write(rendered_html)
+
+    logger.info(f"HTML document written to {config.report_path}")
+
+
+def _get_static_file_contents():
+    """Return the static files content as strings."""
+    static_files = {}
+    for root, _, files in os.walk(STATIC_DIR):
+        root = Path(root)
+        if root.name == 'css':
+            static_files['css'] = [
+                (root / f).read_text()
+                for f in files
+            ]
+        elif root.name == 'js':
+            static_files['js'] = [
+                (root / f).read_text()
+                for f in files
+            ]
+        elif root.name == 'img':
+            static_files['img'] = {
+                f: (root / f).read_bytes()
+                for f in files
+            }
+    return {'static': static_files}
+
+
+def _get_report_context(query_ix):
+    """Build the context for the report template."""
+    query_fasta_str = config.read_query_fasta(query_ix).format('fasta')
+    return {
+        'title': config.REPORT.TITLE,
+        'date': datetime.now().strftime('%d/%m/%Y %H:%M:%S'),
+        'metadata': _get_metadata(query_ix),
+        'input_fasta': query_fasta_str,
+        'conclusions': _draw_conclusions(query_ix),
+    }
+
+
+def _get_metadata(query_ix):
+    """Return mock metadata for the report."""
+    return {  # TODO: parse from metadata.csv
+        'sample_name': 'VE24-1075_COI',
+        'locus': 'COI',
+        'pmi': 'Aphididae',
+        'toi_list': [
+            'Myzus persicae',
+        ],
+        'country': 'Ecuador',
+        'host': 'Cut flower Rosa',
+        'notes': 'Lorem ipsum dolor sit amet',
+    }
+
+
+def _draw_conclusions(query_ix):
+    """Determine conclusions from outputs flags and files."""
+    flags = Flag.read_flags(query_ix)
+    return {
+        'flags': flags,
+        'summary': {
+            'result': _get_taxonomic_result(query_ix, flags),
+            'pmi': _get_pmi_result(flags),
+            'toi': _get_toi_result(query_ix, flags),
+        }
+    }
+
+
+def _get_taxonomic_result(query_ix, flags):
+    """Determine the taxonomic result from the flags."""
+    path = config.get_query_dir(query_ix) / config.TAXONOMY_ID_CSV
+    flag_1 = flags[FLAGS.POSITIVE_ID]
+    explanation = (f"Flag {FLAGS.POSITIVE_ID}{flag_1.value}: "
+                   + flag_1.explanation())
+    if flag_1.value == FLAGS.A:
+        with path.open() as f:
+            reader = csv.DictReader(f)
+            hit = next(reader)
+        return {
+            'confirmed': True,
+            'explanation': explanation,
+            'taxonomy': hit['taxonomy'],
+        }
+    return {
+        'confirmed': False,
+        'explanation': explanation,
+        'taxonomy': None,
+    }
+
+
+def _get_pmi_result(flags):
+    """Determine the preliminary ID confirmation from the flags."""
+    flag_1 = flags[FLAGS.POSITIVE_ID]
+    if flag_1.value != FLAGS.A:
+        return {
+            'confirmed': False,
+            'explanation': "Inconclusive taxonomic ID (Flag"
+                           f" {FLAGS.POSITIVE_ID}{flag_1.value})",
+        }
+    flag_7 = flags[FLAGS.PMI]
+    if flag_7.value == FLAGS.A:
+        return {
+            'confirmed': True,
+            'explanation': flag_7.explanation(),
+        }
+    return {
+        'confirmed': False,
+        'explanation': flag_7.explanation(),
+    }
+
+
+def _get_toi_result(query_ix, flags):
+    """Determine the taxa of interest detection from the flags."""
+    query_dir = config.get_query_dir(query_ix)
+    path = query_dir / config.TOI_DETECTED_CSV
+    with path.open() as f:
+        reader = csv.DictReader(f)
+        detected_tois = [
+            DetectedTaxon(*[
+                row.get(colname)
+                for colname in config.OUTPUTS.TOI_DETECTED_HEADER
+            ])
+            for row in reader
+            if row.get(config.OUTPUTS.TOI_DETECTED_HEADER[1])
+        ]
+    flag_2 = flags[FLAGS.TOI]
+    criteria_2 = f"Flag {flag_2}: {flag_2.explanation()}"
+
+    # TODO
+    # flag_5_1 = flags[FLAGS.DB_COVERAGE_TARGET]
+    # flag_5_2 = flags[FLAGS.DB_COVERAGE_RELATED]
+    # flag_5_1_value = flag_5_1.value_for_target(TARGETS.TOI, max_only=True)
+    # criteria_5_1 = (
+    #     f"Flag {flag_5_1} for taxa of concern:"
+    #     f" {flag_5_1.explanation(flag_5_1_value)}")
+    # flag_5_2_value = flag_5_2.value_for_target(TARGETS.TOI, max_only=True)
+    # criteria_5_2 = (
+    #     f"Flag {flag_5_2} for taxa of concern:"
+    #     f" {flag_5_2.explanation(flag_5_2_value)}")
+    return {
+        'detected': detected_tois,
+        'criteria': [
+            {
+                'message': criteria_2,
+                'level': flag_2.get_level(),
+            },
+            # { # TODO
+            #     'message': criteria_5_1,
+            #     'level': flag_5_1.get_level(flag_5_1_value),
+            # },
+            # {
+            #     'message': criteria_5_2,
+            #     'level': flag_5_2.get_level(flag_5_2_value),
+            # },
+        ],
+        'ruled_out': (
+            flag_2.value == FLAGS.B
+            # and flag_5_1_value == FLAGS.A  # TODO
+            # and flag_5_2_value == FLAGS.A  # TODO
+        ),
+    }
+
+
+if __name__ == '__main__':
+    query_ix = 1
+    render(query_ix)
