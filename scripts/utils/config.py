@@ -8,8 +8,13 @@ import csv
 import json
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
+from datetime import datetime
 from pathlib import Path
 from typing import Union
+
+from utils import path_safe_str
+
+REPORT_FILENAME = "report_{timestamp}_{sample_id}.html"
 
 
 class Config:
@@ -29,7 +34,6 @@ class Config:
     CANDIDATES_JSON = os.getenv("CANDIDATES_JSON_FILENAME", 'candidates.json')
     TOI_DETECTED_CSV = os.getenv("TOI_DETECTED_CSV_FILENAME",
                                  'taxa_of_concern_detected.csv')
-    REPORT_HTML = os.getenv("REPORT_HTML_FILENAME", 'report.html')
 
     class INPUTS:
         FASTA_FILEPATH = Path(
@@ -74,13 +78,19 @@ class Config:
     def taxonomy_path(self):
         return self.output_dir / self.TAXONOMY_FILE
 
-    @property
-    def report_html_path(self):
-        return self.output_dir / self.REPORT_HTML
+    def get_report_path(self, query_ix):
+        return self.get_query_dir(query_ix) / REPORT_FILENAME.format(
+            sample_id=path_safe_str(self.get_sample_id(query_ix)),
+            # ! TODO: remove this:
+            timestamp='NOW',  # datetime.now().strftime("%Y%m%d_%H%M%S"),
+        )
 
     def set_output_dir(self, output_dir):
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True, parents=True)
+
+    def get_sample_id(self, query_ix):
+        return self.read_query_fasta(query_ix).id
 
     def read_query_fasta(
         self,

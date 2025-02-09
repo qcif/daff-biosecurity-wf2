@@ -1,5 +1,7 @@
 """Generic utility functions."""
 
+import re
+
 
 def deduplicate(sequence, key=None):
     """Remove duplicates from a sequence while preserving order.
@@ -25,3 +27,8 @@ def serialize(obj):
         return obj.to_json()
     raise TypeError(f"Object of type {type(obj).__name__} is not JSON"
                     " serializable")
+
+
+def path_safe_str(value):
+    """Return a path-safe version of a string."""
+    return re.sub(r'[^\w\d\-\_]', '_', str(value))

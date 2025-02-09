@@ -52,9 +52,22 @@ class Flag:
             "flag_id": self.flag_id,
         }
         if self.targets:
-            data["targets"] = self.targets
+            targets = {
+                target: {
+                    ix: {
+                        "value": value,
+                        "level": self.get_level(value),
+                        "explanation": self.explanation(value),
+                    }
+                    for ix, value in value.items()
+                }
+                for target, value in self.targets.items()
+            }
+            data["targets"] = targets
         else:
             data["value"] = self.value
+            data["level"] = self.get_level()
+            data["explanation"] = self.explanation()
         return data
 
     @property
@@ -150,7 +163,7 @@ FLAG_DETAILS = {
         "level": {
             FLAGS.A: 1,
             FLAGS.B: 2,
-            FLAGS.C: 2,
+            FLAGS.C: 3,
             FLAGS.D: 2,
             FLAGS.E: 3,
         },
@@ -162,15 +175,12 @@ FLAG_DETAILS = {
             FLAGS.B: "Taxon of interest NOT detected",
         },
         "level": {
-            FLAGS.A: "success",
-            FLAGS.B: "warning",
-            FLAGS.C: "warning",
-            FLAGS.D: "warning",
-            FLAGS.E: "danger",
+            FLAGS.A: 1,
+            FLAGS.B: 3,
         },
     },
     FLAGS.SOURCES: {
-        "name": "Intraspecies diversity",
+        "name": "Reference sequence source diversity",
         "explanation": {
             FLAGS.A: "There are diverse results (>5 sources) for this species"
             " in the results",
@@ -178,11 +188,8 @@ FLAG_DETAILS = {
             " results",
         },
         "level": {
-            FLAGS.A: "success",
-            FLAGS.B: "warning",
-            FLAGS.C: "warning",
-            FLAGS.D: "warning",
-            FLAGS.E: "danger",
+            FLAGS.A: 1,
+            FLAGS.B: 2,
         },
     },
     FLAGS.DB_COVERAGE_TARGET: {
@@ -196,11 +203,9 @@ FLAG_DETAILS = {
                 " database (0 entries) ",
         },
         "level": {
-            FLAGS.A: "success",
-            FLAGS.B: "warning",
-            FLAGS.C: "warning",
-            FLAGS.D: "warning",
-            FLAGS.E: "danger",
+            FLAGS.A: 1,
+            FLAGS.B: 2,
+            FLAGS.C: 3,
         },
     },
     FLAGS.DB_COVERAGE_RELATED: {
@@ -211,11 +216,9 @@ FLAG_DETAILS = {
             FLAGS.C: "<=10% of species have sequence for this locus",
         },
         "level": {
-            FLAGS.A: "success",
-            FLAGS.B: "warning",
-            FLAGS.C: "warning",
-            FLAGS.D: "warning",
-            FLAGS.E: "danger",
+            FLAGS.A: 1,
+            FLAGS.B: 2,
+            FLAGS.C: 3,
         },
     },
     FLAGS.DB_COVERAGE_RELATED_COUNTRY: {
@@ -231,11 +234,9 @@ FLAG_DETAILS = {
                 " country of origin",
         },
         "level": {
-            FLAGS.A: "success",
-            FLAGS.B: "warning",
-            FLAGS.C: "warning",
-            FLAGS.D: "warning",
-            FLAGS.E: "danger",
+            FLAGS.A: 1,
+            FLAGS.B: 2,
+            FLAGS.C: 0,
         },
     },
     FLAGS.INTRASPECIES_DIVERSITY: {
@@ -247,11 +248,9 @@ FLAG_DETAILS = {
             FLAGS.C: "Genotype diversity grouped into multiple diverse groups",
         },
         "level": {
-            FLAGS.A: "success",
-            FLAGS.B: "warning",
-            FLAGS.C: "warning",
-            FLAGS.D: "warning",
-            FLAGS.E: "danger",
+            FLAGS.A: 1,
+            FLAGS.B: 2,
+            FLAGS.C: 3,
         },
     },
     FLAGS.PMI: {
@@ -263,11 +262,8 @@ FLAG_DETAILS = {
                 " morphology ID",
         },
         "level": {
-            FLAGS.A: "success",
-            FLAGS.B: "warning",
-            FLAGS.C: "warning",
-            FLAGS.D: "warning",
-            FLAGS.E: "danger",
+            FLAGS.A: 1,
+            FLAGS.B: 3,
         },
     },
 }

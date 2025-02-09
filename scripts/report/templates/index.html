@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ title }}</title>
+    <link rel="icon" href="https://www.agriculture.gov.au/themes/custom/awe/favicon.ico">
+
+    {% for style in static.css %}
+      <style>
+        {{ style }}
+      </style>
+    {% endfor %}
+  </head>
+
+  <body>
+    {% include "components/heading.html" %}
+    <div class="container">
+      {% include "components/inputs.html" %}
+    </div>
+  </body>
+
+  {% for script in static.js %}
+    <script>
+      {{ script }}
+    </script>
+  {% endfor %}
+  
+</html>
