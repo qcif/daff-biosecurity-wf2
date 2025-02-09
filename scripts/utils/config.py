@@ -1,4 +1,7 @@
-"""Runtime configuration for the workflow."""
+"""Runtime configuration for the workflow.
+
+All configuration values can be overridden with environment variables.
+"""
 
 import os
 import csv
@@ -12,18 +15,6 @@ from typing import Union
 class Config:
 
     output_dir = Path(os.getenv("OUTPUT_DIR", 'output')).resolve()
-    INPUT_FASTA_FILEPATH = Path(
-        os.getenv(
-            "INPUT_FASTA_PATH",
-            Path(__file__).parent.parent.parent
-            / 'tests/test-data/queries.fasta')
-    )
-    INPUT_TOI_FILEPATH = Path(
-        os.getenv(
-            "INPUT_TOI_FILEPATH",
-            Path(__file__).parent.parent.parent
-            / 'tests/test-data/taxa_of_interest.txt')
-    )
     ACCESSIONS_FILENAME = os.getenv("ACCESSIONS_FILENAME", "accessions.txt")
     TAXONOMY_FILE = os.getenv("TAXONOMY_FILENAME", 'taxonomy.csv')
     QUERY_TITLE_FILE = os.getenv("QUERY_TITLE_FILENAME", 'query_title.txt')
@@ -39,6 +30,26 @@ class Config:
     TOI_DETECTED_CSV = os.getenv("TOI_DETECTED_CSV_FILENAME",
                                  'taxa_of_concern_detected.csv')
     REPORT_HTML = os.getenv("REPORT_HTML_FILENAME", 'report.html')
+
+    class INPUTS:
+        FASTA_FILEPATH = Path(
+            os.getenv(
+                "INPUT_FASTA_PATH",
+                Path(__file__).parent.parent.parent
+                / 'tests/test-data/queries.fasta')
+        )
+        TOI_FILEPATH = Path(
+            os.getenv(
+                "INPUT_TOI_FILEPATH",
+                Path(__file__).parent.parent.parent
+                / 'tests/test-data/taxa_of_interest.txt')
+        )
+        METADATA_PATH = Path(
+            os.getenv(
+                "INPUT_METADATA_CSV_FILEPATH",
+                Path(__file__).parent.parent.parent
+                / 'tests/test-data/metadata.csv')
+        )
 
     class ALIGNMENT:
         MIN_NT = int(os.getenv('MIN_NT', 400))
@@ -76,7 +87,7 @@ class Config:
         index: int = None,
     ) -> Union[list[SeqRecord], SeqRecord]:
         """Read query FASTA sequence."""
-        path = self.INPUT_FASTA_FILEPATH
+        path = self.INPUTS.FASTA_FILEPATH
         sequences = list(SeqIO.parse(path, "fasta"))
         if index is not None:
             return sequences[index]
@@ -96,7 +107,7 @@ class Config:
         """Read taxa of interest from TOI file."""
         return [
             line.strip()
-            for line in self.INPUT_TOI_FILEPATH.read_text().splitlines()
+            for line in self.INPUTS.TOI_FILEPATH.read_text().splitlines()
             if line.strip()
         ]
 
