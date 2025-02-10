@@ -89,17 +89,38 @@ def _get_report_context(query_ix):
 
 def _get_metadata(query_ix):
     """Return mock metadata for the report."""
-    return {  # TODO: parse from metadata.csv
-        'sample_name': 'VE24-1075_COI',
-        'locus': 'COI',
-        'pmi': 'Aphididae',
-        'toi_list': [
-            'Myzus persicae',
-        ],
-        'country': 'Ecuador',
-        'host': 'Cut flower Rosa',
-        'notes': 'Lorem ipsum dolor sit amet',
-    }
+    return [  # TODO: parse from metadata.csv
+        {
+            'name': 'Sample ID',
+            'value': 'VE24-1075_COI',
+        },
+        {
+            'name': 'Locus',
+            'value': 'COI',
+        },
+        {
+            'name': 'Preliminary morphology ID',
+            'value': 'Aphididae',
+        },
+        {
+            'name': 'Taxa of interest',
+            'value': [
+                'Myzus persicae',
+            ],
+        },
+        {
+            'name': 'Country of origin',
+            'value': 'Ecuador',
+        },
+        {
+            'name': 'Host/commodity of origin',
+            'value': 'Cut flower Rosa',
+        },
+        {
+            'name': 'Comments',
+            'value': 'Lorem ipsum dolor sit amet',
+        },
+    ]
 
 
 def _draw_conclusions(query_ix):

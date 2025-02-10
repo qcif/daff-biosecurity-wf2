@@ -1,3 +1,59 @@
 <section>
   <h2>Input parameters</h2>
+  <table class="table table-striped">
+    <tbody>
+      {% for item in metadata %}
+      <tr>
+        <td class="fw-bold">{{ item.name }}</td>
+        <td>
+          {% if 'interest' in item.name %}
+          {% for value in item.value %}
+          {{ value }}<br>
+          {% endfor %}
+          {% else %}
+          {{ item.value }}
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+      <tr>
+        <td class="fw-bold">
+          Query DNA sequence
+        </td>
+        <td>
+          <button
+            class="btn btn-primary btn-sm"
+            data-bs-toggle="modal"
+            data-bs-target="#inputFastaModal"
+          >View</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
 </section>
+
+<div class="modal" id="inputFastaModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Input DNA sequence</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <pre>{{ input_fasta }}</pre>
+      </div>
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          data-bs-dismiss="modal"
+        >Close</button>
+      </div>
+    </div>
+  </div>
+</div>
