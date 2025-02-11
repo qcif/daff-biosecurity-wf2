@@ -141,7 +141,7 @@ class Flag:
             flags[flag_id] = value
         with path.open('w') as f:
             json.dump(flags, f, indent=2)
-        logger.info(f"Flag {flag_id}{value} written to {config.FLAGS_CSV}")
+        logger.info(f"Flag {flag_id}{value} written to {config.FLAGS_JSON}")
 
 
 class TARGETS:
