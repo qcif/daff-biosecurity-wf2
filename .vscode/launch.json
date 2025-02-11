@@ -29,7 +29,7 @@
             "name": "Assign taxonomy",
             "program": "${workspaceFolder}/scripts/p3_assign_taxonomy.py",
             "args": [
-                "output/query_1"
+                "output/query_0_LC438549.1"
             ],
             "env": {
                 "INPUT_TOI_FILEPATH": "tests/test-data/taxa_of_interest.txt",
