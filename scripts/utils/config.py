@@ -6,6 +6,7 @@ All configuration values can be overridden with environment variables.
 import os
 import csv
 import json
+import logging
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 from datetime import datetime
@@ -14,12 +15,17 @@ from typing import Union
 
 from utils import path_safe_str
 
-REPORT_FILENAME = "report_{timestamp}_{sample_id}.html"
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+
+REPORT_FILENAME = "report_{sample_id}_{timestamp}.html"
 
 
 class Config:
 
     output_dir = Path(os.getenv("OUTPUT_DIR", 'output')).resolve()
+
+    TIMESTAMP_FILENAME = os.getenv("TIMESTAMP_FILENAME", 'timestamp.txt')
     ACCESSIONS_FILENAME = os.getenv("ACCESSIONS_FILENAME", "accessions.txt")
     TAXONOMY_FILE = os.getenv("TAXONOMY_FILENAME", 'taxonomy.csv')
     QUERY_TITLE_FILE = os.getenv("QUERY_TITLE_FILENAME", 'query_title.txt')
@@ -78,11 +84,23 @@ class Config:
     def taxonomy_path(self):
         return self.output_dir / self.TAXONOMY_FILE
 
+    @property
+    def start_time(self) -> datetime:
+        path = self.output_dir / self.TIMESTAMP_FILENAME
+        if path.exists():
+            ts = path.read_text().strip(' \n')
+            return datetime.strptime(ts, "%Y%m%d %H%M%S")
+        now = datetime.now()
+        timestamp = now.strftime("%Y%m%d %H%M%S")
+        path.write_text(timestamp)
+        return now
+
     def get_report_path(self, query_ix):
-        return self.get_query_dir(query_ix) / REPORT_FILENAME.format(
-            sample_id=path_safe_str(self.get_sample_id(query_ix)),
-            # ! TODO: remove this:
-            timestamp='NOW',  # datetime.now().strftime("%Y%m%d_%H%M%S"),
+        return self.get_query_dir(query_ix) / path_safe_str(
+            REPORT_FILENAME.format(
+                sample_id=self.get_sample_id(query_ix).replace('.', '_'),
+                timestamp='NOW',  # self.timestamp, # ! TODO
+            )
         )
 
     def set_output_dir(self, output_dir):

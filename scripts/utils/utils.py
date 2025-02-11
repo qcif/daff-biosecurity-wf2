@@ -31,4 +31,4 @@ def serialize(obj):
 
 def path_safe_str(value):
     """Return a path-safe version of a string."""
-    return re.sub(r'[^\w\d\-\_]', '_', str(value))
+    return re.sub(r'[^\w\d\-\_\.]', '_', str(value))

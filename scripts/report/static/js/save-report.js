@@ -1,7 +1,7 @@
 
 const FULL_DATA_PATH = window.location.pathname.split("/").slice(0, -1).join("/") + "/"
+
 async function saveCurrentPage() {
-  alert(`Please save this document in the same location as the original file:\n${FULL_DATA_PATH}`);
 
   // Clone the current document's HTML
   const clone = document.documentElement.cloneNode(true);

@@ -80,10 +80,26 @@ def _get_report_context(query_ix):
     query_fasta_str = config.read_query_fasta(query_ix).format('fasta')
     return {
         'title': config.REPORT.TITLE,
-        'date': datetime.now().strftime('%d/%m/%Y %H:%M:%S'),
+        'start_time': config.start_time.strftime("%Y-%m-%d %H:%M:%S"),
+        'end_time': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        'wall_time': _get_walltime(),
         'metadata': _get_metadata(query_ix),
         'input_fasta': query_fasta_str,
         'conclusions': _draw_conclusions(query_ix),
+    }
+
+
+def _get_walltime():
+    """Return wall time since start of the workflow.
+    Returns a dict of hours, minutes, seconds.
+    """
+    seconds = (datetime.now() - config.start_time).total_seconds()
+    hours, remainder = divmod(seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    return {
+        'hours': int(hours),
+        'minutes': int(minutes),
+        'seconds': int(seconds),
     }
 
 
