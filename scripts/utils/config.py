@@ -115,7 +115,7 @@ class Config:
 
     def get_query_dir(self, query_ix):
         sample_id = self.get_sample_id(query_ix)
-        d = self.output_dir / f"query_{query_ix}_{sample_id}"
+        d = self.output_dir / f"query_{query_ix + 1:>03}_{sample_id}"
         d.mkdir(exist_ok=True, parents=True)
         return d
 
@@ -124,7 +124,7 @@ class Config:
 
     def ix_from_query_dir(self, query_dir):
         query_dir = Path(query_dir)
-        return int(query_dir.name.split("_")[1])
+        return int(query_dir.name.split("_")[1]) - 1
 
     def read_taxa_of_interest(self) -> list[str]:
         """Read taxa of interest from TOI file."""
