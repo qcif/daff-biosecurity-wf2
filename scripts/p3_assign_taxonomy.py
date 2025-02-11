@@ -18,11 +18,10 @@ import csv
 import json
 import logging
 from Bio import SeqIO
-from pathlib import Path
 
-from utils.flags import Flag, FLAGS
+from utils import deduplicate, existing_path
 from utils.config import Config
-from utils import deduplicate
+from utils.flags import Flag, FLAGS
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -53,10 +52,10 @@ def main():
 def _parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "query_dir", type=Path, help="Path to query output directory")
+        "query_dir", type=existing_path, help="Path to query output directory")
     parser.add_argument(
         "--output_dir",
-        type=Path,
+        type=existing_path,
         default=config.output_dir,
         help=f"Path to output directory. Defaults to {config.output_dir}.")
     return parser.parse_args()

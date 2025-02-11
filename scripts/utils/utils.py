@@ -1,6 +1,7 @@
 """Generic utility functions."""
 
 import re
+from pathlib import Path
 
 
 def deduplicate(sequence, key=None):
@@ -32,3 +33,11 @@ def serialize(obj):
 def path_safe_str(value):
     """Return a path-safe version of a string."""
     return re.sub(r'[^\w\d\-\_\.]', '_', str(value))
+
+
+def existing_path(path):
+    """Check if a path exists and return a Path object."""
+    path = Path(path)
+    if not path.exists():
+        raise FileNotFoundError(f"Path '{path.absolute()}' does not exist.")
+    return path
