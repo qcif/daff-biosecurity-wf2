@@ -152,6 +152,7 @@ def _write_candidates_json(query_ix, hits, species):
             "hits": hits,
             "species": species,
         }, f, indent=2)
+    logger.info(f"Written candidate hits/species to {path}")
 
 
 def _write_candidates_csv(query_ix, species):
@@ -164,6 +165,7 @@ def _write_candidates_csv(query_ix, species):
                 hit.get(key, "")
                 for key in CANDIDATE_CSV_HEADER
             ])
+    logger.info(f"Written candidate species to {path}")
 
 
 def _write_candidates_fasta(query_ix, species):
@@ -178,6 +180,7 @@ def _write_candidates_fasta(query_ix, species):
     ]
     with open(path, "w") as f:
         SeqIO.write(candidate_fastas, f, "fasta")
+    logger.info(f"Written candidate FASTA to {path}")
 
 
 def _detect_taxa_of_interest(candidate_species, query_dir):
@@ -187,6 +190,9 @@ def _detect_taxa_of_interest(candidate_species, query_dir):
     taxonomic level.
     """
     taxa_of_interest = config.read_taxa_of_interest()
+    if not taxa_of_interest:
+        logger.info("No taxa of interest provided - no output written.")
+        return
     candidate_taxa_flattened = [
         {
             'rank': rank,
@@ -220,6 +226,8 @@ def _detect_taxa_of_interest(candidate_species, query_dir):
         )
         if detected_taxon:
             write_flag = False
+    logger.info("Writing taxa of interest detection to"
+                f" {query_dir / config.TOI_DETECTED_CSV}")
 
 
 def _write_toi_detected(query_dir, toi, detected, write_flag=True):

@@ -11,13 +11,11 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-if __name__ == '__main__':
-    from utils.config import Config
-    logging.basicConfig(level=logging.INFO)
-else:
-    from .utils.config import Config
+from .utils.config import Config
 
 logger = logging.getLogger(__name__)
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
 
 TAXONKIT_DATA = Path('~/.taxonkit').expanduser()
 TAXONOMIC_RANKS = [

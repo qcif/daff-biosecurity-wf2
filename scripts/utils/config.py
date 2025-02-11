@@ -8,24 +8,30 @@ import csv
 import json
 import logging
 from Bio import SeqIO
-from Bio.SeqRecord import SeqRecord
 from datetime import datetime
 from pathlib import Path
-from typing import Union
 
-from utils import path_safe_str
+from .utils import path_safe_str
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 REPORT_FILENAME = "report_{sample_id}_{timestamp}.html"
 
+logger = logging.getLogger(__name__)
+
 
 class Config:
 
-    output_dir = Path(os.getenv("OUTPUT_DIR", 'output')).resolve()
-
+    output_dir = Path(os.getenv("OUTPUT_DIR", 'output'))
     TIMESTAMP_FILENAME = os.getenv("TIMESTAMP_FILENAME", 'timestamp.txt')
+    INPUT_TOI_FILEPATH = (
+        Path(os.getenv("INPUT_TOI_FILEPATH"))
+        if os.getenv("INPUT_TOI_FILEPATH")
+        else None
+    )
+    INPUT_FASTA_FILEPATH = Path(os.getenv("INPUT_FASTA_FILEPATH",
+                                          "tests/test-data/query.fasta"))
     ACCESSIONS_FILENAME = os.getenv("ACCESSIONS_FILENAME", "accessions.txt")
     TAXONOMY_FILE = os.getenv("TAXONOMY_FILENAME", 'taxonomy.csv')
     QUERY_TITLE_FILE = os.getenv("QUERY_TITLE_FILENAME", 'query_title.txt')
@@ -107,19 +113,37 @@ class Config:
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True, parents=True)
 
+    def get_query_dir(self, query_ix):
+        sample_id = self.get_sample_id(query_ix)
+        d = self.output_dir / f"query_{query_ix}_{sample_id}"
+        d.mkdir(exist_ok=True, parents=True)
+        return d
+
     def get_sample_id(self, query_ix):
         return self.read_query_fasta(query_ix).id
 
-    def read_query_fasta(
-        self,
-        index: int = None,
-    ) -> Union[list[SeqRecord], SeqRecord]:
-        """Read query FASTA sequence."""
-        path = self.INPUTS.FASTA_FILEPATH
-        sequences = list(SeqIO.parse(path, "fasta"))
+    def ix_from_query_dir(self, query_dir):
+        query_dir = Path(query_dir)
+        return int(query_dir.name.split("_")[1])
+
+    def read_taxa_of_interest(self) -> list[str]:
+        """Read taxa of interest from TOI file."""
+        if self.INPUT_TOI_FILEPATH is None:
+            return []
+        return [
+            line.strip()
+            for line in self.INPUT_TOI_FILEPATH.read_text().splitlines()
+            if line.strip()
+        ]
+
+    def read_query_fasta(self, index=None):
+        """Read query FASTA file."""
+        if not hasattr(self, "query_sequences"):
+            self.query_sequences = list(
+                SeqIO.parse(self.INPUT_FASTA_FILEPATH, "fasta"))
         if index is not None:
-            return sequences[index]
-        return sequences
+            return self.query_sequences[index]
+        return self.query_sequences
 
     def read_blast_hits_json(self, query_dir):
         """Read BLAST hits from JSON file."""
@@ -131,14 +155,6 @@ class Config:
         path = query_dir / self.HITS_FASTA
         return self._read_fasta(path)
 
-    def read_taxa_of_interest(self) -> list[str]:
-        """Read taxa of interest from TOI file."""
-        return [
-            line.strip()
-            for line in self.INPUTS.TOI_FILEPATH.read_text().splitlines()
-            if line.strip()
-        ]
-
     def read_taxonomy_file(self):
         """Read taxonomy from CSV file."""
         taxonomies = {}
@@ -146,15 +162,6 @@ class Config:
             for row in csv.DictReader(f):
                 taxonomies[row["accession"].split('.')[0]] = row
         return taxonomies
-
-    def get_query_dir(self, query_ix):
-        d = self.output_dir / f"query_{query_ix}"
-        d.mkdir(exist_ok=True, parents=True)
-        return d
-
-    def ix_from_query_dir(self, query_dir):
-        query_dir = Path(query_dir)
-        return int(query_dir.name.split("_")[1])
 
     def _read_json(self, path):
         """Read JSON file."""

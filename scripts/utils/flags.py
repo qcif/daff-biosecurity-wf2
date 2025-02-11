@@ -1,8 +1,11 @@
 """Describe how flags are used to record outcomes."""
 
 import json
+import logging
 
 from utils.config import Config
+
+logger = logging.getLogger(__name__)
 
 config = Config()
 
@@ -138,6 +141,7 @@ class Flag:
             flags[flag_id] = value
         with path.open('w') as f:
             json.dump(flags, f, indent=2)
+        logger.info(f"Flag {flag_id}{value} written to {config.FLAGS_CSV}")
 
 
 class TARGETS:
