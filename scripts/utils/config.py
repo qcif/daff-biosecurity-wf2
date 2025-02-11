@@ -19,6 +19,8 @@ class Config:
         if os.getenv("INPUT_TOI_FILEPATH")
         else None
     )
+    INPUT_FASTA_FILEPATH = Path(os.getenv("INPUT_FASTA_FILEPATH",
+                                          "tests/test-data/query.fasta"))
     ACCESSIONS_FILENAME = os.getenv("ACCESSIONS_FILENAME", "accessions.txt")
     TAXONOMY_FILE = os.getenv("TAXONOMY_FILENAME", 'taxonomy.csv')
     QUERY_TITLE_FILE = os.getenv("QUERY_TITLE_FILENAME", 'query_title.txt')
@@ -58,15 +60,18 @@ class Config:
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True, parents=True)
 
-    def read_blast_hits_json(self, query_dir):
-        """Read BLAST hits from JSON file."""
-        path = query_dir / self.HITS_JSON
-        return self._read_json(path)
+    def get_query_dir(self, query_ix):
+        query_id = self.get_query_id(query_ix)
+        d = self.output_dir / f"query_{query_ix}_{query_id}"
+        d.mkdir(exist_ok=True, parents=True)
+        return d
 
-    def read_blast_hits_fasta(self, query_dir):
-        """Read BLAST hits from JSON file."""
-        path = query_dir / self.HITS_FASTA
-        return self._read_fasta(path)
+    def get_query_id(self, query_ix):
+        return self.read_query_fasta(query_ix).id
+
+    def ix_from_query_dir(self, query_dir):
+        query_dir = Path(query_dir)
+        return int(query_dir.name.split("_")[1])
 
     def read_taxa_of_interest(self) -> list[str]:
         """Read taxa of interest from TOI file."""
@@ -77,6 +82,25 @@ class Config:
             for line in self.INPUT_TOI_FILEPATH.read_text().splitlines()
             if line.strip()
         ]
+
+    def read_query_fasta(self, index=None):
+        """Read query FASTA file."""
+        if not hasattr(self, "query_sequences"):
+            self.query_sequences = list(
+                SeqIO.parse(self.INPUT_FASTA_FILEPATH, "fasta"))
+        if index is not None:
+            return self.query_sequences[index]
+        return self.query_sequences
+
+    def read_blast_hits_json(self, query_dir):
+        """Read BLAST hits from JSON file."""
+        path = query_dir / self.HITS_JSON
+        return self._read_json(path)
+
+    def read_blast_hits_fasta(self, query_dir):
+        """Read BLAST hits from JSON file."""
+        path = query_dir / self.HITS_FASTA
+        return self._read_fasta(path)
 
     def read_taxonomy_file(self):
         """Read taxonomy from CSV file."""
@@ -102,15 +126,6 @@ class Config:
                 FLAG_DETAILS[flag_num]['explanation'][outcome],
             ])
         logger.info(f"Flag {flag_num}{outcome} written to {self.FLAGS_CSV}")
-
-    def get_query_dir(self, query_ix):
-        d = self.output_dir / f"query_{query_ix}"
-        d.mkdir(exist_ok=True, parents=True)
-        return d
-
-    def ix_from_query_dir(self, query_dir):
-        query_dir = Path(query_dir)
-        return int(query_dir.name.split("_")[1])
 
     def _read_json(self, path):
         """Read JSON file."""
