@@ -3,18 +3,21 @@
 import os
 import csv
 import json
+import logging
 from Bio import SeqIO
 from pathlib import Path
 from .flags import FLAG_DETAILS
+
+logger = logging.getLogger(__name__)
 
 
 class Config:
 
     output_dir = Path(os.getenv("OUTPUT_DIR", 'output'))
-    INPUT_TOI_FILEPATH = Path(
-        os.getenv(
-            "INPUT_TOI_FILEPATH",
-            'tests/test-data/taxa_of_interest.txt')
+    INPUT_TOI_FILEPATH = (
+        Path(os.getenv("INPUT_TOI_FILEPATH"))
+        if os.getenv("INPUT_TOI_FILEPATH")
+        else None
     )
     ACCESSIONS_FILENAME = os.getenv("ACCESSIONS_FILENAME", "accessions.txt")
     TAXONOMY_FILE = os.getenv("TAXONOMY_FILENAME", 'taxonomy.csv')
@@ -67,6 +70,8 @@ class Config:
 
     def read_taxa_of_interest(self) -> list[str]:
         """Read taxa of interest from TOI file."""
+        if self.INPUT_TOI_FILEPATH is None:
+            return []
         return [
             line.strip()
             for line in self.INPUT_TOI_FILEPATH.read_text().splitlines()
@@ -96,6 +101,7 @@ class Config:
                 outcome,
                 FLAG_DETAILS[flag_num]['explanation'][outcome],
             ])
+        logger.info(f"Flag {flag_num}{outcome} written to {self.FLAGS_CSV}")
 
     def get_query_dir(self, query_ix):
         d = self.output_dir / f"query_{query_ix}"
