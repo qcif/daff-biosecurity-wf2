@@ -61,6 +61,7 @@ class Flag:
                         "value": value,
                         "level": self.get_level(value),
                         "explanation": self.explanation(value),
+                        "bs-class": self.get_bs_class(value),
                     }
                     for ix, value in value.items()
                 }
@@ -71,6 +72,8 @@ class Flag:
             data["value"] = self.value
             data["level"] = self.get_level()
             data["explanation"] = self.explanation()
+            data["bs-class"] = self.get_bs_class(),
+
         return data
 
     @property
@@ -97,6 +100,17 @@ class Flag:
     def get_level(self, value=None):
         """Return the warning level for the given value."""
         return FLAG_DETAILS[self.flag_id]['level'][value or self.value]
+
+    def get_bs_class(self, value=None):
+        """Return the warning level for the given value."""
+        level = self.get_level(value)
+        if level == 0:
+            return "secondary"
+        if level == 1:
+            return "success"
+        if level == 2:
+            return "warning"
+        return "danger"
 
     @staticmethod
     def read_flags(query_ix, as_json=False):
