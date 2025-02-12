@@ -53,7 +53,8 @@
             "module": "report.report",
             "cwd": "${workspaceFolder}/scripts",
             "env": {
-                "OUTPUT_DIR": "../output"
+                "OUTPUT_DIR": "../output",
+                "INPUT_FASTA_FILEPATH": "../tests/test-data/query.fasta",
             }
         }
     ]

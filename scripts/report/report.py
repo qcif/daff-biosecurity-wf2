@@ -80,6 +80,7 @@ def _get_report_context(query_ix):
     query_fasta_str = config.read_query_fasta(query_ix).format('fasta')
     return {
         'title': config.REPORT.TITLE,
+        'analyst_name': "John Doe",
         'start_time': config.start_time.strftime("%Y-%m-%d %H:%M:%S"),
         'end_time': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         'wall_time': _get_walltime(),
@@ -108,7 +109,7 @@ def _get_metadata(query_ix):
     return [  # TODO: parse from metadata.csv
         {
             'name': 'Sample ID',
-            'value': 'VE24-1075_COI',
+            'value': 'LC438549.1',
         },
         {
             'name': 'Locus',
@@ -248,5 +249,5 @@ def _get_toi_result(query_ix, flags):
 
 
 if __name__ == '__main__':
-    query_ix = 1
+    query_ix = 0
     render(query_ix)
