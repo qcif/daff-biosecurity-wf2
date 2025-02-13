@@ -2,6 +2,7 @@
 
 import base64
 import csv
+import json
 import logging
 import os
 from datetime import datetime
@@ -28,7 +29,6 @@ def render(query_ix):
     # ! TODO: Remove this
     path = config.output_dir / 'example_report_context.json'
     with path.open('w') as f:
-        import json
         from utils import serialize
         print(f"Writing report context to {path}")
         json.dump(context, f, default=serialize, indent=2)
@@ -80,13 +80,17 @@ def _get_report_context(query_ix):
     query_fasta_str = config.read_query_fasta(query_ix).format('fasta')
     return {
         'title': config.REPORT.TITLE,
-        'analyst_name': "John Doe",
+        'facility': "Hogwarts",  # ! TODO
+        'analyst_name': "John Doe",  # ! TODO
         'start_time': config.start_time.strftime("%Y-%m-%d %H:%M:%S"),
         'end_time': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         'wall_time': _get_walltime(),
         'metadata': _get_metadata(query_ix),
+        'config': config,
         'input_fasta': query_fasta_str,
         'conclusions': _draw_conclusions(query_ix),
+        'hits': config.read_blast_hits_json(query_ix)['hits'],
+        'candidates': _get_candidates(query_ix),
     }
 
 
@@ -144,7 +148,10 @@ def _draw_conclusions(query_ix):
     """Determine conclusions from outputs flags and files."""
     flags = Flag.read_flags(query_ix)
     return {
-        'flags': flags,
+        'flags': {
+            ix: flag.to_json()
+            for ix, flag in flags.items()
+        },
         'summary': {
             'result': _get_taxonomic_result(query_ix, flags),
             'pmi': _get_pmi_result(flags),
@@ -181,18 +188,21 @@ def _get_pmi_result(flags):
     if flag_1.value != FLAGS.A:
         return {
             'confirmed': False,
-            'explanation': "Inconclusive taxonomic ID (Flag"
+            'explanation': "Inconclusive taxonomic identity (Flag"
                            f" {FLAGS.POSITIVE_ID}{flag_1.value})",
+            'bs-class': None,
         }
     flag_7 = flags[FLAGS.PMI]
     if flag_7.value == FLAGS.A:
         return {
             'confirmed': True,
             'explanation': flag_7.explanation(),
+            'bs-class': 'success',
         }
     return {
         'confirmed': False,
         'explanation': flag_7.explanation(),
+        'bs-class': 'danger',
     }
 
 
@@ -230,22 +240,42 @@ def _get_toi_result(query_ix, flags):
             {
                 'message': criteria_2,
                 'level': flag_2.get_level(),
+                'bs-class': flag_2.get_bs_class(),
             },
             # { # TODO
             #     'message': criteria_5_1,
             #     'level': flag_5_1.get_level(flag_5_1_value),
+            #     'bs-class': flag_5_1.get_bs_class(flag_5_1_value),
             # },
             # {
             #     'message': criteria_5_2,
             #     'level': flag_5_2.get_level(flag_5_2_value),
+            #     'bs-class': flag_5_2.get_bs_class(flag_5_2_value),
             # },
         ],
         'ruled_out': (
-            flag_2.value == FLAGS.B
+            flag_2.value == FLAGS.A
             # and flag_5_1_value == FLAGS.A  # TODO
             # and flag_5_2_value == FLAGS.A  # TODO
         ),
+        'bs-class': 'success' if flag_2.value == FLAGS.A else 'danger',
     }
+
+
+def _get_candidates(query_ix):
+    """Read data for the candidate hits/taxa."""
+    flags = Flag.read_flags(query_ix)
+    query_dir = config.get_query_dir(query_ix)
+    with open(query_dir / config.CANDIDATES_JSON) as f:
+        candidates = json.load(f)
+    candidates['fasta'] = {
+        seq.id: seq.format("fasta")
+        for seq in config.read_fasta(query_dir / config.CANDIDATES_FASTA)
+    }
+    candidates['strict'] = (
+        flags[FLAGS.POSITIVE_ID].value
+        not in (FLAGS.D, FLAGS.E))
+    return candidates
 
 
 if __name__ == '__main__':

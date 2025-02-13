@@ -1,0 +1,107 @@
+<div class="modal" id="blastHitsModal" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">BLAST search results</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <div style="max-height: 40vh; overflow-y: auto;">
+          <table class="table tight font-small freeze-header">
+            <thead>
+              <th class="text-center">#</th>
+              <th>Species</th>
+              <th>Hit subject</th>
+              <th class="text-center">Align length</th>
+              <th class="text-center">Query coverage</th>
+              <th class="text-center">Score</th>
+              <th class="text-center" style="white-space: nowrap;">E-value</th>
+              <th class="text-center">Identity</th>
+            </thead>
+            {% for hit in hits %}
+            <tr class="interactive" onclick="showBlastHit({{ loop.index0 }});">
+              <td class="text-center">{{ loop.index }}</td>
+              <td>
+                TBD
+                <!-- <em>{{ hit.species }}</em> -->
+              </td>
+              <td>{{ hit.hit_subject }}</td>
+              <td class="text-center">{{ hit.alignment_length }}</td>
+              <td class="text-center">{{ hit.query_coverage * 100 }}%</td>
+              <td class="text-center">{{ hit.bitscore }}</td>
+              <td class="text-center">{{ hit.e_value }}</td>
+              <td class="text-center">{{ hit.identity * 100 }}%</td>
+            </tr>
+            {% endfor %}
+          </table>
+        </div>
+
+        <div class="my-5">
+          <div class="row">
+            <div class="col">
+              <p class="lead text-danger">Selected hit alignment (to-do)</p>
+              <pre id="selectedHitAlignment"></pre>
+            </div>
+            <div class="col-auto">
+              <!-- selected taxonomy table -->
+              <p class="lead text-danger">Selected hit taxonomy (to-do)</p>
+              <table class="table tight font-small">
+                <tr>
+                  <th>Kingdom</th>
+                  <td></td>
+                </tr>
+                <tr>
+                  <th>Phylum</th>
+                  <td></td>
+                </tr>
+                <tr>
+                  <th>Class</th>
+                  <td></td>
+                </tr>
+                <tr>
+                  <th>Order</th>
+                  <td></td>
+                </tr>
+                <tr>
+                  <th>Family</th>
+                  <td></td>
+                </tr>
+                <tr>
+                  <th>Genus</th>
+                  <td></td>
+                </tr>
+                <tr>
+                  <th>Species</th>
+                  <td></td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          data-bs-dismiss="modal"
+        >Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const ALIGNMENTS = [
+      // TODO
+    ];
+
+    function showBlastHit(index) {
+      // TODO
+    }
+  </script>
+</div>

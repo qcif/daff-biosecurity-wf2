@@ -145,15 +145,25 @@ class Config:
             return self.query_sequences[index]
         return self.query_sequences
 
-    def read_blast_hits_json(self, query_dir):
+    def read_blast_hits_json(self, query):
         """Read BLAST hits from JSON file."""
+        query_dir = (
+            self.get_query_dir(query)
+            if isinstance(query, int)
+            else query
+        )
         path = query_dir / self.HITS_JSON
-        return self._read_json(path)
+        return self.read_json(path)
 
-    def read_blast_hits_fasta(self, query_dir):
+    def read_blast_hits_fasta(self, query):
         """Read BLAST hits from JSON file."""
+        query_dir = (
+            self.get_query_dir(query)
+            if isinstance(query, int)
+            else query
+        )
         path = query_dir / self.HITS_FASTA
-        return self._read_fasta(path)
+        return self.read_fasta(path)
 
     def read_taxonomy_file(self):
         """Read taxonomy from CSV file."""
@@ -163,11 +173,21 @@ class Config:
                 taxonomies[row["accession"].split('.')[0]] = row
         return taxonomies
 
-    def _read_json(self, path):
+    def read_json(self, path):
         """Read JSON file."""
         with path.open() as f:
             return json.load(f)
 
-    def _read_fasta(self, path):
+    def read_fasta(self, path):
         """Read FASTA file."""
         return list(SeqIO.parse(path, "fasta"))
+
+    def to_json(self):
+        """Serialize object to JSON."""
+        return {
+            key: value
+            for key, value in self.__dict__.items()
+            if key not in (
+                'query_sequences',
+            )
+        }

@@ -1,36 +1,35 @@
-<section>
-  <h2>Input parameters</h2>
-  <table class="table table-striped">
-    <tbody>
-      {% for item in metadata %}
-      <tr>
-        <td class="fw-bold">{{ item.name }}</td>
-        <td>
-          {% if 'interest' in item.name %}
-          {% for value in item.value %}
-          {{ value }}<br>
-          {% endfor %}
-          {% else %}
-          {{ item.value }}
-          {% endif %}
-        </td>
-      </tr>
-      {% endfor %}
-      <tr>
-        <td class="fw-bold">
-          Query DNA sequence
-        </td>
-        <td>
-          <button
-            class="btn btn-primary btn-sm"
-            data-bs-toggle="modal"
-            data-bs-target="#inputFastaModal"
-          >View</button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</section>
+<h3>Parameters</h3>
+
+<table class="table table-striped my-3">
+  <tbody>
+    {% for item in metadata %}
+    <tr>
+      <td class="fw-bold">{{ item.name }}</td>
+      <td>
+        {% if 'interest' in item.name %}
+        {% for value in item.value %}
+        {{ value }}<br>
+        {% endfor %}
+        {% else %}
+        {{ item.value }}
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+    <tr>
+      <td class="fw-bold">
+        Query DNA sequence
+      </td>
+      <td>
+        <button
+          class="btn btn-primary btn-sm"
+          data-bs-toggle="modal"
+          data-bs-target="#inputFastaModal"
+        >View</button>
+      </td>
+    </tr>
+  </tbody>
+</table>
 
 <div class="modal" id="inputFastaModal" tabindex="-1">
   <div class="modal-dialog modal-lg">

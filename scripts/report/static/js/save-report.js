@@ -45,12 +45,23 @@ async function saveCurrentPage() {
   }
 }
 
-// Add a button to trigger the save function for demonstration
-const saveButton = document.createElement('button');
-saveButton.classList.add('btn', 'btn-primary');
-saveButton.textContent = 'Save report';
-saveButton.style.position = 'fixed';
-saveButton.style.top = '1.5rem';
-saveButton.style.right = '1.5rem';
-saveButton.onclick = saveCurrentPage;
-document.body.appendChild(saveButton);
+function createSaveButton() {
+  const saveButton = document.createElement('button');
+  saveButton.classList.add('btn', 'btn-primary');
+  saveButton.textContent = 'Save report';
+  saveButton.style.position = 'fixed';
+  saveButton.style.top = '1.5rem';
+  saveButton.style.right = '1.5rem';
+  saveButton.onclick = saveCurrentPage;
+  document.body.appendChild(saveButton);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  createSaveButton();
+  document.addEventListener('keydown', (event) => {
+    if (event.ctrlKey && event.key === 's') {
+      event.preventDefault();
+      saveCurrentPage();
+    }
+  });
+});

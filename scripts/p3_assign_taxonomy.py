@@ -79,6 +79,9 @@ def _assign_species_id(hits, query_dir):
             hit["species"] = tax.get('species')
             hit['taxid'] = tax.get('taxid')
         else:
+            hit['taxonomy'] = None
+            hit["species"] = None
+            hit['taxid'] = None
             logger.warning(
                 f"Taxonomy record not found for {hit['accession']} -"
                 " this hit could not be included in the candidate"
@@ -93,6 +96,18 @@ def _assign_species_id(hits, query_dir):
     candidate_species_strict = deduplicate([
         hit for hit in candidate_hits_strict
     ], key=lambda x: x.get("species"))
+
+    # Add hit count for each candidate species
+    for species in candidate_species:
+        species["hit_count"] = sum(
+            1 for hit in candidate_hits
+            if hit["species"] == species["species"]
+        )
+    for species in candidate_species_strict:
+        species["hit_count"] = sum(
+            1 for hit in candidate_hits_strict
+            if hit["species"] == species["species"]
+        )
 
     _write_taxonomic_id(query_ix, candidate_hits_strict)
     _write_candidate_flags(
@@ -233,9 +248,9 @@ def _write_toi_detected(query_dir, toi, detected, write_flag=True):
     """Record whether a given TOI was detected and set flag."""
     if write_flag:
         if detected:
-            value = FLAGS.A
-        else:
             value = FLAGS.B
+        else:
+            value = FLAGS.A
         Flag.write(
             config.ix_from_query_dir(query_dir),
             FLAGS.TOI,

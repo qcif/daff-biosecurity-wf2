@@ -60,6 +60,7 @@ class Flag:
                     ix: {
                         "value": value,
                         "level": self.get_level(value),
+                        "outcome": self.outcome(value),
                         "explanation": self.explanation(value),
                         "bs-class": self.get_bs_class(value),
                     }
@@ -71,8 +72,9 @@ class Flag:
         else:
             data["value"] = self.value
             data["level"] = self.get_level()
+            data["outcome"] = self.outcome()
             data["explanation"] = self.explanation()
-            data["bs-class"] = self.get_bs_class(),
+            data["bs-class"] = self.get_bs_class()
 
         return data
 
@@ -82,6 +84,9 @@ class Flag:
 
     def explanation(self, value=None):
         return FLAG_DETAILS[self.flag_id]["explanation"][value or self.value]
+
+    def outcome(self, value=None):
+        return FLAG_DETAILS[self.flag_id]["outcome"][value or self.value]
 
     def value_for_target(self, target, index=None, max_only=False):
         if target == TARGETS.PMI:
@@ -185,16 +190,32 @@ FLAG_DETAILS = {
             FLAGS.D: 2,
             FLAGS.E: 3,
         },
+        "outcome": {
+            FLAGS.A: "Positive species identification",
+            FLAGS.B: "The analyst should attempt subjective species"
+                     " identification at the genus level",
+            FLAGS.C: "The analyst should attempt subjective species"
+                     " identification at the genus level",
+            FLAGS.D: "The analyst should attempt subjective species"
+                     " identification at the genus level",
+            FLAGS.E: "Identification not possible (potential unknown species)",
+        }
     },
     FLAGS.TOI: {
         "name": "Taxa of interest",
         "explanation": {
-            FLAGS.A: "Taxon of interest detected",
-            FLAGS.B: "Taxon of interest NOT detected",
+            FLAGS.A: "Taxon of interest NOT detected",
+            FLAGS.B: "Taxon of interest detected",
         },
         "level": {
             FLAGS.A: 1,
             FLAGS.B: 3,
+        },
+        "outcome": {
+            FLAGS.A: "None of the taxa of interest matched the"
+                     " candidates species",
+            FLAGS.B: "At least one of the taxa of interest matched the"
+                     " candidates species",
         },
     },
     FLAGS.SOURCES: {
