@@ -1,4 +1,4 @@
-"""Example usage of the Entrez module from Biopython to fetch sequence data
+"""Use Entrez module from Biopython to fetch sequence data
 from NCBI/Genbank."""
 
 import sys
@@ -8,11 +8,14 @@ import re
 from utils.config import Config
 config = Config()
 
+LOCI = {
+  'COI': ('COX', 'CO1', 'Cytochrome oxidase subunit 1'),
+  # others to be confirmed with DAFF
+}
+
 Entrez.email = config.USER_EMAIL
-# Entrez.email = "your-email@example.com"
 
 
-# Fetch the FASTA sequence
 def fetch_fasta(gi, database="nuccore"):
     handle = Entrez.efetch(db=database, id=gi, rettype="fasta", retmode="text")
     fasta_data = handle.read()
@@ -20,7 +23,6 @@ def fetch_fasta(gi, database="nuccore"):
     return fasta_data
 
 
-# Fetch the accession metadata
 def fetch_metadata(gi, database="nuccore"):
     handle = Entrez.efetch(db=database, id=gi, rettype="gb", retmode="text")
     metadata = handle.read()
@@ -28,16 +30,18 @@ def fetch_metadata(gi, database="nuccore"):
     return metadata
 
 
-def search_nuccore_mrna(taxid, search_term):
+def search_nuccore_mrna(taxid, search_term, count: bool = False):
     """Search the nuccore database for mRNA records."""
     query = (
         f'("{search_term}"[Gene name]'
         f' AND txid{taxid}[Organism])'
     )
     # Increase retmax for more results
-    handle = Entrez.esearch(db="nuccore", term=query, retmax=100)
+    handle = Entrez.esearch(db="nuccore", term=query, retmax=1)
     search_results = Entrez.read(handle)
     handle.close()
+    if count:
+        return search_results["Count"]
     return search_results["IdList"]
 
 
@@ -52,11 +56,11 @@ def parse_metadata(metadata):
                 publications.append(current_publications)
             current_publications = {}
         elif line.startswith("  AUTHORS"):
-            current_publications['authors'] = line.replace(
-                "  AUTHORS   ", "").strip().split(", ")
+            current_publications['authors'] = line.replace("  AUTHORS   ", "")\
+                .strip().split(", ")
         elif line.startswith("  TITLE"):
-            current_publications['title'] = line.replace(
-                "  TITLE     ", "").strip()
+            current_publications['title'] = line.replace("  TITLE     ", "")\
+                .strip()
         elif line.startswith("  JOURNAL"):
             journal_line = line.replace("  JOURNAL   ", "").strip()
             current_publications['journal'] = journal_line
@@ -80,52 +84,51 @@ def fetch_sources(accessions) -> dict[str, dict]:
     return sources
 
 
-def fetch_gb_records(locus: str, taxid: int) -> list[dict]:
+# TODO: NEED TO CHANGE AFTER DAFF MEETING
+def fetch_gb_records(locus: str,
+                     taxid: int,
+                     count: bool = False) -> list[dict]:
     '''Find matching GenBank records.'''
-    search_term = locus
-    record_ids = search_nuccore_mrna(taxid, search_term)
+    if locus in LOCI:
+        gene_names = LOCI[locus]
+        search_term = ' OR '.join(
+            [f'"{term}"[Gene name]' for term in gene_names])
+    else:
+        # gene_names = (locus,)
+        search_term = f'"{locus}"[Gene name]'
+    record_ids = search_nuccore_mrna(taxid, search_term, count)
     return record_ids
 
 
 # Example usage: fetch FASTA and metadata -------------------------------------
-start_time = time.time()
-# GI number for the record you want to fetch
-gi_number = "34577062"
+if __name__ == "__main__":
+    start_time = time.time()
+    gi_number = "34577062"
+    database = "nuccore"
 
-# Database to search (e.g., "nuccore")
-database = "nuccore"
+    fasta_sequence = fetch_fasta(gi_number)
+    accession_metadata = fetch_metadata(gi_number)
 
-# Fetch and display data
-fasta_sequence = fetch_fasta(gi_number)
-accession_metadata = fetch_metadata(gi_number)
+    print("FASTA Sequence:")
+    print(fasta_sequence)
 
-print("FASTA Sequence:")
-print(fasta_sequence)
+    print("\nAccession Metadata:")
+    print(accession_metadata)
 
-print("\nAccession Metadata:")
-print(accession_metadata)
+    # Example usage: keyword search Taxonomic ID for the organism of interest
+    taxid = "9606"
+    search_term = "COI"
+    record_ids = search_nuccore_mrna(taxid, search_term)
 
+    payload_size = sys.getsizeof(record_ids)
+    print(f"Payload size: {payload_size} bytes")
 
-# Example usage: keyword search -----------------------------------------------
+    # Display results
+    if record_ids:
+        print(record_ids)
+    else:
+        print("No records found.")
 
-# Taxonomic ID for the organism of interest
-taxid = "9606"  # Replace with your desired taxid (e.g., for humans, 9606)
-
-# Term to search (e.g., "COI")
-search_term = "COI"
-
-# Fetch IDs
-record_ids = search_nuccore_mrna(taxid, search_term)
-payload_size = sys.getsizeof(record_ids)
-print(f"Payload size: {payload_size} bytes")
-
-# Display results
-if record_ids:
-    print(f"Found {len(record_ids)} record(s):")
-    print(record_ids)
-else:
-    print("No records found.")
-
-end_time = time.time()
-execute_time = end_time - start_time
-print(f"Request time: {execute_time:.2f} seconds")
+    end_time = time.time()
+    execute_time = end_time - start_time
+    print(f"Request time: {execute_time:.2f} seconds")
