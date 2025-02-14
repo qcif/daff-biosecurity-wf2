@@ -9,7 +9,7 @@ from utils.config import Config
 config = Config()
 
 LOCI = {
-  'COI': ('COX', 'CO1', 'Cytochrome oxidase subunit 1'),
+  'COI': ['COX', 'CO1', 'Cytochrome oxidase subunit 1'],
   # others to be confirmed with DAFF
 }
 
@@ -90,12 +90,11 @@ def fetch_gb_records(locus: str,
                      count: bool = False) -> list[dict]:
     '''Find matching GenBank records.'''
     if locus in LOCI:
-        gene_names = LOCI[locus]
-        search_term = ' OR '.join(
-            [f'"{term}"[Gene name]' for term in gene_names])
+        gene_names = [locus] + LOCI[locus]
     else:
-        # gene_names = (locus,)
-        search_term = f'"{locus}"[Gene name]'
+        gene_names = [locus]
+    search_term = ' OR '.join(
+        [f'"{term}"[Gene name]' for term in gene_names])
     record_ids = search_nuccore_mrna(taxid, search_term, count)
     return record_ids
 
