@@ -173,12 +173,12 @@ def _get_taxonomic_result(query_ix, flags):
         return {
             'confirmed': True,
             'explanation': explanation,
-            'taxonomy': hit['taxonomy'],
+            'species': hit['species'],
         }
     return {
         'confirmed': False,
         'explanation': explanation,
-        'taxonomy': None,
+        'species': None,
     }
 
 
