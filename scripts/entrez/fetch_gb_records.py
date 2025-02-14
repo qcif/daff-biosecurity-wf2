@@ -90,6 +90,8 @@ def fetch_gb_records(
     max_results = 1 if count else 100
     handle = Entrez.esearch(db="nuccore", term=query, retmax=max_results)
     results = Entrez.read(handle)
+    payload_size = sys.getsizeof(results)
+    print(f"[fetch_gb_records] Payload size: {payload_size} bytes")
     handle.close()
     if count:
         return results["Count"]
@@ -102,28 +104,17 @@ if __name__ == "__main__":
     gi_number = "34577062"
     database = "nuccore"
 
-    fasta_sequence = fetch_fasta(gi_number)
     accession_metadata = fetch_metadata(gi_number)
+    payload_size = sys.getsizeof(accession_metadata)
+    print(f"[fetch_metadata] Payload size: {payload_size} bytes")
+    end_time = time.time()
+    execute_time = end_time - start_time
+    print(f"Request time: {execute_time:.2f} seconds")
 
-    print("FASTA Sequence:")
-    print(fasta_sequence)
-
-    print("\nAccession Metadata:")
-    print(accession_metadata)
-
-    # Example usage: keyword search Taxonomic ID for the organism of interest
-    taxid = "9606"
+    start_time = time.time()
+    taxid = 9606
     locus = "COI"
-    record_ids = fetch_gb_records(locus, taxid, count=True)
-
-    payload_size = sys.getsizeof(record_ids)
-    print(f"Payload size: {payload_size} bytes")
-
-    # Display results
-    if record_ids:
-        print(record_ids)
-    else:
-        print("No records found.")
+    record_count = fetch_gb_records(locus, taxid, count=True)
 
     end_time = time.time()
     execute_time = end_time - start_time
