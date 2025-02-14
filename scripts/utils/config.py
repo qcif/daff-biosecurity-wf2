@@ -46,8 +46,18 @@ class Config:
     CANDIDATES_JSON = os.getenv("CANDIDATES_JSON_FILENAME", 'candidates.json')
     TOI_DETECTED_CSV = os.getenv("TOI_DETECTED_CSV_FILENAME",
                                  'taxa_of_concern_detected.csv')
+    PMI_MATCH_CSV = os.getenv("PMI_MATCH_CSV_FILENAME",
+                              'preliminary_id_match.csv')
 
     class INPUTS:
+        METADATA_CSV_HEADER = {
+            "sample_id": "sample_id",
+            "locus": "locus",
+            "preliminary_id": "preliminary_id",
+            "taxa_of_interest": "taxa_of_interest",
+            "country_code": "country_code",
+            "host": "host",
+        }
         FASTA_FILEPATH = Path(
             os.getenv(
                 "INPUT_FASTA_PATH",
@@ -125,6 +135,33 @@ class Config:
     def ix_from_query_dir(self, query_dir):
         query_dir = Path(query_dir)
         return int(query_dir.name.split("_")[1]) - 1
+
+    def get_pmi_for_query(self, query_ix):
+        sample_id = self.get_sample_id(query_ix)
+        metadata = self.read_metadata()
+        return metadata[sample_id][
+            self.INPUTS.METADATA_CSV_HEADER["preliminary_id"]
+        ]
+
+    def read_metadata(self) -> dict[str, str]:
+        """Read metadata from CSV file."""
+        metadata = {}
+        with self.INPUTS.METADATA_PATH.open() as f:
+            header = self.INPUTS.METADATA_CSV_HEADER
+            for row in csv.DictReader(f):
+                sample_id = row.pop(header["sample_id"])
+                metadata[sample_id] = {
+                    key: (
+                        [
+                            x.strip()
+                            for x in metadata[colname].split('|')
+                        ]
+                        if key == "taxa_of_interest"
+                        else metadata[colname].strip()
+                    )
+                    for key, colname in header.items()
+                }
+        return metadata
 
     def read_taxa_of_interest(self) -> list[str]:
         """Read taxa of interest from TOI file."""

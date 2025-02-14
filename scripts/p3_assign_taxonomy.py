@@ -109,7 +109,8 @@ def _assign_species_id(hits, query_dir):
             if hit["species"] == species["species"]
         )
 
-    _write_taxonomic_id(query_ix, candidate_hits_strict)
+    taxonomic_id = _write_taxonomic_id(query_ix, candidate_species_strict)
+    _write_pmi_match(taxonomic_id, query_ix)
     _write_candidate_flags(
         query_ix,
         candidate_species_strict,
@@ -123,15 +124,19 @@ def _assign_species_id(hits, query_dir):
     return candidate_species_strict or candidate_species
 
 
-def _write_taxonomic_id(query_ix, candidate_hits_strict):
-    if len(candidate_hits_strict) != 1:
+def _write_taxonomic_id(query_ix, candidate_species_strict):
+    if len(candidate_species_strict) != 1:
         logger.info(f"Query {query_ix} - not writing {config.TAXONOMY_ID_CSV}:"
-                    " no taxonomic identification could be made.")
+                    " no taxonomic identification could be made"
+                    f" ({len(candidate_species_strict)} candidates found).")
     else:
         query_dir = config.get_query_dir(query_ix)
         src = query_dir / config.CANDIDATES_CSV
         dest = query_dir / config.TAXONOMY_ID_CSV
         dest.write_text(src.read_text())
+        logger.info(f"Query {query_ix} - writing taxonomic ID to"
+                    f" {config.TAXONOMY_ID_CSV}")
+        return candidate_species_strict[0]
 
 
 def _write_candidate_flags(query_ix, candidates_strict, candidates):
@@ -195,6 +200,29 @@ def _write_candidates_fasta(query_ix, species):
     with open(path, "w") as f:
         SeqIO.write(candidate_fastas, f, "fasta")
     logger.info(f"Written candidate FASTA to {path}")
+
+
+def _write_pmi_match(taxonomic_identity, query_ix):
+    """Write PMI match as a flag."""
+    if taxonomic_identity:
+        match = [
+            (rank, taxon)
+            for rank, taxon in taxonomic_identity["taxonomy"].items()
+            if taxon.lower() == config.pmi_for_query(query_ix).lower()
+        ]
+        logger.info("Writing PMI match flag")
+        Flag.write(
+            query_ix,
+            FLAGS.PMI,
+            FLAGS.A if match else FLAGS.B,
+        )
+        if match:
+            path = config.get_query_dir(query_ix) / config.PMI_MATCH_CSV
+            with path.open('w') as f:
+                f.write(','.join(('rank', 'taxon')))
+                f.write(','.join(match[0]))
+    else:
+        logger.info("No PMI match found - no flag written.")
 
 
 def _detect_taxa_of_interest(candidate_species, query_dir):
