@@ -9,7 +9,7 @@ from utils.config import Config
 config = Config()
 
 LOCI = {
-  'COI': ['COX', 'CO1', 'Cytochrome oxidase subunit 1'],
+  'coi': ['COI', 'COX', 'CO1', 'Cytochrome oxidase subunit 1'],
   # others to be confirmed with DAFF
 }
 
@@ -28,21 +28,6 @@ def fetch_metadata(gi, database="nuccore"):
     metadata = handle.read()
     handle.close()
     return metadata
-
-
-def search_nuccore_mrna(taxid, search_term, count: bool = False):
-    """Search the nuccore database for mRNA records."""
-    query = (
-        f'("{search_term}"[Gene name]'
-        f' AND txid{taxid}[Organism])'
-    )
-    # Increase retmax for more results
-    handle = Entrez.esearch(db="nuccore", term=query, retmax=1)
-    search_results = Entrez.read(handle)
-    handle.close()
-    if count:
-        return search_results["Count"]
-    return search_results["IdList"]
 
 
 def parse_metadata(metadata):
@@ -85,18 +70,30 @@ def fetch_sources(accessions) -> dict[str, dict]:
 
 
 # TODO: NEED TO CHANGE AFTER DAFF MEETING
-def fetch_gb_records(locus: str,
-                     taxid: int,
-                     count: bool = False) -> list[dict]:
-    '''Find matching GenBank records.'''
-    if locus in LOCI:
-        gene_names = [locus] + LOCI[locus]
+def fetch_gb_records(
+    locus: str,
+    taxid: int,
+    count: bool = False,
+) -> list[dict]:
+    '''Find matching GenBank records.
+
+    If count, returns a count of matching records, otherwise returns a list
+    of matching accessions IDs.
+    '''
+    if locus.lower() in LOCI:
+        gene_names = LOCI[locus.lower()]
     else:
         gene_names = [locus]
-    search_term = ' OR '.join(
+    query = ' OR '.join(
         [f'"{term}"[Gene name]' for term in gene_names])
-    record_ids = search_nuccore_mrna(taxid, search_term, count)
-    return record_ids
+    query += f' AND txid{taxid}[Organism])'
+    max_results = 1 if count else 100
+    handle = Entrez.esearch(db="nuccore", term=query, retmax=max_results)
+    results = Entrez.read(handle)
+    handle.close()
+    if count:
+        return results["Count"]
+    return results["IdList"]
 
 
 # Example usage: fetch FASTA and metadata -------------------------------------
@@ -116,8 +113,8 @@ if __name__ == "__main__":
 
     # Example usage: keyword search Taxonomic ID for the organism of interest
     taxid = "9606"
-    search_term = "COI"
-    record_ids = search_nuccore_mrna(taxid, search_term)
+    locus = "COI"
+    record_ids = fetch_gb_records(locus, taxid, count=True)
 
     payload_size = sys.getsizeof(record_ids)
     print(f"Payload size: {payload_size} bytes")
