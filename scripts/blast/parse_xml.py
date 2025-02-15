@@ -25,20 +25,21 @@ def calculate_hit_e_value(hit, effective_search_space):
 def calculate_hit_identity(hsps):
     """Calculate the total identity of all hsps for a hit."""
     total_hsps_identity = sum(hsp.identities for hsp in hsps)
-    total_hsp_align_length = sum((hsp.sbjct_end - hsp.sbjct_start)
-                                 for hsp in hsps)
+    total_hsp_align_length = sum(
+        hsp.align_length for hsp in hsps
+    )
     hit_identity = round(
         total_hsps_identity / total_hsp_align_length,
-        2,
+        3,
     )
-    return max(hit_identity, 1) if total_hsp_align_length > 0 else 0
+    return min(hit_identity, 1) if total_hsp_align_length > 0 else 0
 
 
 def calculate_hit_query_coverage(alignment_length, query_length):
     """Calculate query coverage as a percentage."""
-    return max(round(
+    return min(round(
         alignment_length / query_length,
-        2,
+        3,
     ), 1) if query_length > 0 else 0
 
 

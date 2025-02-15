@@ -1,36 +1,82 @@
-"""Runtime configuration for the workflow."""
+"""Runtime configuration for the workflow.
+
+All configuration values can be overridden with environment variables.
+"""
 
 import os
 import csv
 import json
+import logging
 from Bio import SeqIO
+from datetime import datetime
 from pathlib import Path
-from .flags import FLAG_DETAILS
+
+from .utils import path_safe_str
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+
+REPORT_FILENAME = "report_{sample_id}_{timestamp}.html"
+
+logger = logging.getLogger(__name__)
 
 
 class Config:
 
     output_dir = Path(os.getenv("OUTPUT_DIR", 'output'))
     USER_EMAIL = os.getenv("USER_EMAIL", "c.hyde@qcif.edu.au")
-    INPUT_TOI_FILEPATH = Path(
-        os.getenv(
-            "INPUT_TOI_FILEPATH",
-            'tests/test-data/taxa_of_interest.txt')
+    TIMESTAMP_FILENAME = os.getenv("TIMESTAMP_FILENAME", 'timestamp.txt')
+    INPUT_TOI_FILEPATH = (
+        Path(os.getenv("INPUT_TOI_FILEPATH"))
+        if os.getenv("INPUT_TOI_FILEPATH")
+        else None
     )
+    INPUT_FASTA_FILEPATH = Path(os.getenv("INPUT_FASTA_FILEPATH",
+                                          "tests/test-data/query.fasta"))
     ACCESSIONS_FILENAME = os.getenv("ACCESSIONS_FILENAME", "accessions.txt")
     TAXONOMY_FILE = os.getenv("TAXONOMY_FILENAME", 'taxonomy.csv')
     QUERY_TITLE_FILE = os.getenv("QUERY_TITLE_FILENAME", 'query_title.txt')
     HITS_JSON = os.getenv("HITS_JSON_FILENAME", 'hits.json')
     HITS_FASTA = os.getenv("HITS_FASTA_FILENAME", 'hits.fasta')
-    FLAGS_CSV = os.getenv("FLAGS_CSV_FILENAME", 'flags.csv')
-    TAXONOMY_ID_FILE = os.getenv("TAXONOMY_ID_FILENAME",
-                                 'assigned_taxonomy.txt')
+    FLAGS_JSON = os.getenv("FLAGS_JSON_FILENAME", 'flags.json')
+    TAXONOMY_ID_CSV = os.getenv("TAXONOMY_ID_CSV_FILENAME",
+                                'assigned_taxonomy.csv')
     CANDIDATES_FASTA = os.getenv("CANDIDATES_FASTA_FILENAME",
                                  'candidates.fasta')
     CANDIDATES_CSV = os.getenv("CANDIDATES_CSV_FILENAME", 'candidates.csv')
     CANDIDATES_JSON = os.getenv("CANDIDATES_JSON_FILENAME", 'candidates.json')
     TOI_DETECTED_CSV = os.getenv("TOI_DETECTED_CSV_FILENAME",
                                  'taxa_of_concern_detected.csv')
+    PMI_MATCH_CSV = os.getenv("PMI_MATCH_CSV_FILENAME",
+                              'preliminary_id_match.csv')
+
+    class INPUTS:
+        METADATA_CSV_HEADER = {
+            "sample_id": "sample_id",
+            "locus": "locus",
+            "preliminary_id": "preliminary_id",
+            "taxa_of_interest": "taxa_of_interest",
+            "country_code": "country_code",
+            "host": "host",
+        }
+        FASTA_FILEPATH = Path(
+            os.getenv(
+                "INPUT_FASTA_PATH",
+                Path(__file__).parent.parent.parent
+                / 'tests/test-data/queries.fasta')
+        )
+        TOI_FILEPATH = Path(
+            os.getenv(
+                "INPUT_TOI_FILEPATH",
+                Path(__file__).parent.parent.parent
+                / 'tests/test-data/taxa_of_interest.txt')
+        )
+        METADATA_PATH = Path(
+            os.getenv(
+                "INPUT_METADATA_CSV_FILEPATH",
+                Path(__file__).parent.parent.parent
+                / 'tests/test-data/metadata.csv')
+        )
 
     class ALIGNMENT:
         MIN_NT = int(os.getenv('MIN_NT', 400))
@@ -38,41 +84,124 @@ class Config:
         MIN_IDENTITY = float(os.getenv('MIN_IDENTITY', 0.935))
         MIN_IDENTITY_STRICT = float(os.getenv('MIN_IDENTITY_STRICT', 0.985))
 
-    class FLAGS:
-        """Flags for reporting outcomes."""
-        CANDIDATES = 1
-        TOI = 2
-        A = "A"
-        B = "B"
-        C = "C"
-        D = "D"
-        E = "E"
+    class OUTPUTS:
+        TOI_DETECTED_HEADER = [
+            "Taxon of interest",
+            "Match rank",
+            "Match taxon",
+            "Match species",
+            "Match accession",
+            "Match identity",
+        ]
+
+    class REPORT:
+        TITLE = "Taxonomic assignment report"
 
     @property
     def taxonomy_path(self):
         return self.output_dir / self.TAXONOMY_FILE
 
+    @property
+    def start_time(self) -> datetime:
+        path = self.output_dir / self.TIMESTAMP_FILENAME
+        if path.exists():
+            ts = path.read_text().strip(' \n')
+            return datetime.strptime(ts, "%Y%m%d %H%M%S")
+        now = datetime.now()
+        timestamp = now.strftime("%Y%m%d %H%M%S")
+        path.write_text(timestamp)
+        return now
+
+    def get_report_path(self, query_ix):
+        return self.get_query_dir(query_ix) / path_safe_str(
+            REPORT_FILENAME.format(
+                sample_id=self.get_sample_id(query_ix).replace('.', '_'),
+                timestamp='NOW',  # self.timestamp, # ! TODO
+            )
+        )
+
     def set_output_dir(self, output_dir):
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True, parents=True)
 
-    def read_blast_hits_json(self, query_dir):
-        """Read BLAST hits from JSON file."""
-        path = query_dir / self.HITS_JSON
-        return self._read_json(path)
+    def get_query_dir(self, query_ix):
+        sample_id = self.get_sample_id(query_ix)
+        d = self.output_dir / f"query_{query_ix + 1:>03}_{sample_id}"
+        d.mkdir(exist_ok=True, parents=True)
+        return d
 
-    def read_blast_hits_fasta(self, query_dir):
-        """Read BLAST hits from JSON file."""
-        path = query_dir / self.HITS_FASTA
-        return self._read_fasta(path)
+    def get_sample_id(self, query_ix):
+        return self.read_query_fasta(query_ix).id
+
+    def ix_from_query_dir(self, query_dir):
+        query_dir = Path(query_dir)
+        return int(query_dir.name.split("_")[1]) - 1
+
+    def get_pmi_for_query(self, query_ix):
+        sample_id = self.get_sample_id(query_ix)
+        metadata = self.read_metadata()
+        return metadata[sample_id][
+            self.INPUTS.METADATA_CSV_HEADER["preliminary_id"]
+        ]
+
+    def read_metadata(self) -> dict[str, str]:
+        """Read metadata from CSV file."""
+        metadata = {}
+        with self.INPUTS.METADATA_PATH.open() as f:
+            header = self.INPUTS.METADATA_CSV_HEADER
+            for row in csv.DictReader(f):
+                sample_id = row.pop(header["sample_id"])
+                metadata[sample_id] = {
+                    key: (
+                        [
+                            x.strip()
+                            for x in metadata[colname].split('|')
+                        ]
+                        if key == "taxa_of_interest"
+                        else metadata[colname].strip()
+                    )
+                    for key, colname in header.items()
+                }
+        return metadata
 
     def read_taxa_of_interest(self) -> list[str]:
         """Read taxa of interest from TOI file."""
+        if self.INPUT_TOI_FILEPATH is None:
+            return []
         return [
             line.strip()
             for line in self.INPUT_TOI_FILEPATH.read_text().splitlines()
             if line.strip()
         ]
+
+    def read_query_fasta(self, index=None):
+        """Read query FASTA file."""
+        if not hasattr(self, "query_sequences"):
+            self.query_sequences = list(
+                SeqIO.parse(self.INPUT_FASTA_FILEPATH, "fasta"))
+        if index is not None:
+            return self.query_sequences[index]
+        return self.query_sequences
+
+    def read_blast_hits_json(self, query):
+        """Read BLAST hits from JSON file."""
+        query_dir = (
+            self.get_query_dir(query)
+            if isinstance(query, int)
+            else query
+        )
+        path = query_dir / self.HITS_JSON
+        return self.read_json(path)
+
+    def read_blast_hits_fasta(self, query):
+        """Read BLAST hits from JSON file."""
+        query_dir = (
+            self.get_query_dir(query)
+            if isinstance(query, int)
+            else query
+        )
+        path = query_dir / self.HITS_FASTA
+        return self.read_fasta(path)
 
     def read_taxonomy_file(self):
         """Read taxonomy from CSV file."""
@@ -82,36 +211,21 @@ class Config:
                 taxonomies[row["accession"].split('.')[0]] = row
         return taxonomies
 
-    def write_flag(self, query_ix, flag_num, outcome):
-        """Write flags to CSV file."""
-        path = self.get_query_dir(query_ix) / self.FLAGS_CSV
-        if not path.exists():
-            with path.open("w") as f:
-                writer = csv.writer(f)
-                writer.writerow(["name", "number", "outcome", "explanation"])
-        with path.open("a") as f:
-            writer = csv.writer(f)
-            writer.writerow([
-                FLAG_DETAILS[flag_num]['name'],
-                flag_num,
-                outcome,
-                FLAG_DETAILS[flag_num]['explanation'][outcome],
-            ])
-
-    def get_query_dir(self, query_ix):
-        d = self.output_dir / f"query_{query_ix}"
-        d.mkdir(exist_ok=True, parents=True)
-        return d
-
-    def ix_from_query_dir(self, query_dir):
-        query_dir = Path(query_dir)
-        return int(query_dir.name.split("_")[1])
-
-    def _read_json(self, path):
+    def read_json(self, path):
         """Read JSON file."""
         with path.open() as f:
             return json.load(f)
 
-    def _read_fasta(self, path):
+    def read_fasta(self, path):
         """Read FASTA file."""
         return list(SeqIO.parse(path, "fasta"))
+
+    def to_json(self):
+        """Serialize object to JSON."""
+        return {
+            key: value
+            for key, value in self.__dict__.items()
+            if key not in (
+                'query_sequences',
+            )
+        }

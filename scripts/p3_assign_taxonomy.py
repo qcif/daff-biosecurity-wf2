@@ -18,9 +18,10 @@ import csv
 import json
 import logging
 from Bio import SeqIO
-from pathlib import Path
+
+from utils import deduplicate, existing_path
 from utils.config import Config
-from utils import deduplicate
+from utils.flags import Flag, FLAGS
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -51,10 +52,11 @@ def main():
 def _parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "query_dir", type=Path, help="Path to query output directory")
+        "query_dir", type=existing_path, help="Path to query output directory")
     parser.add_argument(
         "--output_dir",
-        type=Path,
+        type=existing_path,
+        default=config.output_dir,
         help=f"Path to output directory. Defaults to {config.output_dir}.")
     return parser.parse_args()
 
@@ -77,6 +79,9 @@ def _assign_species_id(hits, query_dir):
             hit["species"] = tax.get('species')
             hit['taxid'] = tax.get('taxid')
         else:
+            hit['taxonomy'] = None
+            hit["species"] = None
+            hit['taxid'] = None
             logger.warning(
                 f"Taxonomy record not found for {hit['accession']} -"
                 " this hit could not be included in the candidate"
@@ -91,6 +96,21 @@ def _assign_species_id(hits, query_dir):
     candidate_species_strict = deduplicate([
         hit for hit in candidate_hits_strict
     ], key=lambda x: x.get("species"))
+
+    # Add hit count for each candidate species
+    for species in candidate_species:
+        species["hit_count"] = sum(
+            1 for hit in candidate_hits
+            if hit["species"] == species["species"]
+        )
+    for species in candidate_species_strict:
+        species["hit_count"] = sum(
+            1 for hit in candidate_hits_strict
+            if hit["species"] == species["species"]
+        )
+
+    taxonomic_id = _write_taxonomic_id(query_ix, candidate_species_strict)
+    _write_pmi_match(taxonomic_id, query_ix)
     _write_candidate_flags(
         query_ix,
         candidate_species_strict,
@@ -104,18 +124,33 @@ def _assign_species_id(hits, query_dir):
     return candidate_species_strict or candidate_species
 
 
+def _write_taxonomic_id(query_ix, candidate_species_strict):
+    if len(candidate_species_strict) != 1:
+        logger.info(f"Query {query_ix} - not writing {config.TAXONOMY_ID_CSV}:"
+                    " no taxonomic identification could be made"
+                    f" ({len(candidate_species_strict)} candidates found).")
+    else:
+        query_dir = config.get_query_dir(query_ix)
+        src = query_dir / config.CANDIDATES_CSV
+        dest = query_dir / config.TAXONOMY_ID_CSV
+        dest.write_text(src.read_text())
+        logger.info(f"Query {query_ix} - writing taxonomic ID to"
+                    f" {config.TAXONOMY_ID_CSV}")
+        return candidate_species_strict[0]
+
+
 def _write_candidate_flags(query_ix, candidates_strict, candidates):
     if len(candidates_strict) == 1:
-        flag = config.FLAGS.A
+        value = FLAGS.A
     elif len(candidates_strict) > 1 and len(candidates_strict) < 4:
-        flag = config.FLAGS.B
+        value = FLAGS.B
     elif len(candidates_strict) >= 4:
-        flag = config.FLAGS.C
+        value = FLAGS.C
     elif len(candidates):
-        flag = config.FLAGS.D
+        value = FLAGS.D
     else:
-        flag = config.FLAGS.E
-    config.write_flag(query_ix, config.FLAGS.CANDIDATES, flag)
+        value = FLAGS.E
+    Flag.write(query_ix, FLAGS.POSITIVE_ID, value)
 
 
 def _write_candidates(
@@ -135,7 +170,8 @@ def _write_candidates_json(query_ix, hits, species):
         json.dump({
             "hits": hits,
             "species": species,
-        }, f)
+        }, f, indent=2)
+    logger.info(f"Written candidate hits/species to {path}")
 
 
 def _write_candidates_csv(query_ix, species):
@@ -148,6 +184,7 @@ def _write_candidates_csv(query_ix, species):
                 hit.get(key, "")
                 for key in CANDIDATE_CSV_HEADER
             ])
+    logger.info(f"Written candidate species to {path}")
 
 
 def _write_candidates_fasta(query_ix, species):
@@ -162,6 +199,30 @@ def _write_candidates_fasta(query_ix, species):
     ]
     with open(path, "w") as f:
         SeqIO.write(candidate_fastas, f, "fasta")
+    logger.info(f"Written candidate FASTA to {path}")
+
+
+def _write_pmi_match(taxonomic_identity, query_ix):
+    """Write PMI match as a flag."""
+    if taxonomic_identity:
+        match = [
+            (rank, taxon)
+            for rank, taxon in taxonomic_identity["taxonomy"].items()
+            if taxon.lower() == config.pmi_for_query(query_ix).lower()
+        ]
+        logger.info("Writing PMI match flag")
+        Flag.write(
+            query_ix,
+            FLAGS.PMI,
+            FLAGS.A if match else FLAGS.B,
+        )
+        if match:
+            path = config.get_query_dir(query_ix) / config.PMI_MATCH_CSV
+            with path.open('w') as f:
+                f.write(','.join(('rank', 'taxon')))
+                f.write(','.join(match[0]))
+    else:
+        logger.info("No PMI match found - no flag written.")
 
 
 def _detect_taxa_of_interest(candidate_species, query_dir):
@@ -171,17 +232,26 @@ def _detect_taxa_of_interest(candidate_species, query_dir):
     taxonomic level.
     """
     taxa_of_interest = config.read_taxa_of_interest()
+    if not taxa_of_interest:
+        logger.info("No taxa of interest provided - no output written.")
+        return
     candidate_taxa_flattened = [
         {
-            'species': hit['species'],
-            'accession': hit['accession'],
             'rank': rank,
             'taxon': taxon,
+            'species': hit['species'],
+            'accession': hit['accession'],
+            'identity': hit['identity'],
         }
         for hit in candidate_species
         for rank, taxon in hit["taxonomy"].items()
     ]
     write_flag = True
+
+    with (query_dir / config.TOI_DETECTED_CSV).open("w") as f:
+        writer = csv.writer(f)
+        writer.writerow(config.OUTPUTS.TOI_DETECTED_HEADER)
+
     for toi in taxa_of_interest:
         try:
             detected_taxon = [
@@ -198,32 +268,23 @@ def _detect_taxa_of_interest(candidate_species, query_dir):
         )
         if detected_taxon:
             write_flag = False
+    logger.info("Writing taxa of interest detection to"
+                f" {query_dir / config.TOI_DETECTED_CSV}")
 
 
 def _write_toi_detected(query_dir, toi, detected, write_flag=True):
     """Record whether a given TOI was detected and set flag."""
-    path = query_dir / config.TOI_DETECTED_CSV
     if write_flag:
         if detected:
-            flag = config.FLAGS.A
+            value = FLAGS.B
         else:
-            flag = config.FLAGS.B
-        config.write_flag(
+            value = FLAGS.A
+        Flag.write(
             config.ix_from_query_dir(query_dir),
-            config.FLAGS.TOI,
-            flag,
+            FLAGS.TOI,
+            value,
         )
-    if not path.exists():
-        with path.open("w") as f:
-            writer = csv.writer(f)
-            writer.writerow([
-                "Taxon of interest",
-                "Match rank",
-                "Match taxon",
-                "Match species",
-                "Match accession",
-            ])
-    with path.open("a") as f:
+    with (query_dir / config.TOI_DETECTED_CSV).open("a") as f:
         writer = csv.writer(f)
         writer.writerow([
             toi,
@@ -231,6 +292,7 @@ def _write_toi_detected(query_dir, toi, detected, write_flag=True):
             detected.get('taxon', ''),
             detected.get('species', ''),
             detected.get('accession', ''),
+            detected.get('identity', ''),
         ])
 
 

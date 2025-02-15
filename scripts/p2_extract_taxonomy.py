@@ -11,13 +11,12 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-if __name__ == '__main__':
-    from utils.config import Config
-    logging.basicConfig(level=logging.INFO)
-else:
-    from .utils.config import Config
+from utils import existing_path
+from utils.config import Config
 
 logger = logging.getLogger(__name__)
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
 
 TAXONKIT_DATA = Path('~/.taxonkit').expanduser()
 TAXONOMIC_RANKS = [
@@ -51,14 +50,14 @@ def _parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         'taxids_csv',
-        type=Path,
+        type=existing_path,
         help='CSV file with columns (accession,taxid) to extract taxonomy'
              ' information for.',
     )
     parser.add_argument(
         '--taxdb',
         dest='taxdb_path',
-        type=Path,
+        type=existing_path,
         help='Path to directory containing NCBI taxdump files for taxonkit.'
              f' Defaults to {TAXONKIT_DATA}',
         default=Path(TAXONKIT_DATA),

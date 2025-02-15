@@ -7,6 +7,7 @@ from Bio import SeqIO
 from pathlib import Path
 
 from blast.parse_xml import parse_blast_xml
+from utils import existing_path
 from utils.config import Config
 
 if __name__ == "__main__":
@@ -31,7 +32,7 @@ def _parse_args():
     )
     parser.add_argument(
         "blast_xml_path",
-        type=str,
+        type=existing_path,
         help="Path to the BLAST XML file to parse.",
     )
     parser.add_argument(

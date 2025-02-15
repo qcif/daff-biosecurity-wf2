@@ -1,0 +1,66 @@
+<h3>Result overview</h3>
+
+<div class="my-3">
+  <p class="alert alert-{{ conclusions['flags']['1']['bs-class'] }}">
+    <span class="text-large">
+      <strong>Taxonomic identity:</strong>
+      {% if conclusions.summary.result.confirmed %}
+      <em>
+        {{ conclusions.summary.result.taxonomy.species }}
+      </em>
+      {% else %}
+      <strong>Inconclusive</strong>
+      {% endif %}
+    </span>
+    <br>
+    <b>Reasoning:</b> {{ conclusions.summary.result.explanation }}
+  </p>
+</div>
+
+<table class="table border alert-{{  conclusions.summary.pmi['bs-class'] }}">
+  <tr>
+    <td>Preliminary morphology ID confirmed</td>
+    <td style="width: 75px;">
+      {% if conclusions.summary.result.confirmed %}
+      <strong class="text-{% if conclusions.summary.pmi.confirmed %}success{% else %}danger{% endif %}">
+        {{ conclusions.summary.pmi.confirmed }}
+      </strong>
+      {% else %}
+      <strong>NA</strong>
+      {% endif %}
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2">
+      <ul class="font-small">
+        <li>
+          {{ conclusions.summary.pmi.explanation }}
+        </li>
+      </ul>
+    </td>
+  </tr>
+</table>
+
+<table
+  class="table border alert-{{  conclusions.summary.toi['bs-class'] }}"
+>
+  <tr>
+    <td>Taxa of interest ruled out</td>
+    <td style="width: 75px;">
+      <strong class="text-{% if conclusions.summary.toi.ruled_out %}success{% else %}danger{% endif %}">
+        {{ conclusions.summary.toi.ruled_out }}
+      </strong>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2">
+      <ul class="font-small">
+        {% for item in conclusions.summary.toi.criteria %}
+        <li {% if item.level > 1 %}class="text-{{ item['bs-class'] }}"{% endif %}>
+          {{ item.message }}
+        </li>
+        {% endfor %}
+      </ul>
+    </td>
+  </tr>
+</table>

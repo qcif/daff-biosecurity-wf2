@@ -29,8 +29,11 @@
             "name": "Assign taxonomy",
             "program": "${workspaceFolder}/scripts/p3_assign_taxonomy.py",
             "args": [
-                "tests/test-data/query_1",
-            ]
+                "output/query_001_LC438549.1"
+            ],
+            "env": {
+                "INPUT_TOI_FILEPATH": "tests/test-data/taxa_of_interest.txt",
+            }
         },
         {
             "type": "debugpy",
@@ -49,6 +52,17 @@
                 "--country", "AU",
                 "--output", "output/relatives.json"
             ]
+        },
+        {
+            "type": "debugpy",
+            "request": "launch",
+            "name": "Workflow report",
+            "module": "report.report",
+            "cwd": "${workspaceFolder}/scripts",
+            "env": {
+                "OUTPUT_DIR": "../output",
+                "INPUT_FASTA_FILEPATH": "../tests/test-data/query.fasta",
+            }
         }
     ]
 }
