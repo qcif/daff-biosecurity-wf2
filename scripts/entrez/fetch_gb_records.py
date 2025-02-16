@@ -2,7 +2,6 @@
 from NCBI/Genbank."""
 
 import sys
-import time
 from Bio import Entrez
 import re
 from utils.config import Config
@@ -24,10 +23,20 @@ def fetch_fasta(gi, database="nuccore"):
     return fasta_data
 
 
-def fetch_metadata(gi, database="nuccore"):
-    handle = Entrez.efetch(db=database, id=gi, rettype="gb", retmode="text")
-    metadata = handle.read()
-    handle.close()
+def fetch_metadata(gis, database="nuccore"):
+    metadata = []
+    for i in range(0, len(gis), 10):
+        batch = gis[i:i+10]
+        ids = ",".join(batch)
+        handle = Entrez.efetch(
+            db=database,
+            id=ids,
+            rettype="gb",
+            retmode="text")
+        metadata_list = handle.read()
+        handle.close()
+
+        metadata.append(metadata_list)
     return metadata
 
 
@@ -57,24 +66,22 @@ def parse_metadata(metadata):
     if current_publications:
         publications.append(current_publications)
 
-    return
+    return publications
 
 
 def fetch_sources(accessions) -> dict[str, dict]:
     '''Fetch a list of publication sources for each accession.'''
     sources = {}
-    payload_size = 0
-    for accession in accessions:
-        metadata = fetch_metadata(accession)
-        payload_size += sys.getsizeof(metadata)
-        publications = parse_metadata(metadata)
-        sources[accession] = publications
-    if DEBUG_REQUESTS:
-        print(f"[fetch_sources] Payload size: {payload_size} bytes")
+    metadata_batches = fetch_metadata(accessions)
+    for metadata in metadata_batches:
+        formatted_metadata = metadata.split("//")
+        for i, accession in enumerate(accessions):
+            if i < len(formatted_metadata):
+                publications = parse_metadata(formatted_metadata[i])
+                sources[accession] = publications
     return sources
 
 
-# TODO: NEED TO CHANGE AFTER DAFF MEETING
 def fetch_gb_records(
     locus: str,
     taxid: int,
@@ -104,35 +111,34 @@ def fetch_gb_records(
 
 
 # Example usage: fetch FASTA and metadata -------------------------------------
-if __name__ == "__main__":
-    from pathlib import Path
+# if __name__ == "__main__":
+    # start_time = time.time()
+    # gi_number = "34577062"
+    # gi_number = "377581039"
+    # accessions = [gi_number, '1066585321', '1393953329', '1519311736',
+    #               '1519244926', '2462587281', '2462587279', '2462587277',
+    #               '2462587276', '2462587274']
+    # accessions = [gi_number, "377581039"]
+    # database = "nuccore"
 
-    start_time = time.time()
+    # accession_metadata = fetch_metadata(gi_number)
+    # publications_list = parse_metadata(accession_metadata)
+    # print(f"[publications list]: {publications_list}")
+    # payload_size = sys.getsizeof(accession_metadata)
+    # print(f"[fetch_metadata] Payload size: {payload_size} bytes")
+    # end_time = time.time()
+    # execute_time = end_time - start_time
+    # print(f"Request time: {execute_time:.2f} seconds")
 
-    path = Path('/home/cameron/dev/daff-biosecurity/wf2/output/accessions.txt')
-    accessions = [
-        line.strip()
-        for line in path.read_text().split("\n")[:100]
-    ]
-    sources = fetch_sources(accessions)
-    end_time = time.time()
-    execute_time = end_time - start_time
-    print(f"Request time: {execute_time:.2f} seconds")
+    # source = fetch_sources(accessions)
+    # print("[fetch sources]: ", source)
 
-    gi_number = "34577062"
-    database = "nuccore"
-    accession_metadata = fetch_metadata(gi_number)
-    payload_size = sys.getsizeof(accession_metadata)
-    print(f"[fetch_metadata] Payload size: {payload_size} bytes")
-    end_time = time.time()
-    execute_time = end_time - start_time
-    print(f"Request time: {execute_time:.2f} seconds")
+    # start_time = time.time()
+    # taxid = 9606
+    # locus = "COI"
+    # record_count = fetch_gb_records(locus, taxid)
+    # print("Record count: ", record_count)
 
-    start_time = time.time()
-    taxid = 9606
-    locus = "COI"
-    record_count = fetch_gb_records(locus, taxid, count=True)
-
-    end_time = time.time()
-    execute_time = end_time - start_time
-    print(f"Request time: {execute_time:.2f} seconds")
+    # end_time = time.time()
+    # execute_time = end_time - start_time
+    # print(f"Request time: {execute_time:.2f} seconds")
