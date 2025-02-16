@@ -5,7 +5,7 @@ import logging
 import sys
 from Bio import Entrez
 import re
-from utils.config import Config
+from ..utils.config import Config
 
 config = Config()
 logger = logging.getLogger(__name__)
@@ -43,11 +43,6 @@ def fetch_sources(accessions, database="nuccore") -> list[dict]:
             for record in metadata_batches.split("\n//\n")
             if record.strip(' \n')
         ]
-        if len(metadata_list) != len(batch):
-            raise ValueError("Number of metadata records returned from Entrez"
-                             " does not match number of accessions. This will"
-                             " create an error if not handled - this must be"
-                             " debugged by a developer.")
         for i, record in enumerate(metadata_list):
             accession = match_accession_to_metadata(record, batch)
             sources = parse_metadata_sources(record)
@@ -57,7 +52,7 @@ def fetch_sources(accessions, database="nuccore") -> list[dict]:
     if missing_accessions:
         logger.warning("[Fetch sources] no data was returned for the"
                        " following accessions. They cannot be included in"
-                       " reference sequence source diversity analysis:"
+                       " source diversity analysis:"
                        f" {missing_accessions}")
         for accession in missing_accessions:
             accession_sources[accession] = []
@@ -71,11 +66,12 @@ def match_accession_to_metadata(record, batch):
         a for a in batch
         if a.lower() in record.lower()
     ]
-    if not matching_accession:
-        raise ValueError("Accession number found in metadata record does not"
-                         " match any accession number in the batch.")
+    if matching_accession:
+        return matching_accession[0]
 
-    return matching_accession[0]
+    logger.warning("Accession number found in metadata record does not"
+                   " match any accession number in the batch. This record can"
+                   " not be used for source diversity analysis.")
 
 
 def parse_metadata_sources(metadata):
@@ -136,7 +132,7 @@ def fetch_gb_records(
     print(f"[fetch_gb_records] Payload size: {payload_size} bytes")
     handle.close()
     if count:
-        return results["Count"]
+        return int(results["Count"])
     return results["IdList"]
 
 
