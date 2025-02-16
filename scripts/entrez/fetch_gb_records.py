@@ -1,11 +1,14 @@
 """Use Entrez module from Biopython to fetch sequence data
 from NCBI/Genbank."""
 
+import logging
 import sys
 from Bio import Entrez
 import re
 from utils.config import Config
+
 config = Config()
+logger = logging.getLogger(__name__)
 
 DEBUG_REQUESTS = True
 LOCI = {
@@ -23,41 +26,69 @@ def fetch_fasta(gi, database="nuccore"):
     return fasta_data
 
 
-def fetch_metadata(gis, database="nuccore"):
-    metadata = []
-    for i in range(0, len(gis), 10):
-        batch = gis[i:i+10]
+def fetch_sources(accessions, database="nuccore") -> list[dict]:
+    accession_sources = {}
+    for i in range(0, len(accessions), 10):
+        batch = accessions[i:i+10]
         ids = ",".join(batch)
         handle = Entrez.efetch(
             db=database,
             id=ids,
             rettype="gb",
             retmode="text")
-        metadata_list = handle.read()
+        metadata_batches = handle.read()
         handle.close()
+        metadata_list = [
+            record.strip(' \n')
+            for record in metadata_batches.split("\n//\n")
+            if record.strip(' \n')
+        ]
+        if len(metadata_list) != len(batch):
+            raise ValueError("Number of metadata records returned from Entrez"
+                             " does not match number of accessions. This will"
+                             " create an error if not handled - this must be"
+                             " debugged by a developer.")
+        for i, record in enumerate(metadata_list):
+            accession, sources = parse_metadata_sources(record)
+            accession_sources[accession] = sources
 
-        metadata.append(metadata_list)
-    return metadata
+    missing_accessions = set(accessions) - set(accession_sources.keys())
+    if missing_accessions:
+        logger.warning("[Fetch sources] no data was returned for the"
+                       " following accessions. They cannot be included in"
+                       " reference sequence source diversity analysis:"
+                       f" {missing_accessions}")
+        for accession in missing_accessions:
+            accession_sources[accession] = []
+
+    return accession_sources
 
 
-def parse_metadata(metadata):
+def parse_metadata_sources(metadata):
     '''Extract authors, title, journal and year from data.'''
     publications = []
     current_publications = {}
 
     for line in metadata.split("\n"):
-        if line.startswith("REFERENCE"):
+        if line.startswith("ACCESSION"):
+            accession = line.replace("ACCESSION", "").strip()
+        elif line.startswith("REFERENCE"):
             if current_publications:
                 publications.append(current_publications)
             current_publications = {}
         elif line.startswith("  AUTHORS"):
-            current_publications['authors'] = line.replace("  AUTHORS   ", "")\
-                .strip().split(", ")
-        elif line.startswith("  TITLE"):
-            current_publications['title'] = line.replace("  TITLE     ", "")\
+            current_publications['authors'] = (
+                line.replace("AUTHORS", "")
                 .strip()
+                .split(", ")
+            )
+        elif line.startswith("  TITLE"):
+            current_publications['title'] = (
+                line.replace("TITLE", "")
+                .strip()
+            )
         elif line.startswith("  JOURNAL"):
-            journal_line = line.replace("  JOURNAL   ", "").strip()
+            journal_line = line.replace("JOURNAL", "").strip()
             current_publications['journal'] = journal_line
             match = re.search(r'\((\d{4})\)', journal_line)
             if match:
@@ -66,20 +97,7 @@ def parse_metadata(metadata):
     if current_publications:
         publications.append(current_publications)
 
-    return publications
-
-
-def fetch_sources(accessions) -> dict[str, dict]:
-    '''Fetch a list of publication sources for each accession.'''
-    sources = {}
-    metadata_batches = fetch_metadata(accessions)
-    for metadata in metadata_batches:
-        formatted_metadata = metadata.split("//")
-        for i, accession in enumerate(accessions):
-            if i < len(formatted_metadata):
-                publications = parse_metadata(formatted_metadata[i])
-                sources[accession] = publications
-    return sources
+    return accession, publications
 
 
 def fetch_gb_records(
@@ -111,8 +129,16 @@ def fetch_gb_records(
 
 
 # Example usage: fetch FASTA and metadata -------------------------------------
-# if __name__ == "__main__":
-    # start_time = time.time()
+if __name__ == "__main__":
+    import time
+    from pathlib import Path
+
+    start_time = time.time()
+
+    path = Path('../tests/test-data/accessions.txt')
+    accessions = path.read_text().splitlines()[:50]
+    sources = fetch_sources(accessions)
+
     # gi_number = "34577062"
     # gi_number = "377581039"
     # accessions = [gi_number, '1066585321', '1393953329', '1519311736',
@@ -139,6 +165,8 @@ def fetch_gb_records(
     # record_count = fetch_gb_records(locus, taxid)
     # print("Record count: ", record_count)
 
-    # end_time = time.time()
-    # execute_time = end_time - start_time
-    # print(f"Request time: {execute_time:.2f} seconds")
+    end_time = time.time()
+    execute_time = end_time - start_time
+    print(f"Request time: {execute_time:.2f} seconds")
+
+    print()
