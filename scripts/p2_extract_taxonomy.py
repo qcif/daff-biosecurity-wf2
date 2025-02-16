@@ -11,8 +11,8 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from utils import existing_path
-from utils.config import Config
+from .utils import existing_path
+from .utils.config import Config
 
 logger = logging.getLogger(__name__)
 if __name__ == '__main__':
