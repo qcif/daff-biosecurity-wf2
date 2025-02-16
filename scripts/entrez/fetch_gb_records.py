@@ -8,6 +8,7 @@ import re
 from utils.config import Config
 config = Config()
 
+DEBUG_REQUESTS = True
 LOCI = {
   'coi': ['COI', 'COX', 'CO1', 'Cytochrome oxidase subunit 1'],
   # others to be confirmed with DAFF
@@ -62,10 +63,14 @@ def parse_metadata(metadata):
 def fetch_sources(accessions) -> dict[str, dict]:
     '''Fetch a list of publication sources for each accession.'''
     sources = {}
+    payload_size = 0
     for accession in accessions:
         metadata = fetch_metadata(accession)
+        payload_size += sys.getsizeof(metadata)
         publications = parse_metadata(metadata)
         sources[accession] = publications
+    if DEBUG_REQUESTS:
+        print(f"[fetch_sources] Payload size: {payload_size} bytes")
     return sources
 
 
@@ -100,10 +105,22 @@ def fetch_gb_records(
 
 # Example usage: fetch FASTA and metadata -------------------------------------
 if __name__ == "__main__":
+    from pathlib import Path
+
     start_time = time.time()
+
+    path = Path('/home/cameron/dev/daff-biosecurity/wf2/output/accessions.txt')
+    accessions = [
+        line.strip()
+        for line in path.read_text().split("\n")[:100]
+    ]
+    sources = fetch_sources(accessions)
+    end_time = time.time()
+    execute_time = end_time - start_time
+    print(f"Request time: {execute_time:.2f} seconds")
+
     gi_number = "34577062"
     database = "nuccore"
-
     accession_metadata = fetch_metadata(gi_number)
     payload_size = sys.getsizeof(accession_metadata)
     print(f"[fetch_metadata] Payload size: {payload_size} bytes")
