@@ -49,7 +49,8 @@ def fetch_sources(accessions, database="nuccore") -> list[dict]:
                              " create an error if not handled - this must be"
                              " debugged by a developer.")
         for i, record in enumerate(metadata_list):
-            accession, sources = parse_metadata_sources(record)
+            accession = match_accession_to_metadata(record, batch)
+            sources = parse_metadata_sources(record)
             accession_sources[accession] = sources
 
     missing_accessions = set(accessions) - set(accession_sources.keys())
@@ -64,15 +65,26 @@ def fetch_sources(accessions, database="nuccore") -> list[dict]:
     return accession_sources
 
 
+def match_accession_to_metadata(record, batch):
+    """Find the accession that matched the given from metadata record."""
+    matching_accession = [
+        a for a in batch
+        if a.lower() in record.lower()
+    ]
+    if not matching_accession:
+        raise ValueError("Accession number found in metadata record does not"
+                         " match any accession number in the batch.")
+
+    return matching_accession[0]
+
+
 def parse_metadata_sources(metadata):
     '''Extract authors, title, journal and year from data.'''
     publications = []
     current_publications = {}
 
     for line in metadata.split("\n"):
-        if line.startswith("ACCESSION"):
-            accession = line.replace("ACCESSION", "").strip()
-        elif line.startswith("REFERENCE"):
+        if line.startswith("REFERENCE"):
             if current_publications:
                 publications.append(current_publications)
             current_publications = {}
@@ -97,7 +109,7 @@ def parse_metadata_sources(metadata):
     if current_publications:
         publications.append(current_publications)
 
-    return accession, publications
+    return publications
 
 
 def fetch_gb_records(
