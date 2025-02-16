@@ -23,7 +23,6 @@ TAXID = "9606"
 
 class TestFetchRecords(unittest.TestCase):
 
-    # @patch('fetch_gb_records.fetch_metadata')
     def test_fetch_single_source(self):
         result = fetch_sources(SINGLE_ACCESSION)
         with EXPECT_SINGLE_SOURCE_JSON.open() as f:
@@ -36,7 +35,6 @@ class TestFetchRecords(unittest.TestCase):
             expected = json.load(f)
         self.assertEqual(result, expected)
 
-    # @patch('fetch_gb_records.fetch_')
     def test_fetch_gb_records_count(self):
         result = fetch_gb_records(LOCUS, TAXID, True)
         self.assertEqual(result, EXPECTED_RECORD_COUNT)
