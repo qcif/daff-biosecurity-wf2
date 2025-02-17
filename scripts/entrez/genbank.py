@@ -4,10 +4,13 @@ from NCBI/Genbank."""
 import logging
 import time
 from Bio import Entrez
-import re
 from filelock import FileLock
+from xml.etree import ElementTree as ET
 
-from ..utils.config import Config
+try:
+    from ..utils.config import Config
+except ImportError:
+    from utils.config import Config
 
 config = Config()
 filelock = FileLock(config.entrez_lock_file)
@@ -76,21 +79,14 @@ def fetch_sources(accessions, **kwargs) -> list[dict]:
     for i in range(0, len(accessions), 10):
         batch = accessions[i:i+10]
         ids_str = ",".join(batch)
-        metadata_batches = fetch_entrez(
+        metadata_xml = fetch_entrez(
             id=ids_str,
             rettype="gb",
-            retmode="text",
+            retmode="xml",
             **kwargs,
-        )
-        metadata_list = [
-            record.strip(' \n')
-            for record in metadata_batches.split("\n//\n")
-            if record.strip(' \n')
-        ]
-        for record in metadata_list:
-            accession = match_accession_to_metadata(record, batch)
-            sources = parse_metadata_sources(record)
-            accession_sources[accession] = sources
+        ).decode('utf-8')
+        sources = parse_metadata_sources(metadata_xml)
+        accession_sources.update(sources)
 
     missing_accessions = set(accessions) - set(accession_sources.keys())
     if missing_accessions:
@@ -118,38 +114,26 @@ def match_accession_to_metadata(record, batch):
                    " not be used for source diversity analysis.")
 
 
-def parse_metadata_sources(metadata):
-    '''Extract authors, title, journal and year from data.'''
-    publications = []
-    current_publications = {}
-
-    for line in metadata.split("\n"):
-        if line.startswith("REFERENCE"):
-            if current_publications:
-                publications.append(current_publications)
-            current_publications = {}
-        elif line.startswith("  AUTHORS"):
-            current_publications['authors'] = (
-                line.replace("AUTHORS", "")
-                .strip()
-                .split(", ")
-            )
-        elif line.startswith("  TITLE"):
-            current_publications['title'] = (
-                line.replace("TITLE", "")
-                .strip()
-            )
-        elif line.startswith("  JOURNAL"):
-            journal_line = line.replace("JOURNAL", "").strip()
-            current_publications['journal'] = journal_line
-            match = re.search(r'\((\d{4})\)', journal_line)
-            if match:
-                current_publications['year'] = int(match.group(1))
-
-    if current_publications:
-        publications.append(current_publications)
-
-    return publications
+def parse_metadata_sources(xml_str):
+    root = ET.fromstring(xml_str)
+    records = {}
+    for record in root.findall('.//GBSeq'):
+        accession = getattr(
+            record.find('GBSeq_primary-accession'), 'text', None)
+        publications = []
+        for ref in record.findall('.//GBReference'):
+            authors = [
+                x.text for x in ref.findall('.//GBAuthor')
+            ]
+            title = getattr(ref.find('GBReference_title'), 'text', None)
+            journal = getattr(ref.find('GBReference_journal'), 'text', None)
+            publications.append({
+                'authors': authors,
+                'title': title,
+                'journal': journal,
+            })
+        records[accession] = publications
+    return records
 
 
 def fetch_gb_records(
@@ -178,3 +162,11 @@ def fetch_gb_records(
     if count:
         return int(results["Count"])
     return results["IdList"]
+
+
+if __name__ == '__main__':
+    from pathlib import Path
+    accessions = Path(
+        '../tests/test-data/accessions.txt').read_text().splitlines()
+    sources = fetch_sources(accessions[:20])
+    print(f"Fetched sources for {len(sources)} accessions.")

@@ -38,8 +38,8 @@
         {
             "type": "debugpy",
             "request": "launch",
-            "name": "Fetch Records",
-            "module": "entrez.fetch_gb_records",
+            "name": "Genbank",
+            "module": "entrez.genbank",
             "cwd": "${workspaceFolder}/scripts"
         },
         {
