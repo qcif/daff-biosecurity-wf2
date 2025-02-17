@@ -11,8 +11,13 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from .utils import existing_path
-from .utils.config import Config
+try:
+    from utils import existing_path
+    from utils.config import Config
+except ImportError:
+    # For unit tests only
+    from .utils import existing_path
+    from .utils.config import Config
 
 logger = logging.getLogger(__name__)
 if __name__ == '__main__':
