@@ -38,6 +38,13 @@
         {
             "type": "debugpy",
             "request": "launch",
+            "name": "Fetch Records",
+            "module": "entrez.fetch_gb_records",
+            "cwd": "${workspaceFolder}/scripts"
+        },
+        {
+            "type": "debugpy",
+            "request": "launch",
             "name": "GBIF species fetch",
             "program": "${workspaceFolder}/scripts/gbif/fetch_related_species.py",
             "args": [
