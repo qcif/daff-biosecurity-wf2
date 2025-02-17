@@ -2,12 +2,15 @@
 from NCBI/Genbank."""
 
 import logging
-import sys
+import time
 from Bio import Entrez
 import re
+from filelock import FileLock
+
 from ..utils.config import Config
 
 config = Config()
+filelock = FileLock(config.entrez_lock_file)
 logger = logging.getLogger(__name__)
 
 DEBUG_REQUESTS = True
@@ -19,25 +22,66 @@ LOCI = {  # TODO: update with DAFF
 Entrez.email = config.USER_EMAIL
 
 
-def fetch_fasta(gi, database="nuccore"):
-    handle = Entrez.efetch(db=database, id=gi, rettype="fasta", retmode="text")
-    fasta_data = handle.read()
-    handle.close()
-    return fasta_data
+def fetch_entrez(
+    endpoint=Entrez.efetch,
+    db='nuccore',
+    **kwargs,
+) -> str:
+    """Fetch data from NCBI Entrez database.
+    Queue requests to avoid rate limits.
+    Retry-on-failure.
+    """
+    def read(handle):
+        if endpoint == Entrez.efetch:
+            return handle.read()
+        return Entrez.read(handle)
+
+    handle = None
+    retries = config.ENTREZ_MAX_RETRIES
+    kwargs.update({
+        "db": db,
+    })
+    while True:
+        with filelock:
+            # Ensure that requests are sent at max 10/sec
+            time.sleep(0.1)
+        try:
+            handle = endpoint(**kwargs)
+            data = read(handle)
+            break
+        except Exception as exc:
+            logger.warning(f"Error fetching data from Entrez API:\n{exc}")
+            if not retries:
+                logger.error("Max retries reached. Exiting.")
+                raise exc
+            logger.info(f"Retrying {retries} more times.")
+            retries -= 1
+        finally:
+            if handle:
+                handle.close()
+    return data
 
 
-def fetch_sources(accessions, database="nuccore") -> list[dict]:
+def fetch_fasta(identifier, **kwargs):
+    return fetch_entrez(
+        ids=identifier,
+        rettype="fasta",
+        retmode="text",
+        **kwargs,
+    )
+
+
+def fetch_sources(accessions, **kwargs) -> list[dict]:
     accession_sources = {}
     for i in range(0, len(accessions), 10):
         batch = accessions[i:i+10]
-        ids = ",".join(batch)
-        handle = Entrez.efetch(  # TODO: add in try/except/wait/retry
-            db=database,
-            id=ids,
+        ids_str = ",".join(batch)
+        metadata_batches = fetch_entrez(
+            id=ids_str,
             rettype="gb",
-            retmode="text")
-        metadata_batches = handle.read()
-        handle.close()
+            retmode="text",
+            **kwargs,
+        )
         metadata_list = [
             record.strip(' \n')
             for record in metadata_batches.split("\n//\n")
@@ -126,11 +170,11 @@ def fetch_gb_records(
         [f'"{term}"[Gene name]' for term in gene_names])
     query += f' AND txid{taxid}[Organism])'
     max_results = 1 if count else 100
-    handle = Entrez.esearch(db="nuccore", term=query, retmax=max_results)
-    results = Entrez.read(handle)
-    payload_size = sys.getsizeof(results)
-    print(f"[fetch_gb_records] Payload size: {payload_size} bytes")
-    handle.close()
+    results = fetch_entrez(
+        endpoint=Entrez.esearch,
+        term=query,
+        retmax=max_results,
+    )
     if count:
         return int(results["Count"])
     return results["IdList"]

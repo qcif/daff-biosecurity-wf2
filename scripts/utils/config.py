@@ -49,6 +49,8 @@ class Config:
                                  'taxa_of_concern_detected.csv')
     PMI_MATCH_CSV = os.getenv("PMI_MATCH_CSV_FILENAME",
                               'preliminary_id_match.csv')
+    ENTREZ_LOCK_FILE = 'entrez.lock'
+    ENTREZ_MAX_RETRIES = 3
 
     class INPUTS:
         METADATA_CSV_HEADER = {
@@ -100,6 +102,10 @@ class Config:
     @property
     def taxonomy_path(self):
         return self.output_dir / self.TAXONOMY_FILE
+
+    @property
+    def entrez_lock_file(self):
+        return self.output_dir / self.ENTREZ_LOCK_FILE
 
     @property
     def start_time(self) -> datetime:
