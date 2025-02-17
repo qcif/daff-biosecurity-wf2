@@ -11,7 +11,7 @@ config = Config()
 logger = logging.getLogger(__name__)
 
 DEBUG_REQUESTS = True
-LOCI = {
+LOCI = {  # TODO: update with DAFF
   'coi': ['COI', 'COX', 'CO1', 'Cytochrome oxidase subunit 1'],
   # others to be confirmed with DAFF
 }
@@ -31,7 +31,7 @@ def fetch_sources(accessions, database="nuccore") -> list[dict]:
     for i in range(0, len(accessions), 10):
         batch = accessions[i:i+10]
         ids = ",".join(batch)
-        handle = Entrez.efetch(
+        handle = Entrez.efetch(  # TODO: add in try/except/wait/retry
             db=database,
             id=ids,
             rettype="gb",
@@ -43,7 +43,7 @@ def fetch_sources(accessions, database="nuccore") -> list[dict]:
             for record in metadata_batches.split("\n//\n")
             if record.strip(' \n')
         ]
-        for i, record in enumerate(metadata_list):
+        for record in metadata_list:
             accession = match_accession_to_metadata(record, batch)
             sources = parse_metadata_sources(record)
             accession_sources[accession] = sources
