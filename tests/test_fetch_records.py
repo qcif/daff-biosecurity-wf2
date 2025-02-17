@@ -4,8 +4,6 @@ from pathlib import Path
 
 from scripts.entrez.genbank import fetch_sources, fetch_gb_records
 
-EXPECTED_SINGLE_SOURCE = None
-
 DATA_DIR = Path(__file__).parent / 'test-data'
 EXPECTED_RECORD_COUNT = 1686
 EXPECT_RECORDS_JSON = DATA_DIR / 'genbank_expect_ids.json'
