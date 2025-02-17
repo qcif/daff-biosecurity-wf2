@@ -162,6 +162,7 @@ def _write_candidates(
     _write_candidates_json(query_ix, candidate_hits, candidate_species)
     _write_candidates_csv(query_ix, candidate_species)
     _write_candidates_fasta(query_ix, candidate_species)
+    _write_candidates_count(query_ix, candidate_species)
 
 
 def _write_candidates_json(query_ix, hits, species):
@@ -202,13 +203,22 @@ def _write_candidates_fasta(query_ix, species):
     logger.info(f"Written candidate FASTA to {path}")
 
 
+def _write_candidates_count(query_ix, candidate_species):
+    query_dir = config.get_query_dir(query_ix)
+    path = query_dir / config.CANDIDATES_COUNT_FILE
+    count = len(candidate_species)
+    with path.open("w") as f:
+        f.write(str(count))
+    logger.info(f"Written candidate count [{count}] to {path}")
+
+
 def _write_pmi_match(taxonomic_identity, query_ix):
     """Write PMI match as a flag."""
     if taxonomic_identity:
         match = [
             (rank, taxon)
             for rank, taxon in taxonomic_identity["taxonomy"].items()
-            if taxon.lower() == config.pmi_for_query(query_ix).lower()
+            if taxon.lower() == config.get_pmi_for_query(query_ix).lower()
         ]
         logger.info("Writing PMI match flag")
         Flag.write(
