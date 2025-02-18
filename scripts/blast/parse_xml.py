@@ -71,6 +71,33 @@ def calculate_alignment_length(hsps: list[NCBIXML.HSP]) -> int:
     )
 
 
+def _get_printed_alignment(hsp, length=80):
+    """Wrap query, subject and midline strings into a printable alignment."""
+    def string_chunk(sequence, chunk_size=10):
+        return " ".join(
+            sequence[i:i + chunk_size]
+            for i in range(0, len(sequence), chunk_size)
+        )
+
+    alignment_str = ""
+    for i in range(0, len(hsp.query), length):
+        digits = max(
+            len(str(hsp.query_start + i)),
+            len(str(hsp.sbjct_start + i)),
+        )
+        pad = digits + 8
+        query = string_chunk(hsp.query[i:i + length])
+        subject = string_chunk(hsp.sbjct[i:i + length])
+        midline = string_chunk(hsp.match[i:i + length])
+        alignment_str += (
+            f"Query  {str(hsp.query_start + i).rjust(digits)} {query}\n")
+        alignment_str += f"{' ' * pad}{midline}\n"
+        alignment_str += (
+            f"Sbjct  {str(hsp.sbjct_start + i).zfill(digits)} {subject}\n\n")
+
+    return alignment_str
+
+
 def parse_blast_xml(blast_xml_path: str) -> tuple[
     list[dict],
     list[list[SeqRecord]],
@@ -129,11 +156,7 @@ def parse_blast_xml(blast_xml_path: str) -> tuple[
                         "subject_start": hsp.sbjct_start,
                         "subject_end": hsp.sbjct_end,
                         "alignment_length": hsp.align_length,
-                        "alignment": {
-                            "query": hsp.query,
-                            "subject": hsp.sbjct,
-                            "midline": hsp.match,
-                        }
+                        "alignment": _get_printed_alignment(hsp),
                     }
                     hit_record["hsps"].append(hsp_record)
                     fastas.append(SeqRecord(
