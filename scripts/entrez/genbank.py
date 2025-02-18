@@ -17,6 +17,7 @@ filelock = FileLock(config.entrez_lock_file)
 logger = logging.getLogger(__name__)
 
 DEBUG_REQUESTS = True
+EFETCH_BATCH_SIZE = 10
 LOCI = {  # TODO: update with DAFF
   'coi': ['COI', 'COX', 'CO1', 'Cytochrome oxidase subunit 1'],
   # others to be confirmed with DAFF
@@ -47,7 +48,7 @@ def fetch_entrez(
     while True:
         with filelock:
             # Ensure that requests are sent at max 10/sec
-            time.sleep(0.1)
+            time.sleep(0.11)
         try:
             handle = endpoint(**kwargs)
             data = read(handle)
@@ -76,8 +77,8 @@ def fetch_fasta(identifier, **kwargs):
 
 def fetch_sources(accessions, **kwargs) -> list[dict]:
     accession_sources = {}
-    for i in range(0, len(accessions), 10):
-        batch = accessions[i:i+10]
+    for i in range(0, len(accessions), EFETCH_BATCH_SIZE):
+        batch = accessions[i:i + EFETCH_BATCH_SIZE]
         ids_str = ",".join(batch)
         metadata_xml = fetch_entrez(
             id=ids_str,
@@ -85,7 +86,7 @@ def fetch_sources(accessions, **kwargs) -> list[dict]:
             retmode="xml",
             **kwargs,
         ).decode('utf-8')
-        sources = parse_metadata_sources(metadata_xml)
+        sources = parse_metadata(metadata_xml)
         accession_sources.update(sources)
 
     missing_accessions = set(accessions) - set(accession_sources.keys())
@@ -100,21 +101,7 @@ def fetch_sources(accessions, **kwargs) -> list[dict]:
     return accession_sources
 
 
-def match_accession_to_metadata(record, batch):
-    """Find the accession that matched the given from metadata record."""
-    matching_accession = [
-        a for a in batch
-        if a.lower() in record.lower()
-    ]
-    if matching_accession:
-        return matching_accession[0]
-
-    logger.warning("Accession number found in metadata record does not"
-                   " match any accession number in the batch. This record can"
-                   " not be used for source diversity analysis.")
-
-
-def parse_metadata_sources(xml_str):
+def parse_metadata(xml_str):
     root = ET.fromstring(xml_str)
     records = {}
     for record in root.findall('.//GBSeq'):

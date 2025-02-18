@@ -1,10 +1,16 @@
 import json
+import os
 import unittest
 import threading
+import time
 from queue import Queue
 from pathlib import Path
 
 from scripts.entrez.genbank import fetch_sources, fetch_gb_records
+
+RESPECT_RATE_LIMIT = 1
+PERFORMANCE = 2
+CONCURRENCY_TEST = RESPECT_RATE_LIMIT
 
 DATA_DIR = Path(__file__).parent / 'test-data'
 EXPECTED_RECORD_COUNT = 1686
@@ -21,6 +27,7 @@ MULTIPLE_ACCESSIONS = [ACCESSION_1, ACCESSION_2]
 LOCUS = 'COI'
 TAXID = "9606"
 THREAD_COUNT = 20  # Number of parallel requests
+BATCH_SIZE = 10  # Number of accessions per request, in PERFORMANCE mode
 
 
 class TestFetchRecords(unittest.TestCase):
@@ -47,6 +54,9 @@ class TestFetchRecords(unittest.TestCase):
             EXPECTED_RECORD_IDS = json.load(f)
         self.assertEqual(result, EXPECTED_RECORD_IDS)
 
+    @unittest.skipUnless(
+        os.getenv("GENBANK_CONCURRENCY_TEST") == "1",
+        "Skipping genbank concurrency test")
     def test_parallel_requests(self):
         """Test that parallel requests do not get blocked by the API."""
         def worker(accession):
@@ -56,6 +66,7 @@ class TestFetchRecords(unittest.TestCase):
             except Exception as e:
                 results_queue.put((accession, str(e)))
 
+        t0 = time.time()
         results_queue = Queue()
         threads = []
         accessions = [
@@ -63,10 +74,19 @@ class TestFetchRecords(unittest.TestCase):
             for a in ACCESSIONS_LIST_FILE.read_text().splitlines()
             if a.strip()
         ]
-        for acc in accessions[:THREAD_COUNT]:  # Use the first 20 accessions
-            t = threading.Thread(target=worker, args=(acc,))
-            t.start()
-            threads.append(t)
+
+        if CONCURRENCY_TEST == RESPECT_RATE_LIMIT:
+            for acc in accessions[:THREAD_COUNT]:
+                t = threading.Thread(target=worker, args=(acc,))
+                t.start()
+                threads.append(t)
+
+        elif CONCURRENCY_TEST == PERFORMANCE:
+            for i in range(0, THREAD_COUNT, BATCH_SIZE):
+                acc = accessions[i:i + BATCH_SIZE]
+                t = threading.Thread(target=worker, args=(','.join(acc),))
+                t.start()
+                threads.append(t)
 
         # Wait for all threads to complete
         for t in threads:
@@ -78,7 +98,14 @@ class TestFetchRecords(unittest.TestCase):
             acc, result = results_queue.get()
             results.update(result)
 
+        td = time.time() - t0  # use a breakpoint to check the time taken
+        print("Time taken:", td)
+
         # Assert that all requests succeeded (i.e., no exceptions)
         for acc, result in results.items():
             self.assertIsInstance(result, list, f"Failed for {acc}: {result}")
+            self.assertIn(
+                acc,
+                accessions,
+                f"Returned accession not found in the query list: {acc}")
         self.assertEqual(len(results), THREAD_COUNT)

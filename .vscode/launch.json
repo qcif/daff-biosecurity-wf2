@@ -11,6 +11,9 @@
                 "-p", "test*.py",
                 "-b"
             ],
+            "env": {
+                "GENBANK_CONCURRENCY_TEST": "0"
+            },
             "console": "integratedTerminal",
             "justMyCode": true
         },
