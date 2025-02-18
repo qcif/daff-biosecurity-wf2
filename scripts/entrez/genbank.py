@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 DEBUG_REQUESTS = True
 EFETCH_BATCH_SIZE = 10
+AUTOMATED_ANNOTATION_TAG = '##Genome-Annotation-Data-START##'
 LOCI = {  # TODO: update with DAFF
   'coi': ['COI', 'COX', 'CO1', 'Cytochrome oxidase subunit 1'],
   # others to be confirmed with DAFF
@@ -118,6 +119,10 @@ def parse_metadata(xml_str):
                 'authors': authors,
                 'title': title,
                 'journal': journal,
+            })
+        if AUTOMATED_ANNOTATION_TAG in ET.tostring(record).decode('utf-8'):
+            publications.append({
+                'automated_annotation': True,
             })
         records[accession] = publications
     return records
