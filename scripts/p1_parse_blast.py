@@ -10,10 +10,7 @@ from blast.parse_xml import parse_blast_xml
 from utils import existing_path
 from utils.config import Config
 
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
 config = Config()
 
 

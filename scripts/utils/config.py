@@ -9,16 +9,15 @@ import json
 import logging
 from Bio import SeqIO
 from datetime import datetime
+from logging.config import dictConfig
 from pathlib import Path
 
+from .log import get_logging_config
 from .utils import path_safe_str
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
 
 REPORT_FILENAME = "report_{sample_id}_{timestamp}.html"
-
-logger = logging.getLogger(__name__)
 
 
 class Config:
@@ -51,6 +50,8 @@ class Config:
                                  'taxa_of_concern_detected.csv')
     PMI_MATCH_CSV = os.getenv("PMI_MATCH_CSV_FILENAME",
                               'preliminary_id_match.csv')
+    LOG_FILENAME = 'run.log'
+    QUERY_LOG_FILENAME = 'query.log'
     ENTREZ_LOCK_FILE = 'entrez.lock'
     ENTREZ_MAX_RETRIES = 3
 
@@ -100,6 +101,14 @@ class Config:
 
     class REPORT:
         TITLE = "Taxonomic assignment report"
+
+    def __init__(self):
+        conf = get_logging_config(self.output_dir / self.LOG_FILENAME)
+        dictConfig(conf)
+
+    def configure_query_logger(self, query_dir):
+        conf = get_logging_config(query_dir / self.QUERY_LOG_FILENAME)
+        dictConfig(conf)
 
     @property
     def taxonomy_path(self):

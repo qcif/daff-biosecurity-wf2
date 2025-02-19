@@ -24,7 +24,7 @@ from utils.config import Config
 from utils.flags import Flag, FLAGS
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
+config = Config()
 
 CANDIDATE_CSV_HEADER = [
     "species",
@@ -38,12 +38,11 @@ CANDIDATE_CSV_HEADER = [
     "bitscore",
 ]
 
-config = Config()
-
 
 def main():
     args = _parse_args()
     config.set_output_dir(args.output_dir)
+    config.configure_query_logger(args.query_dir)
     query = config.read_blast_hits_json(args.query_dir)
     candidate_species = _assign_species_id(query['hits'], args.query_dir)
     _detect_taxa_of_interest(candidate_species, args.query_dir)
@@ -134,8 +133,7 @@ def _write_taxonomic_id(query_ix, candidate_species_strict):
         src = query_dir / config.CANDIDATES_CSV
         dest = query_dir / config.TAXONOMY_ID_CSV
         dest.write_text(src.read_text())
-        logger.info(f"Query {query_ix} - writing taxonomic ID to"
-                    f" {config.TAXONOMY_ID_CSV}")
+        logger.info(f"Writing taxonomic ID to {config.TAXONOMY_ID_CSV}")
         return candidate_species_strict[0]
 
 

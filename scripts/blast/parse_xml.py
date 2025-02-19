@@ -5,8 +5,6 @@ from Bio.Blast import NCBIXML
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
 
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

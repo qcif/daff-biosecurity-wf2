@@ -22,9 +22,6 @@ except ImportError:
     from .taxonomy.extract import TAXONKIT_DATA, TAXONOMIC_RANKS
 
 logger = logging.getLogger(__name__)
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
-
 config = Config()
 
 

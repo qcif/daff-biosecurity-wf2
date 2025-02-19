@@ -18,14 +18,13 @@ from utils import existing_path, serialize
 from utils.config import Config
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
-
 config = Config()
 
 
 def main():
     args = _parse_args()
     config.set_output_dir(args.output_dir)
+    config.configure_query_logger(args.query_dir)
     species, hits = _read_candidate_hits(args.query_dir)
     species, hits = _collect_sources_per_species(species, hits)
     candidates = {

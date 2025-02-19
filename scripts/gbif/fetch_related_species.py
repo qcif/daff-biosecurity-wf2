@@ -11,8 +11,6 @@ LIMIT = 500
 ACCEPTED_STATUS = ['ACCEPTED', 'DOUBTFUL']
 GBIF_SPECIES_BASE_URL = 'https://www.gbif.org/species/'
 
-if not logging.getLogger().hasHandlers():
-    logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
