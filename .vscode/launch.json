@@ -12,7 +12,7 @@
                 "-b"
             ],
             "env": {
-                "GENBANK_CONCURRENCY_TEST": "0"
+                "GENBANK_CONCURRENCY_TEST": "0" // Enable/disable
             },
             "console": "integratedTerminal",
             "justMyCode": true
@@ -37,6 +37,15 @@
             "env": {
                 "INPUT_TOI_FILEPATH": "tests/test-data/taxa_of_interest.txt",
             }
+        },
+        {
+            "type": "debugpy",
+            "request": "launch",
+            "name": "P4 Source diversity",
+            "program": "${workspaceFolder}/scripts/p4_source_diversity.py",
+            "args": [
+                "output/query_001_LC438549.1"
+            ]
         },
         {
             "type": "debugpy",

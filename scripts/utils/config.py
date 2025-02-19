@@ -154,7 +154,7 @@ class Config:
 
     def read_metadata(self) -> dict[str, str]:
         """Read metadata from CSV file."""
-        if getattr(self, 'metadata'):
+        if getattr(self, 'metadata', None):
             return self.metadata
         self.metadata = {}
         with self.INPUTS.METADATA_PATH.open() as f:
