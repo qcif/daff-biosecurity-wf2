@@ -1,0 +1,62 @@
+import logging
+import subprocess
+import tempfile
+from pathlib import Path
+
+from ..utils.config import Config
+
+logger = logging.getLogger(__name__)
+config = Config()
+
+TAXONKIT_DATA = Path('~/.taxonkit').expanduser()
+TAXONOMIC_RANKS = [
+    "superkingdom",
+    'kingdom',
+    'phylum',
+    'class',
+    'order',
+    'family',
+    'genus',
+    'species',
+]
+
+
+def taxonomies(
+    taxids: list[str],
+    taxdb: Path = Path(TAXONKIT_DATA),
+) -> dict[str, dict[str, str]]:
+    """Use taxonkit lineage to extract taxonomic data for given taxids."""
+    with tempfile.NamedTemporaryFile(mode='w+') as temp_file:
+        temp_file.write("\n".join(taxids))
+        temp_file.flush()
+        temp_file_name = temp_file.name
+        result = subprocess.run(
+            [
+                'taxonkit',
+                'lineage',
+                '-R',
+                '-c', temp_file_name,
+                '--data-dir', taxdb,
+            ],
+            capture_output=True,
+            text=True
+        )
+
+    taxonomy_data = {}
+    for line in result.stdout.strip().split('\n'):
+        fields = line.split('\t')[1:]
+        if len(fields) == 3:
+            taxid, taxon_details, ranks = fields[0], fields[1], fields[2]
+            lineage_list = taxon_details.split(';')
+            ranks_list = ranks.split(';')
+            taxonomy = {
+                rank: name for rank,
+                name in zip(ranks_list, lineage_list)
+                if rank in TAXONOMIC_RANKS
+            }
+            taxonomy_data[taxid] = taxonomy
+        else:
+            logger.warning(
+                "Warning: Unexpected format in taxonkit stdout."
+                f" This may result in missing taxonomy information:\n{line}")
+    return taxonomy_data

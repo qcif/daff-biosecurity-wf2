@@ -2,7 +2,8 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import call, mock_open, patch
-from scripts.p2_extract_taxonomy import main, extract_taxonomies
+from scripts import p2_extract_taxonomy
+from scripts.taxonomy import extract
 
 TAXONKIT_STDOUT = Path(__file__).parent / "test-data/taxonkit.stdout"
 ACCESSION_TAXIDS = {
@@ -80,7 +81,7 @@ class TestNcbiTaxonomy(unittest.TestCase):
     def test_it_can_extract_taxonomic_data_for_accessions(self, mock_run):
         mock_run.side_effect = mock_subprocess_run
         taxids = sorted(ACCESSION_TAXIDS.values())
-        output = extract_taxonomies(taxids)
+        output = extract.taxonomies(taxids)
         self.assertEqual(output, TAXONOMIES_RETURN_VALUE)
 
     @patch('subprocess.run')
@@ -102,7 +103,7 @@ class TestNcbiTaxonomy(unittest.TestCase):
 
         m = mock_open(read_data=INPUT_CSV_DATA)
         with patch("builtins.open", m):
-            main()
+            p2_extract_taxonomy.main()
 
         # Verify that the expected write calls happened
         mock_args.output_csv.open.assert_has_calls(

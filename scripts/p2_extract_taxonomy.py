@@ -7,33 +7,23 @@ This requires access to the NCBI taxdump files (configurable by CLI param).
 import argparse
 import csv
 import logging
-import subprocess
-import tempfile
 from pathlib import Path
 
 try:
     from utils import existing_path
     from utils.config import Config
+    from taxonomy import extract
+    from taxonomy.extract import TAXONKIT_DATA, TAXONOMIC_RANKS
 except ImportError:
     # For unit tests only
     from .utils import existing_path
     from .utils.config import Config
+    from .taxonomy import extract
+    from .taxonomy.extract import TAXONKIT_DATA, TAXONOMIC_RANKS
 
 logger = logging.getLogger(__name__)
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
-
-TAXONKIT_DATA = Path('~/.taxonkit').expanduser()
-TAXONOMIC_RANKS = [
-    "superkingdom",
-    'kingdom',
-    'phylum',
-    'class',
-    'order',
-    'family',
-    'genus',
-    'species',
-]
 
 config = Config()
 
@@ -46,7 +36,7 @@ def main():
             for row in csv.reader(taxids_file)
         }
     taxids = sorted(set(accession_taxids.values()))
-    taxonomies = extract_taxonomies(taxids, taxdb=args.taxdb_path)
+    taxonomies = extract.taxonomies(taxids, taxdb=args.taxdb_path)
     _write_csv(taxonomies, accession_taxids, args.output_csv)
 
 
@@ -97,47 +87,6 @@ def _write_csv(taxonomies, accession_taxids, output_csv):
         ]
         writer.writerows(rows)
     logger.info(f"Taxonomy records written to {output_csv}")
-
-
-def extract_taxonomies(
-    taxids: list[str],
-    taxdb: Path = Path(TAXONKIT_DATA),
-) -> dict[str, dict[str, str]]:
-    """Use taxonkit lineage to extract taxonomic data for given taxids."""
-    with tempfile.NamedTemporaryFile(mode='w+') as temp_file:
-        temp_file.write("\n".join(taxids))
-        temp_file.flush()
-        temp_file_name = temp_file.name
-        result = subprocess.run(
-            [
-                'taxonkit',
-                'lineage',
-                '-R',
-                '-c', temp_file_name,
-                '--data-dir', taxdb,
-            ],
-            capture_output=True,
-            text=True
-        )
-
-    taxonomy_data = {}
-    for line in result.stdout.strip().split('\n'):
-        fields = line.split('\t')[1:]
-        if len(fields) == 3:
-            taxid, taxon_details, ranks = fields[0], fields[1], fields[2]
-            lineage_list = taxon_details.split(';')
-            ranks_list = ranks.split(';')
-            taxonomy = {
-                rank: name for rank,
-                name in zip(ranks_list, lineage_list)
-                if rank in TAXONOMIC_RANKS
-            }
-            taxonomy_data[taxid] = taxonomy
-        else:
-            logger.warning(
-                "Warning: Unexpected format in taxonkit stdout."
-                f" This may result in missing taxonomy information:\n{line}")
-    return taxonomy_data
 
 
 if __name__ == '__main__':
