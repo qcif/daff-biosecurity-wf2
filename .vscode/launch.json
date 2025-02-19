@@ -12,7 +12,7 @@
                 "-b"
             ],
             "env": {
-                "GENBANK_CONCURRENCY_TEST": "0" // Enable/disable
+                "GENBANK_CONCURRENCY_TEST": "1" // Enable/disable
             },
             "console": "integratedTerminal",
             "justMyCode": true

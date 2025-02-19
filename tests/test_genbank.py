@@ -6,7 +6,13 @@ import time
 from queue import Queue
 from pathlib import Path
 
-from scripts.entrez.genbank import fetch_sources, fetch_gb_records
+from scripts.entrez.genbank import (
+    fetch_sources,
+    fetch_gb_records,
+    GbRecordSource,
+)
+from scripts.utils import serialize
+
 
 RESPECT_RATE_LIMIT = 1
 PERFORMANCE = 2
@@ -26,23 +32,11 @@ SINGLE_ACCESSION = [ACCESSION_1]
 MULTIPLE_ACCESSIONS = [ACCESSION_1, ACCESSION_2]
 LOCUS = 'COI'
 TAXID = "9606"
-THREAD_COUNT = 20  # Number of parallel requests
+MAX_ACCESSIONS = 20  # Limit number of accessions to request
 BATCH_SIZE = 10  # Number of accessions per request, in PERFORMANCE mode
 
 
 class TestFetchRecords(unittest.TestCase):
-
-    def test_fetch_single_source(self):
-        result = fetch_sources(SINGLE_ACCESSION)
-        with EXPECT_SINGLE_SOURCE_JSON.open() as f:
-            expected = json.load(f)
-        self.assertEqual(result, expected)
-
-    def test_fetch_multiple_source(self):
-        result = fetch_sources(MULTIPLE_ACCESSIONS)
-        with EXPECT_MULTIPLE_SOURCES_JSON.open() as f:
-            expected = json.load(f)
-        self.assertEqual(result, expected)
 
     def test_fetch_gb_records_count(self):
         result = fetch_gb_records(LOCUS, TAXID, True)
@@ -53,6 +47,18 @@ class TestFetchRecords(unittest.TestCase):
         with EXPECT_RECORDS_JSON.open() as f:
             EXPECTED_RECORD_IDS = json.load(f)
         self.assertEqual(result, EXPECTED_RECORD_IDS)
+
+    def test_fetch_single_source(self):
+        result = fetch_sources(SINGLE_ACCESSION)
+        expected = EXPECT_SINGLE_SOURCE_JSON.read_text()
+        observed = json.dumps(result, default=serialize)
+        self.assertEqual(observed, expected)
+
+    def test_fetch_multiple_source(self):
+        result = fetch_sources(MULTIPLE_ACCESSIONS)
+        expected = EXPECT_MULTIPLE_SOURCES_JSON.read_text()
+        observed = json.dumps(result, default=serialize)
+        self.assertEqual(observed, expected)
 
     @unittest.skipUnless(
         os.getenv("GENBANK_CONCURRENCY_TEST") == "1",
@@ -76,13 +82,13 @@ class TestFetchRecords(unittest.TestCase):
         ]
 
         if CONCURRENCY_TEST == RESPECT_RATE_LIMIT:
-            for acc in accessions[:THREAD_COUNT]:
+            for acc in accessions[:MAX_ACCESSIONS]:
                 t = threading.Thread(target=worker, args=(acc,))
                 t.start()
                 threads.append(t)
 
         elif CONCURRENCY_TEST == PERFORMANCE:
-            for i in range(0, THREAD_COUNT, BATCH_SIZE):
+            for i in range(0, MAX_ACCESSIONS, BATCH_SIZE):
                 acc = accessions[i:i + BATCH_SIZE]
                 t = threading.Thread(target=worker, args=(','.join(acc),))
                 t.start()
@@ -103,9 +109,12 @@ class TestFetchRecords(unittest.TestCase):
 
         # Assert that all requests succeeded (i.e., no exceptions)
         for acc, result in results.items():
-            self.assertIsInstance(result, list, f"Failed for {acc}: {result}")
+            self.assertIsInstance(
+                result,
+                GbRecordSource,
+                f"Failed for {acc}: {result}")
             self.assertIn(
                 acc,
                 accessions,
                 f"Returned accession not found in the query list: {acc}")
-        self.assertEqual(len(results), THREAD_COUNT)
+        self.assertEqual(len(results), MAX_ACCESSIONS)
