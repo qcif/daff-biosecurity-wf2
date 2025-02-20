@@ -46,10 +46,17 @@ class Config:
                                  'taxa_of_concern_detected.csv')
     PMI_MATCH_CSV = os.getenv("PMI_MATCH_CSV_FILENAME",
                               'preliminary_id_match.csv')
+    GBIF_LIMIT_RECORDS = int(os.getenv("GBIF_LIMIT_RECORDS", 500))
+    GBIF_ACCEPTED_STATUS = os.getenv(
+        "GBIF_ACCEPTED_STATUS",
+        'accepted,doubtful',
+    ).upper().replace(' ', '').split(',')
     LOG_FILENAME = 'run.log'
     QUERY_LOG_FILENAME = 'query.log'
     ENTREZ_LOCK_FILE = 'entrez.lock'
     ENTREZ_MAX_RETRIES = 3
+    GBIF_FAST_LOCK_FILE = 'gbif-fast.lock'
+    GBIF_SLOW_LOCK_FILE = 'gbif-slow.lock'
 
     class INPUTS:
         METADATA_CSV_HEADER = {
@@ -107,6 +114,14 @@ class Config:
     @property
     def entrez_lock_file(self):
         return self.output_dir / self.ENTREZ_LOCK_FILE
+
+    @property
+    def gbif_slow_lock_file(self):
+        return self.output_dir / self.GBIF_SLOW_LOCK_FILE
+
+    @property
+    def gbif_fast_lock_file(self):
+        return self.output_dir / self.GBIF_FAST_LOCK_FILE
 
     @property
     def start_time(self) -> datetime:
