@@ -23,7 +23,6 @@ QUERY_DIR_PREFIX = 'query_'
 
 class Config:
 
-    output_dir = Path(os.getenv("OUTPUT_DIR", 'output'))
     USER_EMAIL = os.getenv("USER_EMAIL", "c.hyde@qcif.edu.au")
     TIMESTAMP_FILENAME = os.getenv("TIMESTAMP_FILENAME", 'timestamp.txt')
     INPUT_FASTA_FILEPATH = Path(os.getenv("INPUT_FASTA_FILEPATH",
@@ -103,6 +102,15 @@ class Config:
         conf = get_logging_config(self.output_dir / self.LOG_FILENAME)
         dictConfig(conf)
 
+    @property
+    def output_dir(self):
+        return Path(os.getenv("OUTPUT_DIR", 'output'))
+
+    def set_output_dir(self, output_dir):
+        output_dir = Path(output_dir)
+        output_dir.mkdir(exist_ok=True, parents=True)
+        os.environ["OUTPUT_DIR"] = str(output_dir)
+
     def configure_query_logger(self, query_dir):
         conf = get_logging_config(query_dir / self.QUERY_LOG_FILENAME)
         dictConfig(conf)
@@ -142,10 +150,6 @@ class Config:
                 timestamp='NOW',  # self.timestamp, # ! TODO
             )
         )
-
-    def set_output_dir(self, output_dir):
-        self.output_dir = Path(output_dir)
-        self.output_dir.mkdir(exist_ok=True, parents=True)
 
     def get_query_ix(self, ix_or_dir):
         """Resolve query index/dir to query index."""
