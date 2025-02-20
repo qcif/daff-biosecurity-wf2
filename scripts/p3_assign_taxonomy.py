@@ -62,7 +62,7 @@ def _parse_args():
 
 def _assign_species_id(hits, query_dir):
     """Attempt species ID from BLAST hits.json data."""
-    query_ix = config.ix_from_query_dir(query_dir)
+    query_ix = config.get_query_ix(query_dir)
     taxonomies = config.read_taxonomy_file()
     candidate_hits = [
         hit for hit in hits
@@ -239,7 +239,7 @@ def _detect_taxa_of_interest(candidate_species, query_dir):
     Each TOI can be at any taxonomic level, so need to check at appropriate
     taxonomic level.
     """
-    taxa_of_interest = config.read_taxa_of_interest()
+    taxa_of_interest = config.read_taxa_of_interest(query_dir)
     if not taxa_of_interest:
         logger.info("No taxa of interest provided - no output written.")
         return
@@ -288,7 +288,7 @@ def _write_toi_detected(query_dir, toi, detected, write_flag=True):
         else:
             value = FLAGS.A
         Flag.write(
-            config.ix_from_query_dir(query_dir),
+            config.get_query_ix(query_dir),
             FLAGS.TOI,
             value,
         )

@@ -18,6 +18,7 @@ from .utils import path_safe_str
 logger = logging.getLogger(__name__)
 
 REPORT_FILENAME = "report_{sample_id}_{timestamp}.html"
+QUERY_DIR_PREFIX = 'query_'
 
 
 class Config:
@@ -25,11 +26,6 @@ class Config:
     output_dir = Path(os.getenv("OUTPUT_DIR", 'output'))
     USER_EMAIL = os.getenv("USER_EMAIL", "c.hyde@qcif.edu.au")
     TIMESTAMP_FILENAME = os.getenv("TIMESTAMP_FILENAME", 'timestamp.txt')
-    INPUT_TOI_FILEPATH = (
-        Path(os.getenv("INPUT_TOI_FILEPATH"))
-        if os.getenv("INPUT_TOI_FILEPATH")
-        else None
-    )
     INPUT_FASTA_FILEPATH = Path(os.getenv("INPUT_FASTA_FILEPATH",
                                           "tests/test-data/query.fasta"))
     ACCESSIONS_FILENAME = os.getenv("ACCESSIONS_FILENAME", "accessions.txt")
@@ -69,12 +65,6 @@ class Config:
                 "INPUT_FASTA_PATH",
                 Path(__file__).parent.parent.parent
                 / 'tests/test-data/queries.fasta')
-        )
-        TOI_FILEPATH = Path(
-            os.getenv(
-                "INPUT_TOI_FILEPATH",
-                Path(__file__).parent.parent.parent
-                / 'tests/test-data/taxa_of_interest.txt')
         )
         METADATA_PATH = Path(
             os.getenv(
@@ -129,7 +119,8 @@ class Config:
         path.write_text(timestamp)
         return now
 
-    def get_report_path(self, query_ix):
+    def get_report_path(self, query):
+        query_ix = self.get_query_ix(query)
         return self.get_query_dir(query_ix) / path_safe_str(
             REPORT_FILENAME.format(
                 sample_id=self.get_sample_id(query_ix).replace('.', '_'),
@@ -141,58 +132,80 @@ class Config:
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True, parents=True)
 
-    def get_query_dir(self, query_ix):
-        sample_id = self.get_sample_id(query_ix)
-        d = self.output_dir / f"query_{query_ix + 1:>03}_{sample_id}"
-        d.mkdir(exist_ok=True, parents=True)
-        return d
+    def get_query_ix(self, ix_or_dir):
+        """Resolve query index/dir to query index."""
+        if (
+            isinstance(ix_or_dir, str) and QUERY_DIR_PREFIX in ix_or_dir
+        ) or isinstance(ix_or_dir, Path):
+            query_dir = Path(ix_or_dir)
+            return int(query_dir.name.split("_")[1]) - 1
+        return ix_or_dir
 
-    def get_sample_id(self, query_ix):
+    def get_query_dir(self, ix_or_dir):
+        """Resolve query index/dir to query dir Path."""
+        if (
+            isinstance(ix_or_dir, str) and QUERY_DIR_PREFIX in ix_or_dir
+        ) or isinstance(ix_or_dir, Path):
+            query_dir = Path(ix_or_dir)
+            return query_dir
+
+        query_ix = int(ix_or_dir)
+        sample_id = self.get_sample_id(query_ix)
+        query_dir = (
+            self.output_dir
+            / f"{QUERY_DIR_PREFIX}{query_ix + 1:>03}_{sample_id}"
+        )
+        query_dir.mkdir(exist_ok=True, parents=True)
+        return query_dir
+
+    def get_sample_id(self, query):
+        """Resolve query index/dir to sample ID."""
+        query_ix = self.get_query_ix(query)
         return self.read_query_fasta(query_ix).id
 
-    def ix_from_query_dir(self, query_dir):
-        query_dir = Path(query_dir)
-        return int(query_dir.name.split("_")[1]) - 1
-
-    def get_pmi_for_query(self, query_ix):
+    def get_pmi_for_query(self, query):
+        query_ix = self.get_query_ix(query)
         sample_id = self.get_sample_id(query_ix)
-        metadata = self.read_metadata()
-        return metadata[sample_id][
+        return self.metadata[sample_id][
             self.INPUTS.METADATA_CSV_HEADER["preliminary_id"]
         ]
 
-    def read_metadata(self) -> dict[str, str]:
+    @property
+    def metadata(self) -> dict[str, dict]:
         """Read metadata from CSV file."""
         if getattr(self, 'metadata', None):
-            return self.metadata
-        self.metadata = {}
+            return self._metadata
+        self._metadata = {}
         with self.INPUTS.METADATA_PATH.open() as f:
             header = self.INPUTS.METADATA_CSV_HEADER
             for row in csv.DictReader(f):
                 sample_id = row.pop(header["sample_id"])
-                self.metadata[sample_id] = {
+                self._metadata[sample_id] = {
                     key: (
                         [
                             x.strip()
                             for x in row[colname].split('|')
                         ]
-                        if key == "taxa_of_interest"
+                        if key == header["taxa_of_interest"]
                         else row[colname].strip()
                     )
                     for key, colname in header.items()
                     if key != "sample_id"
                 }
-        return self.metadata
+        return self._metadata
 
-    def read_taxa_of_interest(self) -> list[str]:
-        """Read taxa of interest from TOI file."""
-        if self.INPUT_TOI_FILEPATH is None:
-            return []
-        return [
-            line.strip()
-            for line in self.INPUT_TOI_FILEPATH.read_text().splitlines()
-            if line.strip()
+    def get_locus_for_query(self, query):
+        sample_id = self.get_sample_id(query)
+        return self.metadata[sample_id][
+            self.INPUTS.METADATA_CSV_HEADER["locus"]
         ]
+
+    def read_taxa_of_interest(self, query) -> list[str]:
+        """Read taxa of interest from TOI file."""
+        sample_id = self.get_sample_id(query)
+        metadata = self.metadata
+        colname = self.INPUTS.METADATA_CSV_HEADER["taxa_of_interest"]
+        return metadata[sample_id][colname]
 
     def read_query_fasta(self, index=None):
         """Read query FASTA file."""
@@ -200,26 +213,18 @@ class Config:
             self.query_sequences = list(
                 SeqIO.parse(self.INPUT_FASTA_FILEPATH, "fasta"))
         if index is not None:
-            return self.query_sequences[index]
+            return self.query_sequences[int(index)]
         return self.query_sequences
 
     def read_blast_hits_json(self, query):
         """Read BLAST hits from JSON file."""
-        query_dir = (
-            self.get_query_dir(query)
-            if isinstance(query, int)
-            else query
-        )
+        query_dir = self.get_query_dir(query)
         path = query_dir / self.HITS_JSON
         return self.read_json(path)
 
     def read_blast_hits_fasta(self, query):
         """Read BLAST hits from JSON file."""
-        query_dir = (
-            self.get_query_dir(query)
-            if isinstance(query, int)
-            else query
-        )
+        query_dir = self.get_query_dir(query)
         path = query_dir / self.HITS_FASTA
         return self.read_fasta(path)
 
