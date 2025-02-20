@@ -126,9 +126,10 @@ def _assign_species_id(hits, query_dir):
 
 def _write_taxonomic_id(query_dir, candidate_species_strict):
     if len(candidate_species_strict) != 1:
-        logger.info(f"Query {query_dir} - not writing {config.TAXONOMY_ID_CSV}:"
-                    " no taxonomic identification could be made"
-                    f" ({len(candidate_species_strict)} candidates found).")
+        logger.info(
+            f"Query {query_dir} - not writing {config.TAXONOMY_ID_CSV}:"
+            " no taxonomic identification could be made"
+            f" ({len(candidate_species_strict)} candidates found).")
     else:
         src = query_dir / config.CANDIDATES_CSV
         dest = query_dir / config.TAXONOMY_ID_CSV
