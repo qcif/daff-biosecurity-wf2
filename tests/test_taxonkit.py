@@ -2,8 +2,8 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import call, mock_open, patch
-from scripts import p2_extract_taxonomy
-from scripts.taxonomy import extract
+import p2_extract_taxonomy
+from src.taxonomy import extract
 
 TAXONKIT_STDOUT = Path(__file__).parent / "test-data/taxonkit.stdout"
 ACCESSION_TAXIDS = {
@@ -85,7 +85,7 @@ class TestNcbiTaxonomy(unittest.TestCase):
         self.assertEqual(output, TAXONOMIES_RETURN_VALUE)
 
     @patch('subprocess.run')
-    @patch("scripts.p2_extract_taxonomy._parse_args")
+    @patch("p2_extract_taxonomy._parse_args")
     def test_main(self, mock_parse_args, mock_run):
         """Test main() using mock_open for both read and write operations."""
         mock_run.side_effect = mock_subprocess_run

@@ -14,11 +14,11 @@ import json
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from entrez import genbank
-from gbif.relatives import RelatedTaxaGBIF
-from taxonomy import extract
-from utils import existing_path, serialize
-from utils.config import Config
+from src.entrez import genbank
+from src.gbif.relatives import RelatedTaxaGBIF
+from src.taxonomy import extract
+from src.utils import existing_path, serialize
+from src.utils.config import Config
 
 logger = logging.getLogger(__name__)
 config = Config()

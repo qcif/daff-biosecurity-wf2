@@ -9,17 +9,10 @@ import csv
 import logging
 from pathlib import Path
 
-try:
-    from utils import existing_path
-    from utils.config import Config
-    from taxonomy import extract
-    from taxonomy.extract import TAXONKIT_DATA, TAXONOMIC_RANKS
-except ImportError:
-    # For unit tests only
-    from .utils import existing_path
-    from .utils.config import Config
-    from .taxonomy import extract
-    from .taxonomy.extract import TAXONKIT_DATA, TAXONOMIC_RANKS
+from src.utils import existing_path
+from src.utils.config import Config
+from src.taxonomy import extract
+from src.taxonomy.extract import TAXONKIT_DATA, TAXONOMIC_RANKS
 
 logger = logging.getLogger(__name__)
 config = Config()

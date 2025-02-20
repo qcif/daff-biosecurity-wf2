@@ -9,9 +9,9 @@ from datetime import datetime
 from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
 
-from utils import config
-from utils.flags import Flag, FLAGS  # , TARGETS
 from .outcomes import DetectedTaxon
+from ..utils import config
+from ..utils.flags import Flag, FLAGS  # , TARGETS
 
 logger = logging.getLogger(__name__)
 config = config.Config()

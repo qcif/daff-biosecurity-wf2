@@ -13,9 +13,9 @@ import argparse
 import json
 import logging
 
-from entrez import genbank
-from utils import existing_path, serialize
-from utils.config import Config
+from src.entrez import genbank
+from src.utils import existing_path, serialize
+from src.utils.config import Config
 
 logger = logging.getLogger(__name__)
 config = Config()

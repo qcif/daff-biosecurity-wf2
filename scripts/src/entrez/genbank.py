@@ -7,10 +7,7 @@ from Bio import Entrez
 from filelock import FileLock
 from xml.etree import ElementTree as ET
 
-try:
-    from ..utils.config import Config
-except ImportError:
-    from utils.config import Config
+from ..utils.config import Config
 
 config = Config()
 filelock = FileLock(config.entrez_lock_file)

@@ -20,9 +20,9 @@ import logging
 from Bio import SeqIO
 from pathlib import Path
 
-from utils import deduplicate, existing_path
-from utils.config import Config
-from utils.flags import Flag, FLAGS
+from src.utils import deduplicate, existing_path
+from src.utils.config import Config
+from src.utils.flags import Flag, FLAGS
 
 logger = logging.getLogger(__name__)
 config = Config()

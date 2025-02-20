@@ -6,9 +6,9 @@ import logging
 from Bio import SeqIO
 from pathlib import Path
 
-from blast.parse_xml import parse_blast_xml
-from utils import existing_path
-from utils.config import Config
+from src.blast.parse_xml import parse_blast_xml
+from src.utils import existing_path
+from src.utils.config import Config
 
 logger = logging.getLogger(__name__)
 config = Config()

@@ -3,7 +3,7 @@ import logging
 import unittest
 from pathlib import Path
 from unittest.mock import patch
-from scripts.gbif.relatives import RelatedTaxaGBIF
+from src.gbif.relatives import RelatedTaxaGBIF
 
 TEST_DATA_DIR = Path(__file__).parent / 'test-data'
 GBIF_NAME_LOOKUP_RESPONSE = TEST_DATA_DIR / 'gbif_related_species.json'

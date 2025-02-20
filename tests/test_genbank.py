@@ -6,12 +6,12 @@ import time
 from queue import Queue
 from pathlib import Path
 
-from scripts.entrez.genbank import (
+from src.entrez.genbank import (
     fetch_sources,
     fetch_gb_records,
     GbRecordSource,
 )
-from scripts.utils import serialize
+from src.utils import serialize
 
 
 RESPECT_RATE_LIMIT = 1
