@@ -1,15 +1,31 @@
 """Send some requests to GBIF to estimate the rate limit."""
 
-from pygbif import occurrences as occ
+import pygbif
 from time import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-TOTAL_REQUESTS = 5
-MAX_THREADS = 5
+TOTAL_REQUESTS = 20
+MAX_THREADS = 20
 
 
 def make_request():
-    occ.search(taxonKey=3329049)
+    # pygbif.occurrences.search(
+    #     taxonKey=3329049,
+    #     country='CA',
+    #     facet="speciesKey",
+    #     facetLimit=500,
+    #     limit=1,
+    # )
+    # pygbif.species.name_suggest(
+    #     q='Homo sapiens',
+    #     rank='species',
+    #     limit=20,
+    # )
+    pygbif.species.name_lookup(
+        rank='species',
+        higherTaxonKey='2436435',
+        limit=500,
+    )
 
 
 start_time = time()
