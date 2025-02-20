@@ -69,13 +69,13 @@ class Config:
         FASTA_FILEPATH = Path(
             os.getenv(
                 "INPUT_FASTA_PATH",
-                Path(__file__).parent.parent.parent
+                Path(__file__).parent.parent.parent.parent
                 / 'tests/test-data/queries.fasta')
         )
         METADATA_PATH = Path(
             os.getenv(
                 "INPUT_METADATA_CSV_FILEPATH",
-                Path(__file__).parent.parent.parent
+                Path(__file__).parent.parent.parent.parent
                 / 'tests/test-data/metadata.csv')
         )
 
