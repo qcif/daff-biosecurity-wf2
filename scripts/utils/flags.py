@@ -118,9 +118,9 @@ class Flag:
         return "danger"
 
     @staticmethod
-    def read_flags(query_ix, as_json=False):
+    def read_flags(query, as_json=False):
         """Read flags from CSV file."""
-        path = config.get_query_dir(query_ix) / config.FLAGS_JSON
+        path = config.get_query_dir(query) / config.FLAGS_JSON
         if not path.exists():
             return {}
         with path.open() as f:
@@ -139,15 +139,15 @@ class Flag:
     @classmethod
     def write(
         cls,
-        query_ix,
+        query_dir,
         flag_id,
         value,
         target=None,
         target_ix=None,
     ):
         """Write flags value to JSON file."""
-        path = config.get_query_dir(query_ix) / config.FLAGS_JSON
-        flags = cls.read_flags(query_ix, as_json=True)
+        path = query_dir / config.FLAGS_JSON
+        flags = cls.read_flags(query_dir, as_json=True)
         if target:
             flag = flags.get(flag_id, {})
             targets_dict = flag.get('targets', {})
@@ -160,7 +160,7 @@ class Flag:
             flags[flag_id] = value
         with path.open('w') as f:
             json.dump(flags, f, indent=2)
-        logger.info(f"Flag {flag_id}{value} written to {config.FLAGS_JSON}")
+        logger.info(f"Flag {flag_id}{value} written to {path}")
 
 
 class TARGETS:

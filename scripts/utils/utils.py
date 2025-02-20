@@ -40,4 +40,4 @@ def existing_path(path):
     path = Path(path)
     if not path.exists():
         raise FileNotFoundError(f"Path '{path.absolute()}' does not exist.")
-    return path
+    return path.absolute()
