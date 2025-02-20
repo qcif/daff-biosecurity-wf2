@@ -57,6 +57,37 @@ def taxonomies(
             taxonomy_data[taxid] = taxonomy
         else:
             logger.warning(
-                "Warning: Unexpected format in taxonkit stdout."
-                f" This may result in missing taxonomy information:\n{line}")
+                "[extract.taxonomies] Warning: Unexpected format in taxonkit"
+                " stdout. This may result in missing taxonomy information:\n"
+                + line)
     return taxonomy_data
+
+
+def taxids(species_list: list[str]) -> dict[str, str]:
+    """Use taxonkit name2taxid to extract taxids for given species."""
+    with tempfile.NamedTemporaryFile(mode='w+') as temp_file:
+        temp_file.write("\n".join(species_list))
+        temp_file.flush()
+        result = subprocess.run(
+            [
+                'taxonkit',
+                'name2taxid',
+                temp_file,
+                '--data-dir', TAXONKIT_DATA,
+            ],
+            capture_output=True,
+            text=True
+        )
+
+    taxid_data = {}
+    for line in result.stdout.strip().split('\n'):
+        fields = line.split('\t')
+        if len(fields) == 2:
+            species, taxid = fields
+            taxid_data[species] = taxid
+        else:
+            logger.warning(
+                "[extract.taxids] Warning: Unexpected format in taxonkit"
+                " stdout. This may result in missing taxid information:\n"
+                + line)
+    return taxid_data
