@@ -188,7 +188,7 @@ class Config:
     @property
     def metadata(self) -> dict[str, dict]:
         """Read metadata from CSV file."""
-        if getattr(self, 'metadata', None):
+        if getattr(self, '_metadata', None):
             return self._metadata
         self._metadata = {}
         with self.INPUTS.METADATA_PATH.open() as f:
