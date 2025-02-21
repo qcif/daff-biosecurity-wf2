@@ -98,7 +98,7 @@ class TestNcbiTaxonomy(unittest.TestCase):
         mock_args = unittest.mock.MagicMock()
         mock_args.taxdb_path = "mock_taxdb"
         mock_args.taxids_csv.open = mock_input_open
-        mock_args.output_csv.open = mock_output_open
+        mock_args.output_dir.__truediv__.return_value.open = mock_output_open
         mock_parse_args.return_value = mock_args
 
         m = mock_open(read_data=INPUT_CSV_DATA)
