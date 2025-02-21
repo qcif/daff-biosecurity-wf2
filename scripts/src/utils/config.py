@@ -56,6 +56,8 @@ class Config:
     ENTREZ_MAX_RETRIES = 3
     GBIF_FAST_LOCK_FILE = 'gbif-fast.lock'
     GBIF_SLOW_LOCK_FILE = 'gbif-slow.lock'
+    GBIF_MAX_RETRIES = 3
+    ERROR_FILENAME = 'errors.csv'
 
     class INPUTS:
         METADATA_CSV_HEADER = {
