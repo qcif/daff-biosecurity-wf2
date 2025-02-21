@@ -15,6 +15,7 @@ import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from src.entrez import genbank
+from src.utils import errors
 from src.gbif.relatives import RelatedTaxaGBIF
 from src.taxonomy import extract
 from src.utils import existing_path, serialize
@@ -51,6 +52,14 @@ def read_candidate_species(query_dir):
 
 
 def assess_coverage(query_dir):
+    def get_args(func, query_dir, target, taxid, locus, country):
+        if func == get_target_coverage:
+            return func, taxid, locus
+        elif func == get_related_coverage:
+            return func, target, locus, query_dir
+        elif func == get_related_country_coverage:
+            return func, target, locus, country, query_dir
+
     locus = config.get_locus_for_query(query_dir)
     country = config.get_country_for_query(query_dir)
     candidates = read_candidate_species(query_dir)
@@ -58,12 +67,22 @@ def assess_coverage(query_dir):
     toi_list = config.read_taxa_of_interest(query_dir)
     targets = candidates + toi_list + [pmi]
     target_taxids = extract.taxids(targets)
-    rev_target_taxids = {v: k for k, v in target_taxids.items()}
+    taxid_to_species = {v: k for k, v in target_taxids.items()}
+
+    target_gbif_taxa = {
+        target: RelatedTaxaGBIF(target)
+        for target in targets
+    }
 
     tasks = [
-        (func, target, taxid, locus, country)
-        if func == get_related_country_coverage
-        else (func, target, taxid, locus)
+        get_args(
+            func,
+            query_dir,
+            target_gbif_taxa[target],
+            taxid,
+            locus,
+            country,
+        )
         for target, taxid in target_taxids.values()
         for func in (
             get_target_coverage,
@@ -89,14 +108,32 @@ def assess_coverage(query_dir):
             logger.error(
                 f"[{MODULE_NAME}]: Error processing {func.__name__} for"
                 f" {target}:\n{exc}")
-            write_error(query_dir, func.__name__, target, exc)
+            species_name = (
+                taxid_to_species[target]
+                if target.isdigit()
+                else target
+            )
+            target_source = (
+                "candidate" if species_name in candidates
+                else "taxon of interest" if species_name in toi_list
+                else "preliminary ID"
+            )
+            msg = (
+                f"Error processing {func.__name__} for target species"
+                f" '{species_name}' ({target_source}). This target could not"
+                f" be evaluated.")
+            errors.write(
+                errors.LOCATIONS.DATABASE_COVERAGE,
+                msg,
+                exc,
+                query_dir=query_dir)
 
     candidate_results = {}
     toi_results = {}
     pmi_results = {}
 
     for taxid in target_taxids.values():
-        species_name = rev_target_taxids[taxid]
+        species_name = taxid_to_species[taxid]
         result = results[get_target_coverage.__name__][taxid]
         if species_name in candidates:
             candidate_results[species_name] = result
@@ -113,23 +150,69 @@ def assess_coverage(query_dir):
     )
 
 
-def get_target_coverage(target, taxid, locus):
+def get_target_coverage(taxid, locus):
     """Return a count of the number of accessions for the given target."""
+    # TODO: potential for caching taxid result here
     return genbank.fetch_gb_records(taxid, locus, count=True)
 
 
-def get_related_coverage(target, taxid, locus):
+def get_related_coverage(gbif_target, locus, query_dir):
     """Return a count of the number of related species (same genus) and the
     number of species which have at least one accession in the database.
     """
-    gbif_taxon = RelatedTaxaGBIF(target)
     species_names = [
         r["canonicalName"]
-        for r in gbif_taxon.related_species
+        for r in gbif_target.related_species
     ]
-    taxids = extract.taxids(species_names)
-    # genbank.fetch_gb_records(taxids.values(), locus, count=True)
+    # TODO: potential for caching GBIF related taxa here
+    results, errors = fetch_gb_records_for_species(species_names, locus)
+    if errors:
+        for species, exc in errors.items():
+            msg = (
+                f"Error fetching related species records from Entrez API:\n"
+                f"(species: '{species}').")
+            errors.write(
+                errors.DB_COVERAGE_RELATED,
+                msg,
+                exc,
+                query_dir=query_dir)
+    return results
 
+
+def get_related_country_coverage(
+    gbif_target,
+    locus,
+    country,
+    query_dir,
+):
+    species_names = [
+        r["canonicalName"]
+        for r in gbif_target.for_country(country)
+    ]
+    # TODO: potential for caching GBIF related/country taxa here
+    results, errors = fetch_gb_records_for_species(species_names, locus)
+    if errors:
+        for species, exc in errors.items():
+            msg = (
+                f"Error fetching related/country species records from Entrez"
+                f" API (species: '{species}').")
+            errors.write(
+                errors.DB_COVERAGE_RELATED_COUNTRY,
+                msg,
+                exc,
+                query_dir=query_dir)
+    return results
+
+
+def fetch_gb_records_for_species(species_names, locus):
+    """Fetch a count of the number of Genbank accessions for each species in
+    the list.
+    """
+    taxids = extract.taxids(species_names)
+    taxid_to_species = {
+        v: k
+        for k, v in taxids.items()
+    }
     tasks = [
         (taxid, locus)
         for taxid in taxids.values()
@@ -137,11 +220,12 @@ def get_related_coverage(target, taxid, locus):
 
     with ThreadPoolExecutor() as executor:
         future_to_task = {
-            executor.submit(genbank.fetch_gb_records, *task): task
+            executor.submit(genbank.fetch_gb_records, *task, count=True): task
             for task in tasks
         }
 
     results = {}
+    errors = []
     for future in as_completed(future_to_task):
         taxid, _ = future_to_task[future]
         try:
@@ -150,18 +234,17 @@ def get_related_coverage(target, taxid, locus):
             logger.error(
                 f"[{MODULE_NAME}]: Error processing fetch_gb_records for"
                 f" taxid {taxid}:\n{exc}")
-            write_error(query_dir, func.__name__, target, exc)
+            errors.append((taxid_to_species[taxid], exc))
 
-
-def get_related_country_coverage(target, taxid, locus, country):
-    pass
+    species_counts = {
+        taxid_to_species[taxid]: count
+        for taxid, count in results.items()
+    }
+    # TODO: potential for caching related species counts here
+    return species_counts, errors
 
 
 def write_db_coverage(query_dir, results):
-    pass
-
-
-def write_error(query_dir, func_name, target, exc):
     pass
 
 
