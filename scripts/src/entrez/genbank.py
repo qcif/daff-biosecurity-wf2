@@ -10,7 +10,6 @@ from xml.etree import ElementTree as ET
 from ..utils.config import Config
 
 config = Config()
-filelock = FileLock(config.entrez_lock_file)
 logger = logging.getLogger(__name__)
 
 DEBUG_REQUESTS = True
@@ -143,7 +142,7 @@ def fetch_entrez(
         "db": db,
     })
     while True:
-        with filelock:
+        with FileLock(config.entrez_lock_file):
             # Ensure that requests are sent at max 10/sec
             time.sleep(0.11)
         try:
