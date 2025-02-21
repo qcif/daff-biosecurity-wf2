@@ -28,7 +28,7 @@ MODULE_NAME = "Database Coverage"
 
 def main():
     args = parse_args()
-    config.set_output_dir(args.output_dir)
+    config.configure(args.output_dir)
     config.configure_query_logger(args.query_dir)
     assess_coverage(args.query_dir)
 
@@ -82,6 +82,8 @@ def assess_coverage(query_dir):
     for future in as_completed(future_to_task):
         func, target = future_to_task[future][:2]
         try:
+            if func.__name__ not in results:
+                results[func.__name__] = {}
             results[func.__name__][target] = future.result()
         except Exception as exc:
             logger.error(
@@ -126,6 +128,29 @@ def get_related_coverage(target, taxid, locus):
         for r in gbif_taxon.related_species
     ]
     taxids = extract.taxids(species_names)
+    # genbank.fetch_gb_records(taxids.values(), locus, count=True)
+
+    tasks = [
+        (taxid, locus)
+        for taxid in taxids.values()
+    ]
+
+    with ThreadPoolExecutor() as executor:
+        future_to_task = {
+            executor.submit(genbank.fetch_gb_records, *task): task
+            for task in tasks
+        }
+
+    results = {}
+    for future in as_completed(future_to_task):
+        taxid, _ = future_to_task[future]
+        try:
+            results[taxid] = future.result()
+        except Exception as exc:
+            logger.error(
+                f"[{MODULE_NAME}]: Error processing fetch_gb_records for"
+                f" taxid {taxid}:\n{exc}")
+            write_error(query_dir, func.__name__, target, exc)
 
 
 def get_related_country_coverage(target, taxid, locus, country):

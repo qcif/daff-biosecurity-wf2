@@ -20,6 +20,7 @@ config = Config()
 
 def main():
     args = _parse_args()
+    config.configure(args.output_dir)
     with args.taxids_csv.open() as taxids_file:
         accession_taxids = {
             row[0]: row[1]
@@ -54,6 +55,13 @@ def _parse_args():
         help='CSV file where taxonomy data will be written. Defaults to'
              f' {default_output_csv}',
         default=default_output_csv,
+    )
+    parser.add_argument(
+        "--output_dir",
+        type=existing_path,
+        help="Directory to save parsed output files (JSON and FASTA). Defaults"
+             f" to env variable 'OUTPUT_DIR' or '{config.output_dir}'.",
+        default=config.output_dir,
     )
     return parser.parse_args()
 

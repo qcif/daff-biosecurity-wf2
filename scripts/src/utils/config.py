@@ -98,7 +98,9 @@ class Config:
     class REPORT:
         TITLE = "Taxonomic assignment report"
 
-    def __init__(self):
+    def configure(self, output_dir=None):
+        if output_dir:
+            self.set_output_dir(output_dir)
         conf = get_logging_config(self.output_dir / self.LOG_FILENAME)
         dictConfig(conf)
 
