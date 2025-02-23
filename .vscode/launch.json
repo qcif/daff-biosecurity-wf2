@@ -9,7 +9,8 @@
                 "discover",
                 "-s", "tests",
                 "-p", "test*.py",
-                "-b"
+                // "-p", "test_taxonkit.py",
+                "-b",
             ],
             "env": {
                 "GENBANK_CONCURRENCY_TEST": "0",  // High network traffic

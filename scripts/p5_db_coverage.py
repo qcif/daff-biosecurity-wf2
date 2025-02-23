@@ -10,7 +10,7 @@ species which have occurence records in the same country as the target species.
 """
 
 import argparse
-import json
+# import json
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -18,7 +18,7 @@ from src.entrez import genbank
 from src.utils import errors
 from src.gbif.relatives import RelatedTaxaGBIF
 from src.taxonomy import extract
-from src.utils import existing_path, serialize
+from src.utils import existing_path  # , serialize
 from src.utils.config import Config
 
 logger = logging.getLogger(__name__)

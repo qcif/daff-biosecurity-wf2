@@ -156,7 +156,6 @@ class RelatedTaxaGBIF:
             res = throttle.with_retry(
                 pygbif.occurrences.search,
                 args,
-                endpoint=ENDPOINTS.FAST,
             )
             records += res['results']
             try:
