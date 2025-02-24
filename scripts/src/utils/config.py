@@ -199,7 +199,7 @@ class Config:
         with self.INPUTS.METADATA_PATH.open() as f:
             header = self.INPUTS.METADATA_CSV_HEADER
             for row in csv.DictReader(f):
-                sample_id = row.pop(header["sample_id"])
+                sample_id = row.pop(header["sample_id"]).split('.')[0]
                 self._metadata[sample_id] = {
                     key: (
                         [
