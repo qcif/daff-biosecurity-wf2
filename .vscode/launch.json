@@ -52,6 +52,15 @@
         {
             "type": "debugpy",
             "request": "launch",
+            "name": "P5 DB coverage",
+            "program": "${workspaceFolder}/scripts/p5_db_coverage.py",
+            "args": [
+                "output/query_001_LC438549.1"
+            ]
+        },
+        {
+            "type": "debugpy",
+            "request": "launch",
             "name": "Genbank",
             "module": "entrez.genbank",
             "cwd": "${workspaceFolder}/scripts"
