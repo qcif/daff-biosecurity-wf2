@@ -68,13 +68,8 @@
         {
             "type": "debugpy",
             "request": "launch",
-            "name": "GBIF species fetch",
-            "program": "${workspaceFolder}/scripts/gbif/fetch_related_species.py",
-            "args": [
-                "Cheiloxena aitori",
-                "--country", "AU",
-                "--output", "output/relatives.json"
-            ]
+            "name": "GBIF related species",
+            "program": "${workspaceFolder}/scripts/gbif/relatives.py",
         },
         {
             "type": "debugpy",
