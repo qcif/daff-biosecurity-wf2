@@ -7,6 +7,7 @@ file is used to limit the number of concurrent requests.
 
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from pprint import pformat
 
 from src.entrez import genbank
 from src.utils import errors
@@ -43,6 +44,11 @@ def assess_coverage(query_dir):
     target_taxids = extract.taxids(targets)
     taxid_to_species = {v: k for k, v in target_taxids.items()}
 
+    logger.info(
+        f"[{MODULE_NAME}]: Assessing database coverage for {len(targets)}"
+        f" species at locus '{locus}' in country '{country}'."
+    )
+
     target_gbif_taxa = {
         target: RelatedTaxaGBIF(target)
         for target in targets
@@ -66,6 +72,9 @@ def assess_coverage(query_dir):
     ]
 
     with ThreadPoolExecutor() as executor:
+        logger.info(
+            f"[{MODULE_NAME}]: Threading tasks: {pformat(tasks)}."
+        )
         future_to_task = {
             executor.submit(*task): task
             for task in tasks
@@ -126,6 +135,10 @@ def assess_coverage(query_dir):
 def get_target_coverage(taxid, locus):
     """Return a count of the number of accessions for the given target."""
     # TODO: potential for caching taxid result here
+    logger.info(
+        f"[{MODULE_NAME}]: Fetching Genbank records for target species"
+        f" (taxid: '{taxid}', locus: '{locus}')."
+    )
     return genbank.fetch_gb_records(taxid, locus, count=True)
 
 
@@ -137,6 +150,11 @@ def get_related_coverage(gbif_target, locus, query_dir):
         r["canonicalName"]
         for r in gbif_target.related_species
     ]
+    logger.info(
+        f"[{MODULE_NAME}]: Fetching Genbank records for target"
+        f" {gbif_target.taxon} (locus: '{locus}') - {len(species_names)}"
+        f" related species"
+    )
     # TODO: potential for caching GBIF related taxa here
     results, errors = fetch_gb_records_for_species(species_names, locus)
     if errors:
@@ -163,6 +181,11 @@ def get_related_country_coverage(
         for r in gbif_target.for_country(country)
     ]
     # TODO: potential for caching GBIF related/country taxa here
+    logger.info(
+        f"[{MODULE_NAME}]: Fetching Genbank records for target"
+        f" {gbif_target.taxon} (locus: '{locus}'; country: '{country}') -"
+        f" {len(species_names)} related species"
+    )
     results, errors = fetch_gb_records_for_species(species_names, locus)
     if errors:
         for species, exc in errors.items():
