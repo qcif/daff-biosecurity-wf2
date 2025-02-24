@@ -87,6 +87,9 @@ def taxids(species_list: list[str]) -> dict[str, str]:
         if len(fields) == 2:
             species, taxid = fields
             taxid_data[species] = taxid
+        elif field := fields[0].strip() and len(fields) == 1:
+            species = field
+            taxid_data[species] = None
         else:
             logger.warning(
                 "[extract.taxids] Warning: Unexpected format in taxonkit"

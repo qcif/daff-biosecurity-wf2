@@ -138,10 +138,6 @@ def assess_coverage(query_dir):
 def get_target_coverage(taxid, locus):
     """Return a count of the number of accessions for the given target."""
     # TODO: potential for caching taxid result here
-    logger.info(
-        f"[{MODULE_NAME}]: Fetching Genbank records for target species"
-        f" (taxid: '{taxid}', locus: '{locus}')."
-    )
     return genbank.fetch_gb_records(taxid, locus, count=True)
 
 
@@ -208,9 +204,14 @@ def fetch_gb_records_for_species(species_names, locus):
     the list.
     """
     taxids = extract.taxids(species_names)
+    species_without_taxid = [
+        k for k, v in taxids.items()
+        if v is None
+    ]
     taxid_to_species = {
         v: k
         for k, v in taxids.items()
+        if v is not None
     }
     tasks = [
         (taxid, locus)
@@ -239,5 +240,9 @@ def fetch_gb_records_for_species(species_names, locus):
         taxid_to_species[taxid]: count
         for taxid, count in results.items()
     }
+    species_counts.update({
+        species: 0
+        for species in species_without_taxid
+    })
     # TODO: potential for caching related species counts here
     return species_counts, errors
