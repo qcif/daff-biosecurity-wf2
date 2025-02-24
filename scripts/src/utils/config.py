@@ -14,7 +14,7 @@ from pathlib import Path
 
 from .log import get_logging_config
 from .utils import path_safe_str
-from .utils import countries
+from . import countries
 
 logger = logging.getLogger(__name__)
 
@@ -189,7 +189,7 @@ class Config:
     def get_sample_id(self, query):
         """Resolve query index/dir to sample ID."""
         query_ix = self.get_query_ix(query)
-        return self.read_query_fasta(query_ix).id
+        return self.read_query_fasta(query_ix).id.split('.')[0]
 
     @property
     def metadata(self) -> dict[str, dict]:
@@ -202,14 +202,7 @@ class Config:
             for row in csv.DictReader(f):
                 sample_id = row.pop(header["sample_id"]).split('.')[0]
                 self._metadata[sample_id] = {
-                    key: (
-                        [
-                            x.strip()
-                            for x in row[colname].split('|')
-                        ]
-                        if key == header["taxa_of_interest"]
-                        else row[colname].strip()
-                    )
+                    key: row[colname].strip()
                     for key, colname in header.items()
                     if key != "sample_id"
                 }

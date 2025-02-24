@@ -23,7 +23,10 @@ MODULE_NAME = "Database Coverage"
 
 def read_candidate_species(query_dir):
     candidates = config.read_json(query_dir / config.CANDIDATES_JSON)
-    return candidates["species"]
+    return [
+        c["species"]
+        for c in candidates["species"]
+    ]
 
 
 def assess_coverage(query_dir):
@@ -63,7 +66,7 @@ def assess_coverage(query_dir):
             locus,
             country,
         )
-        for target, taxid in target_taxids.values()
+        for target, taxid in target_taxids.items()
         for func in (
             get_target_coverage,
             get_related_coverage,
@@ -93,7 +96,7 @@ def assess_coverage(query_dir):
                 f" {target}:\n{exc}")
             species_name = (
                 taxid_to_species[target]
-                if target.isdigit()
+                if isinstance(target, str)
                 else target
             )
             target_source = (
@@ -158,7 +161,7 @@ def get_related_coverage(gbif_target, locus, query_dir):
     # TODO: potential for caching GBIF related taxa here
     results, errors = fetch_gb_records_for_species(species_names, locus)
     if errors:
-        for species, exc in errors.items():
+        for species, exc in errors:
             msg = (
                 f"Error fetching related species records from Entrez API:\n"
                 f"(species: '{species}').")

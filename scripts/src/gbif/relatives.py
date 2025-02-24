@@ -81,6 +81,12 @@ class RelatedTaxaGBIF:
         self.genus_key = self._get_genus_key(taxon, rank)
         self.related_species = self.fetch_related()
 
+    def __str__(self):
+        return f"{self.__class__.__name__}: {self.taxon} ({self.rank})"
+
+    def __repr__(self):
+        return self.__str__()
+
     def _get_genus_key(self, taxon, rank):
         args = {
             'q': taxon,
@@ -98,7 +104,10 @@ class RelatedTaxaGBIF:
                 logger.info(f"Genus key found for taxon {taxon}:"
                             f" {record['genusKey']}")
                 return record['genusKey']
-        raise ValueError(f"Genus key not found for taxon {taxon}.")
+        raise ValueError(
+            f"Genus key not found for taxon {taxon}. Taxonomic records cannot"
+            " be retrieved for this species name - please check that this"
+            " species name is correct.")
 
     def _is_accepted(self, record):
         status_key = 'status' if 'status' in record else 'taxonomicStatus'

@@ -72,7 +72,7 @@ def taxids(species_list: list[str]) -> dict[str, str]:
             [
                 'taxonkit',
                 'name2taxid',
-                temp_file,
+                temp_file.name,
                 '--data-dir', TAXONKIT_DATA,
             ],
             capture_output=True,
@@ -81,6 +81,8 @@ def taxids(species_list: list[str]) -> dict[str, str]:
 
     taxid_data = {}
     for line in result.stdout.strip().split('\n'):
+        if not line.strip():
+            continue
         fields = line.split('\t')
         if len(fields) == 2:
             species, taxid = fields
