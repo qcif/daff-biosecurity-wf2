@@ -64,7 +64,11 @@ def taxonomies(
 
 
 def taxids(species_list: list[str]) -> dict[str, str]:
-    """Use taxonkit name2taxid to extract taxids for given species."""
+    """Use taxonkit name2taxid to extract taxids for given species.
+
+    These species did not come from the core_nt database, so they might not
+    even have a taxid if they are unsequenced/rare/new species.
+    """
     with tempfile.NamedTemporaryFile(mode='w+') as temp_file:
         temp_file.write("\n".join(species_list))
         temp_file.flush()
@@ -86,8 +90,8 @@ def taxids(species_list: list[str]) -> dict[str, str]:
         fields = line.split('\t')
         if len(fields) == 2:
             species, taxid = fields
-            taxid_data[species] = taxid
-        elif field := fields[0].strip() and len(fields) == 1:
+            taxid_data[species] = taxid or None
+        elif (field := fields[0].strip()) and len(fields) == 1:
             species = field
             taxid_data[species] = None
         else:

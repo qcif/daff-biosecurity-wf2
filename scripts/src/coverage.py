@@ -75,7 +75,7 @@ def assess_coverage(query_dir):
     ]
 
     with ThreadPoolExecutor() as executor:
-        logger.info(
+        logger.debug(
             f"[{MODULE_NAME}]: Threading tasks: {pformat(tasks)}."
         )
         future_to_task = {
@@ -120,13 +120,30 @@ def assess_coverage(query_dir):
 
     for taxid in target_taxids.values():
         species_name = taxid_to_species[taxid]
+        candidate_results[species_name] = {}
+        toi_results[species_name] = {}
+        pmi_results[species_name] = {}
         result = results[get_target_coverage.__name__][taxid]
         if species_name in candidates:
-            candidate_results[species_name] = result
+            candidate_results[species_name]['target'] = result
         if species_name in toi_list:
-            toi_results[species_name] = result
+            toi_results[species_name]['target'] = result
         if species_name == pmi:
-            pmi_results[species_name] = result
+            pmi_results[species_name]['target'] = result
+
+    for species_name, gbif_taxon in target_gbif_taxa.items():
+        related_result = results[get_related_coverage.__name__][gbif_taxon]
+        country_result = results[get_related_country_coverage.__name__][
+            gbif_taxon]
+        if species_name in candidates:
+            candidate_results[species_name]['related'] = related_result
+            candidate_results[species_name]['country'] = country_result
+        if species_name in toi_list:
+            toi_results[species_name]['related'] = related_result
+            toi_results[species_name]['country'] = country_result
+        if species_name == pmi:
+            pmi_results[species_name]['related'] = related_result
+            pmi_results[species_name]['country'] = country_result
 
     return {
         "candidates": candidate_results,
@@ -137,8 +154,8 @@ def assess_coverage(query_dir):
 
 def get_target_coverage(taxid, locus):
     """Return a count of the number of accessions for the given target."""
-    # TODO: potential for caching taxid result here
-    return genbank.fetch_gb_records(taxid, locus, count=True)
+    # TODO: potential for caching gb count result here
+    return genbank.fetch_gb_records(locus, taxid, count=True)
 
 
 def get_related_coverage(gbif_target, locus, query_dir):
@@ -214,8 +231,9 @@ def fetch_gb_records_for_species(species_names, locus):
         if v is not None
     }
     tasks = [
-        (taxid, locus)
+        (locus, taxid)
         for taxid in taxids.values()
+        if taxid is not None
     ]
 
     with ThreadPoolExecutor() as executor:
@@ -227,7 +245,7 @@ def fetch_gb_records_for_species(species_names, locus):
     results = {}
     errors = []
     for future in as_completed(future_to_task):
-        taxid, _ = future_to_task[future]
+        locus, taxid = future_to_task[future]
         try:
             results[taxid] = future.result()
         except Exception as exc:

@@ -11,6 +11,11 @@ ERROR_CSV_HEADER = [
 ]
 
 
+class APIError(Exception):
+    """Raise this exception when an API request fails."""
+    pass
+
+
 class LOCATIONS:
     """These locations define where a reportable exception occurred and
     can be used to display it in the appropriate location in the report.
@@ -27,7 +32,7 @@ def write(location, msg, exc, query_dir=None):
         path.write_text(','.join(ERROR_CSV_HEADER) + '\n')
     with path.open('a') as f:
         f.write(','.join[
-            location,
+            str(location),
             msg,
-            exc,
+            str(exc),
         ] + '\n')

@@ -8,6 +8,7 @@ from pprint import pformat
 from types import SimpleNamespace
 
 from ..utils import config
+from ..utils.errors import APIError
 
 GBIF_SPECIES_BASE_URL = 'https://www.gbif.org/species/'
 
@@ -62,11 +63,17 @@ class Throttle:
             except Exception as exc:
                 retries -= 1
                 if retries <= 0:
-                    raise exc
+                    raise APIError(
+                        'Failed to fetch data from GBIF API after'
+                        f' {config.GBIF_MAX_RETRIES} retries. Please try'
+                        f' resuming this job at a later time.'
+                        f'\nException: {exc}'
+                    )
                 logger.warning(
                     "Exception encountered in call to GBIF endpoint"
                     f" {func.__name__} Retrying {retries} more times."
-                    f" Args: {pformat(args)}\n{exc}")
+                    f" Exception: {exc}\n"
+                    f" Args:\n{pformat(args)}")
                 time.sleep(1)
 
 
