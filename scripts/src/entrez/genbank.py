@@ -21,6 +21,8 @@ LOCI = {  # TODO: update with DAFF - maybe read from allowed_loci.txt file?
 }
 
 Entrez.email = config.USER_EMAIL
+if config.NCBI_API_KEY:
+    Entrez.api_key = config.NCBI_API_KEY
 
 
 class GbRecordSource:

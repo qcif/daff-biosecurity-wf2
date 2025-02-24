@@ -24,7 +24,8 @@ QUERY_DIR_PREFIX = 'query_'
 
 class Config:
 
-    USER_EMAIL = os.getenv("USER_EMAIL", "c.hyde@qcif.edu.au")
+    USER_EMAIL = os.getenv("USER_EMAIL")
+    NCBI_API_KEY = os.getenv("NCBI_API_KEY")
     TIMESTAMP_FILENAME = os.getenv("TIMESTAMP_FILENAME", 'timestamp.txt')
     INPUT_FASTA_FILEPATH = Path(os.getenv("INPUT_FASTA_FILEPATH",
                                           "tests/test-data/query.fasta"))
