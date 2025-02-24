@@ -14,6 +14,7 @@ from pathlib import Path
 
 from .log import get_logging_config
 from .utils import path_safe_str
+from .utils import countries
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +46,9 @@ class Config:
                                  'taxa_of_concern_detected.csv')
     PMI_MATCH_CSV = os.getenv("PMI_MATCH_CSV_FILENAME",
                               'preliminary_id_match.csv')
+    DB_COVERAGE_JSON = os.getenv("DB_COVERAGE_JSON_FILENAME",
+                                 'db_coverage.json')
+
     GBIF_LIMIT_RECORDS = int(os.getenv("GBIF_LIMIT_RECORDS", 500))
     GBIF_ACCEPTED_STATUS = os.getenv(
         "GBIF_ACCEPTED_STATUS",
@@ -65,7 +69,7 @@ class Config:
             "locus": "locus",
             "preliminary_id": "preliminary_id",
             "taxa_of_interest": "taxa_of_interest",
-            "country_code": "country_code",
+            "country": "country",
             "host": "host",
         }
         FASTA_FILEPATH = Path(
@@ -186,13 +190,6 @@ class Config:
         query_ix = self.get_query_ix(query)
         return self.read_query_fasta(query_ix).id
 
-    def get_pmi_for_query(self, query):
-        query_ix = self.get_query_ix(query)
-        sample_id = self.get_sample_id(query_ix)
-        return self.metadata[sample_id][
-            self.INPUTS.METADATA_CSV_HEADER["preliminary_id"]
-        ]
-
     @property
     def metadata(self) -> dict[str, dict]:
         """Read metadata from CSV file."""
@@ -217,20 +214,28 @@ class Config:
                 }
         return self._metadata
 
-    def get_locus_for_query(self, query):
+    def _get_metadata_for_query(self, query, field) -> str:
         sample_id = self.get_sample_id(query)
         return self.metadata[sample_id][
-            self.INPUTS.METADATA_CSV_HEADER["locus"]
+            self.INPUTS.METADATA_CSV_HEADER[field]
         ]
 
-    def read_taxa_of_interest(self, query) -> list[str]:
-        """Read taxa of interest from TOI file."""
-        sample_id = self.get_sample_id(query)
-        metadata = self.metadata
-        colname = self.INPUTS.METADATA_CSV_HEADER["taxa_of_interest"]
-        return metadata[sample_id][colname]
+    def get_locus_for_query(self, query) -> str:
+        return self._get_metadata_for_query(query, "locus")
 
-    def read_query_fasta(self, index=None):
+    def get_pmi_for_query(self, query) -> str:
+        return self._get_metadata_for_query(query, "preliminary_id")
+
+    def get_country_code_for_query(self, query) -> str:
+        country = self._get_metadata_for_query(query, "country")
+        return countries.get_code(country)
+
+    def get_toi_list_for_query(self, query) -> list[str]:
+        """Read taxa of interest from TOI file."""
+        toi_field = self._get_metadata_for_query(query, "taxa_of_interest")
+        return toi_field.split('|')
+
+    def read_query_fasta(self, index=None) -> list[SeqIO.SeqRecord]:
         """Read query FASTA file."""
         if not hasattr(self, "query_sequences"):
             self.query_sequences = list(
@@ -245,13 +250,13 @@ class Config:
         path = query_dir / self.HITS_JSON
         return self.read_json(path)
 
-    def read_blast_hits_fasta(self, query):
+    def read_blast_hits_fasta(self, query) -> list[SeqIO.SeqRecord]:
         """Read BLAST hits from JSON file."""
         query_dir = self.get_query_dir(query)
         path = query_dir / self.HITS_FASTA
         return self.read_fasta(path)
 
-    def read_taxonomy_file(self):
+    def read_taxonomy_file(self) -> dict[str, dict[str, str]]:
         """Read taxonomy from CSV file."""
         taxonomies = {}
         with self.taxonomy_path.open() as f:
@@ -268,8 +273,8 @@ class Config:
         """Read FASTA file."""
         return list(SeqIO.parse(path, "fasta"))
 
-    def to_json(self):
-        """Serialize object to JSON."""
+    def to_json(self) -> dict:
+        """Serialize object to JSON-friendly dict."""
         return {
             key: value
             for key, value in self.__dict__.items()
