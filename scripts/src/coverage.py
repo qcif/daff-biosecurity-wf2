@@ -166,6 +166,8 @@ def get_related_coverage(gbif_target, locus, query_dir):
         r["canonicalName"]
         for r in gbif_target.related_species
     ]
+    if not species_names:
+        return {}, []
     logger.info(
         f"[{MODULE_NAME}]: Fetching Genbank records for target"
         f" {gbif_target.taxon} (locus: '{locus}') - {len(species_names)}"
@@ -196,6 +198,8 @@ def get_related_country_coverage(
         r["canonicalName"]
         for r in gbif_target.for_country(country)
     ]
+    if not species_names:
+        return {}, []
     # TODO: potential for caching GBIF related/country taxa here
     logger.info(
         f"[{MODULE_NAME}]: Fetching Genbank records for target"
