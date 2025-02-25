@@ -31,7 +31,7 @@ def main():
         "species": species,
         "hits": hits,
     }
-    path = args.query_dir / config.CANDIDATES_JSON
+    path = args.query_dir / config.CANDIDATES_SOURCES_JSON
     with path.open('w') as f:
         json.dump(candidates, f, default=serialize, indent=2)
     logger.info(f"Candidate hits with source diversity data written to {path}")

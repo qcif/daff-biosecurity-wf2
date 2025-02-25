@@ -43,6 +43,8 @@ class Config:
     CANDIDATES_JSON = os.getenv("CANDIDATES_JSON_FILENAME", 'candidates.json')
     CANDIDATES_COUNT_FILE = os.getenv("CANDIDATES_COUNT_FILENAME",
                                       'candidates_count.txt')
+    CANDIDATES_SOURCES_JSON = os.getenv("CANDIDATES_SOURCES_JSON_FILENAME",
+                                        'candidates_sources.json')
     TOI_DETECTED_CSV = os.getenv("TOI_DETECTED_CSV_FILENAME",
                                  'taxa_of_concern_detected.csv')
     PMI_MATCH_CSV = os.getenv("PMI_MATCH_CSV_FILENAME",
