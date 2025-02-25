@@ -34,7 +34,7 @@
             "name": "P3 Assign taxonomy",
             "program": "${workspaceFolder}/scripts/p3_assign_taxonomy.py",
             "args": [
-                "output/query_001_LC438549.1"
+                "output/query_001_LC438549"
             ],
             "env": {
                 "INPUT_TOI_FILEPATH": "tests/test-data/taxa_of_interest.txt",
@@ -46,7 +46,7 @@
             "name": "P4 Source diversity",
             "program": "${workspaceFolder}/scripts/p4_source_diversity.py",
             "args": [
-                "output/query_001_LC438549.1"
+                "output/query_001_LC438549"
             ]
         },
         {
@@ -55,7 +55,7 @@
             "name": "P5 DB coverage",
             "program": "${workspaceFolder}/scripts/p5_db_coverage.py",
             "args": [
-                "output/query_001_LC438549.1"
+                "output/query_001_LC438549"
             ]
         },
         {
