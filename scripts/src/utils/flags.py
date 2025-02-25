@@ -1,6 +1,5 @@
 """Describe how flags are used to record outcomes."""
 
-import json
 import logging
 
 from .config import Config
@@ -10,39 +9,24 @@ logger = logging.getLogger(__name__)
 config = Config()
 
 
-class FLAGS:
-    """Flags for reporting outcomes."""
-    POSITIVE_ID = '1'
-    TOI = '2'
-    SOURCES = '3'
-    DB_COVERAGE_TARGET = '5.1'
-    DB_COVERAGE_RELATED = '5.2'
-    DB_COVERAGE_RELATED_COUNTRY = '5.3'
-    INTRASPECIES_DIVERSITY = '6'
-    PMI = '7'
-    A = "A"
-    B = "B"
-    C = "C"
-    D = "D"
-    E = "E"
-
-
 class Flag:
     """A flag to record discrete analytical outcomes.
 
-    If targets are provided, they should be a dictionary of TARGET.NAME:
-    {ix: value}, where ix matches the order of the <TARGET.NAME> taxa.
+    If a target is provided, it should be the target species name, with
+    target_type being one of ['candidate', 'pmi', 'toi'].
     """
 
     def __init__(
         self,
         flag_id,
         value: str = None,
-        targets: dict[str, dict[int, str]] = None,
+        target: str = None,
+        target_type: str = None,
     ):
         self.flag_id = flag_id
         self.value = value
-        self.targets = targets
+        self.target = target
+        self.target_type = target_type
 
     def __str__(self):
         return f"{self.flag_id}{self.value}"
@@ -53,28 +37,13 @@ class Flag:
     def to_json(self):
         data = {
             "flag_id": self.flag_id,
+            "value": self.value,
+            "target": self.target,
+            "level": self.get_level(),
+            "outcome": self.outcome(),
+            "explanation": self.explanation(),
+            "bs-class": self.get_bs_class(),
         }
-        if self.targets:
-            targets = {
-                target: {
-                    ix: {
-                        "value": value,
-                        "level": self.get_level(value),
-                        "outcome": self.outcome(value),
-                        "explanation": self.explanation(value),
-                        "bs-class": self.get_bs_class(value),
-                    }
-                    for ix, value in value.items()
-                }
-                for target, value in self.targets.items()
-            }
-            data["targets"] = targets
-        else:
-            data["value"] = self.value
-            data["level"] = self.get_level()
-            data["outcome"] = self.outcome()
-            data["explanation"] = self.explanation()
-            data["bs-class"] = self.get_bs_class()
 
         return data
 
@@ -82,33 +51,19 @@ class Flag:
     def name(self):
         return FLAG_DETAILS[self.flag_id]["name"]
 
-    def explanation(self, value=None):
-        return FLAG_DETAILS[self.flag_id]["explanation"][value or self.value]
+    def explanation(self):
+        return FLAG_DETAILS[self.flag_id]["explanation"][self.value]
 
-    def outcome(self, value=None):
-        return FLAG_DETAILS[self.flag_id]["outcome"][value or self.value]
+    def outcome(self):
+        return FLAG_DETAILS[self.flag_id]["outcome"][self.value]
 
-    def value_for_target(self, target, index=None, max_only=False):
-        if target == TARGETS.PMI:
-            return self.targets.get(target)
-        if index is not None:
-            try:
-                return self.targets.get(target)[index]
-            except KeyError:
-                raise ValueError(f"Index {index} is out of range for flag"
-                                 f" {self.flag_id} target {target}.")
-        if max_only:
-            return sorted(self.targets.get(target).values())[-1]
-        raise ValueError(f"You must provide either index or max_value when"
-                         f" requesting flag for target {target}.")
-
-    def get_level(self, value=None):
+    def get_level(self):
         """Return the warning level for the given value."""
-        return FLAG_DETAILS[self.flag_id]['level'][value or self.value]
+        return FLAG_DETAILS[self.flag_id]['level'][self.value]
 
-    def get_bs_class(self, value=None):
+    def get_bs_class(self):
         """Return the warning level for the given value."""
-        level = self.get_level(value)
+        level = self.get_level(self.value)
         if level == 0:
             return "secondary"
         if level == 1:
@@ -117,24 +72,42 @@ class Flag:
             return "warning"
         return "danger"
 
-    @staticmethod
-    def read_flags(query, as_json=False):
+    @classmethod
+    def read(cls, query, as_json=False):
         """Read flags from CSV file."""
-        path = config.get_query_dir(query) / config.FLAGS_JSON
-        if not path.exists():
-            return {}
-        with path.open() as f:
-            if as_json:
-                return json.load(f)
-            return {
-                flag_id: (
-                    Flag(flag_id, value=data)
-                    if isinstance(data, str)
-                    else
-                    Flag(flag_id, targets=data['targets'])
-                )
-                for flag_id, data in json.load(f).items()
-            }
+        pattern = (
+            config.get_query_dir(query)
+            / config.FLAG_FILE_TEMPLATE.format(identifier="*")
+        )
+
+        flags = {}
+        for path in pattern.parent.glob(pattern.name):
+            if path.is_file():
+                flag_id, target, target_type = cls._parse_flag_filename(path)
+                value = path.read_text().strip()
+                if not as_json:
+                    value = Flag(flag_id, value=value, target=target)
+                if target:
+                    flags[flag_id] = flags.get(flag_id, {})
+                    flags[flag_id][target_type] = flags[flag_id].get(
+                        target_type, {})
+                    flags[flag_id][target_type][target] = value
+                else:
+                    flags[flag_id] = value
+        return flags
+
+    def _parse_flag_filename(path):
+        """Parse flag filename to extract flag_id, target, target_type."""
+        stem = path.stem.split('flag_', 1)[1]
+        if '[' in stem:
+            flag_id, target = stem.split("[")
+            target_type, target = target.split("-")
+            target = target.replace("]", "").replace("_", " ")
+        else:
+            flag_id = stem
+            target = None
+            target_type = None
+        return flag_id, target, target_type
 
     @classmethod
     def write(
@@ -143,24 +116,41 @@ class Flag:
         flag_id,
         value,
         target=None,
-        target_ix=None,
+        target_type=None,
     ):
-        """Write flags value to JSON file."""
-        path = query_dir / config.FLAGS_JSON
-        flags = cls.read_flags(query_dir, as_json=True)
-        if target:
-            flag = flags.get(flag_id, {})
-            targets_dict = flag.get('targets', {})
-            target_dict = targets_dict.get(target, {})
-            target_dict[target_ix] = value
-            targets_dict[target] = target_dict
-            flag['targets'] = targets_dict
-            flags[flag_id] = flag
-        else:
-            flags[flag_id] = value
+        """Write flags value to JSON file.
+
+        target: the target taxon name
+        target_type: one of ['candidate', 'pmi', 'toi']
+        """
+        identifier = (
+            f"{flag_id}[{target_type}-{target}]"
+            if target
+            else flag_id
+        ).replace(' ', '_')
+        path = query_dir / config.FLAG_FILE_TEMPLATE.format(
+            identifier=identifier)
         with path.open('w') as f:
-            json.dump(flags, f, indent=2)
-        logger.info(f"Flag {flag_id}{value} written to {path}")
+            f.write(value)
+        target_str = f" (target {target_type}:{target})" if target else ""
+        logger.info(f"Flag {flag_id}{value}{target_str} written to {path}")
+
+
+class FLAGS:
+    """Flags for reporting outcomes."""
+    POSITIVE_ID = '1'
+    TOI = '2'
+    SOURCES = '4'
+    DB_COVERAGE_TARGET = '5.1'
+    DB_COVERAGE_RELATED = '5.2'
+    DB_COVERAGE_RELATED_COUNTRY = '5.3'
+    INTRASPECIES_DIVERSITY = '6'
+    PMI = '7'
+    A = "A"
+    B = "B"
+    C = "C"
+    D = "D"
+    E = "E"
 
 
 class TARGETS:

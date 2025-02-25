@@ -146,7 +146,7 @@ def _get_metadata(query_ix):
 
 def _draw_conclusions(query_ix):
     """Determine conclusions from outputs flags and files."""
-    flags = Flag.read_flags(query_ix)
+    flags = Flag.read(query_ix)
     return {
         'flags': {
             ix: flag.to_json()
@@ -264,7 +264,7 @@ def _get_toi_result(query_ix, flags):
 
 def _get_candidates(query_ix):
     """Read data for the candidate hits/taxa."""
-    flags = Flag.read_flags(query_ix)
+    flags = Flag.read(query_ix)
     query_dir = config.get_query_dir(query_ix)
     with open(query_dir / config.CANDIDATES_JSON) as f:
         candidates = json.load(f)
