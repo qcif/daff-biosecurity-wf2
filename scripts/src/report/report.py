@@ -29,7 +29,7 @@ def render(query_ix):
     # ! TODO: Remove this
     path = config.output_dir / 'example_report_context.json'
     with path.open('w') as f:
-        from utils import serialize
+        from src.utils import serialize
         print(f"Writing report context to {path}")
         json.dump(context, f, default=serialize, indent=2)
     # ! ~~~

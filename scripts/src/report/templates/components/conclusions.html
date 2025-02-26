@@ -6,7 +6,7 @@
       <strong>Taxonomic identity:</strong>
       {% if conclusions.summary.result.confirmed %}
       <em>
-        {{ conclusions.summary.result.taxonomy.species }}
+        {{ conclusions.summary.result.species }}
       </em>
       {% else %}
       <strong>Inconclusive</strong>
@@ -17,7 +17,7 @@
   </p>
 </div>
 
-<table class="table border alert-{{  conclusions.summary.pmi['bs-class'] }}">
+<table class="table border alert-{{ conclusions.summary.pmi['bs-class'] }}">
   <tr>
     <td>Preliminary morphology ID confirmed</td>
     <td style="width: 75px;">

@@ -63,7 +63,7 @@ class Flag:
 
     def get_bs_class(self):
         """Return the warning level for the given value."""
-        level = self.get_level(self.value)
+        level = self.get_level()
         if level == 0:
             return "secondary"
         if level == 1:
@@ -293,6 +293,12 @@ FLAG_DETAILS = {
         "level": {
             FLAGS.A: 1,
             FLAGS.B: 3,
+        },
+        "outcome": {
+            FLAGS.A: "The preliminary identification is supported by the"
+                     " molecular data",
+            FLAGS.B: "The preliminary identification is inconsistent with the"
+                     " molecular data",
         },
     },
 }

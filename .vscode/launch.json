@@ -75,7 +75,7 @@
             "type": "debugpy",
             "request": "launch",
             "name": "Workflow report",
-            "module": "report.report",
+            "module": "src.report.report",
             "cwd": "${workspaceFolder}/scripts",
             "env": {
                 "OUTPUT_DIR": "../output",
