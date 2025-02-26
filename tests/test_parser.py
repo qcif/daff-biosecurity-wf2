@@ -8,7 +8,6 @@ from scripts.src.blast.parse_xml import (
     calculate_hit_identity,
     calculate_hit_query_coverage,
     calculate_alignment_length,
-    _get_printed_alignment,
     parse_blast_xml
 )
 DATA_DIR = Path(__file__).parent / 'test-data'
@@ -45,7 +44,7 @@ class TestParseMethods(unittest.TestCase):
         hsp2.bits = 200
         hit_mock = MagicMock()
         hit_mock.hsps = [hsp1, hsp2]
-        hit_mock.effective_search_space = 1e10 
+        hit_mock.effective_search_space = 1e10
         result = calculate_hit_e_value(hit_mock,
                                        hit_mock.effective_search_space)
 
@@ -83,20 +82,51 @@ class TestParseMethods(unittest.TestCase):
         hsp1.align_length = 100
         hsp1.query_start = 1
         hsp1.query_end = 100
-        hsp1.sbjct_start = 1
-        hsp1.sbjct_end = 100
 
         hsp2.align_length = 150
         hsp2.query_start = 200
         hsp2.query_end = 350
-        hsp2.sbjct_start = 200
-        hsp2.sbjct_end = 350
 
         result = calculate_alignment_length([hsp1, hsp2])
         expected_alignment_length = (hsp1.query_end -
                                      hsp1.query_start + 1) + (
                                          hsp2.query_end -
                                          hsp2.query_start + 1)
+        self.assertEqual(result, expected_alignment_length)
+
+    def test_calculate_alignment_length_overlap(self):
+        hsp1 = MagicMock()
+        hsp2 = MagicMock()
+        hsp1.align_length = 50
+        hsp1.query_start = 1
+        hsp1.query_end = 50
+
+        hsp2.align_length = 40
+        hsp2.query_start = 40
+        hsp2.query_end = 80
+
+        hsps = [hsp1, hsp2]
+        result = calculate_alignment_length(hsps)
+        regions = [
+            (
+                min(hsp.query_start, hsp.query_end),
+                max(hsp.query_start, hsp.query_end))
+            for hsp in hsps
+        ]
+        regions.sort(key=lambda x: x[0])
+
+        # Merge overlapping regions
+        merged_regions = []
+        for start, end in regions:
+            if not merged_regions or merged_regions[-1][1] < start:
+                merged_regions.append((start, end))
+            else:
+                merged_regions[-1] = (
+                    merged_regions[-1][0],
+                    max(merged_regions[-1][1], end))
+
+        expected_alignment_length = sum(end - start + 1
+                                        for start, end in merged_regions)
         self.assertEqual(result, expected_alignment_length)
 
     def test_parse_blast_xml(self):
@@ -108,7 +138,8 @@ class TestParseMethods(unittest.TestCase):
             expected_json = json.load(f)
 
         # Assert that the results match the expected output
-        self.assertEqual(results[0]['query_title'], expected_json['query_title'])
+        self.assertEqual(results[0]['query_title'],
+                         expected_json['query_title'])
         self.assertEqual(results[0]['query_length'],
                          expected_json['query_length'])
         self.assertEqual(len(results[0]['hits']), len(expected_json['hits']))
