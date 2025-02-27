@@ -21,11 +21,11 @@ def get_logging_config(log_file):
                 "level": "DEBUG",
                 "formatter": "default",
                 "filename": log_file,
-                "mode": "a",
+                "mode": "w",
             },
         },
         "root": {
-            "level": "DEBUG",
+            "level": "INFO",
             "handlers": ["console", "file"],
         },
     }

@@ -16,7 +16,7 @@ config = Config()
 
 def main():
     args = _parse_args()
-    config.set_output_dir(args.output_dir)
+    config.configure(args.output_dir)
     hits, fastas = parse_blast_xml(args.blast_xml_path)
     _write_hits(hits)
     _write_fastas(fastas)

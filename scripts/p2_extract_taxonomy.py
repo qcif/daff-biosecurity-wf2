@@ -20,6 +20,7 @@ config = Config()
 
 def main():
     args = _parse_args()
+    config.configure(args.output_dir)
     with args.taxids_csv.open() as taxids_file:
         accession_taxids = {
             row[0]: row[1]
@@ -27,11 +28,10 @@ def main():
         }
     taxids = sorted(set(accession_taxids.values()))
     taxonomies = extract.taxonomies(taxids, taxdb=args.taxdb_path)
-    _write_csv(taxonomies, accession_taxids, args.output_csv)
+    _write_csv(taxonomies, accession_taxids)
 
 
 def _parse_args():
-    default_output_csv = config.output_dir / config.TAXONOMY_FILE
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         'taxids_csv',
@@ -48,19 +48,19 @@ def _parse_args():
         default=Path(TAXONKIT_DATA),
     )
     parser.add_argument(
-        '--output',
-        dest='output_csv',
-        type=Path,
-        help='CSV file where taxonomy data will be written. Defaults to'
-             f' {default_output_csv}',
-        default=default_output_csv,
+        "--output_dir",
+        type=existing_path,
+        help="Directory to save parsed output files (JSON and FASTA). Defaults"
+             f" to env variable 'OUTPUT_DIR' or '{config.output_dir}'.",
+        default=config.output_dir,
     )
     return parser.parse_args()
 
 
-def _write_csv(taxonomies, accession_taxids, output_csv):
-    output_csv.parent.mkdir(parents=True, exist_ok=True)
-    with output_csv.open('w') as output_file:
+def _write_csv(taxonomies, accession_taxids):
+    path = config.output_dir / config.TAXONOMY_FILE
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open('w') as output_file:
         writer = csv.DictWriter(
             output_file,
             fieldnames=['accession', 'taxid'] + TAXONOMIC_RANKS,
@@ -76,7 +76,7 @@ def _write_csv(taxonomies, accession_taxids, output_csv):
             if taxid in taxonomies
         ]
         writer.writerows(rows)
-    logger.info(f"Taxonomy records written to {output_csv}")
+    logger.info(f"Taxonomy records written to {path}")
 
 
 if __name__ == '__main__':

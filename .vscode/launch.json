@@ -9,7 +9,8 @@
                 "discover",
                 "-s", "tests",
                 "-p", "test*.py",
-                "-b"
+                // "-p", "test_taxonkit.py",
+                "-b",
             ],
             "env": {
                 "GENBANK_CONCURRENCY_TEST": "1",  // High network traffic
@@ -33,7 +34,7 @@
             "name": "P3 Assign taxonomy",
             "program": "${workspaceFolder}/scripts/p3_assign_taxonomy.py",
             "args": [
-                "output/query_001_LC438549.1"
+                "output/query_001_LC438549"
             ],
             "env": {
                 "INPUT_TOI_FILEPATH": "tests/test-data/taxa_of_interest.txt",
@@ -45,7 +46,16 @@
             "name": "P4 Source diversity",
             "program": "${workspaceFolder}/scripts/p4_source_diversity.py",
             "args": [
-                "output/query_001_LC438549.1"
+                "output/query_001_LC438549"
+            ]
+        },
+        {
+            "type": "debugpy",
+            "request": "launch",
+            "name": "P5 DB coverage",
+            "program": "${workspaceFolder}/scripts/p5_db_coverage.py",
+            "args": [
+                "output/query_001_LC438549"
             ]
         },
         {
@@ -58,19 +68,14 @@
         {
             "type": "debugpy",
             "request": "launch",
-            "name": "GBIF species fetch",
-            "program": "${workspaceFolder}/scripts/gbif/fetch_related_species.py",
-            "args": [
-                "Cheiloxena aitori",
-                "--country", "AU",
-                "--output", "output/relatives.json"
-            ]
+            "name": "GBIF related species",
+            "program": "${workspaceFolder}/scripts/src/gbif/relatives.py",
         },
         {
             "type": "debugpy",
             "request": "launch",
             "name": "Workflow report",
-            "module": "report.report",
+            "module": "src.report.report",
             "cwd": "${workspaceFolder}/scripts",
             "env": {
                 "OUTPUT_DIR": "../output",

@@ -10,7 +10,6 @@ from xml.etree import ElementTree as ET
 from ..utils.config import Config
 
 config = Config()
-filelock = FileLock(config.entrez_lock_file)
 logger = logging.getLogger(__name__)
 
 DEBUG_REQUESTS = True
@@ -21,7 +20,10 @@ LOCI = {  # TODO: update with DAFF - maybe read from allowed_loci.txt file?
   # others to be confirmed with DAFF
 }
 
+REQUEST_INTERVAL_SECONDS = 0.11 if config.NCBI_API_KEY else 0.34
 Entrez.email = config.USER_EMAIL
+if config.NCBI_API_KEY:
+    Entrez.api_key = config.NCBI_API_KEY
 
 
 class GbRecordSource:
@@ -143,18 +145,26 @@ def fetch_entrez(
         "db": db,
     })
     while True:
-        with filelock:
-            # Ensure that requests are sent at max 10/sec
-            time.sleep(0.11)
+        with FileLock(config.entrez_lock_file):
+            # Ensure that requests do not reach rate limits
+            time.sleep(REQUEST_INTERVAL_SECONDS)
         try:
+            logger.debug("Sending request to Entrez API...")
             handle = endpoint(**kwargs)
             data = read(handle)
             break
         except Exception as exc:
-            logger.warning(f"Error fetching data from Entrez API:\n{exc}")
+            logger.warning(f"Error fetching data from Entrez API: {exc}")
             if not retries:
                 logger.error("Max retries reached. Exiting.")
                 raise exc
+            sleep_seconds = 1
+            if '429' in str(exc):
+                sleep_seconds = 600
+                logger.warning(
+                    "Entrez rate limit exceeded. Waiting 10 minutes before"
+                    " next retry.")
+            time.sleep(sleep_seconds)
             logger.info(f"Retrying {retries} more times.")
             retries -= 1
         finally:
@@ -240,6 +250,7 @@ def fetch_gb_records(
         [f'"{term}"[Gene name]' for term in gene_names])
     query += f' AND txid{taxid}[Organism])'
     max_results = 1 if count else 100
+    logger.debug(f"Submitting Entrez query: <<{query}>>")
     results = fetch_entrez(
         endpoint=Entrez.esearch,
         term=query,

@@ -86,7 +86,8 @@ class TestNcbiTaxonomy(unittest.TestCase):
 
     @patch('subprocess.run')
     @patch("p2_extract_taxonomy._parse_args")
-    def test_main(self, mock_parse_args, mock_run):
+    @patch("p2_extract_taxonomy.config")
+    def test_main(self, mock_config, mock_parse_args, mock_run):
         """Test main() using mock_open for both read and write operations."""
         mock_run.side_effect = mock_subprocess_run
 
@@ -98,15 +99,20 @@ class TestNcbiTaxonomy(unittest.TestCase):
         mock_args = unittest.mock.MagicMock()
         mock_args.taxdb_path = "mock_taxdb"
         mock_args.taxids_csv.open = mock_input_open
-        mock_args.output_csv.open = mock_output_open
         mock_parse_args.return_value = mock_args
+
+        mock_output_dir = unittest.mock.MagicMock()
+        mock_output_dir.__truediv__.return_value = mock_output_dir
+        mock_output_dir.exists.return_value = True
+        mock_output_dir.open = mock_output_open
+        mock_config.output_dir = mock_output_dir
 
         m = mock_open(read_data=INPUT_CSV_DATA)
         with patch("builtins.open", m):
             p2_extract_taxonomy.main()
 
         # Verify that the expected write calls happened
-        mock_args.output_csv.open.assert_has_calls(
+        mock_output_open.assert_has_calls(
             EXPECTED_WRITE_CALLS,
             any_order=True,
         )

@@ -14,6 +14,7 @@ from pathlib import Path
 
 from .log import get_logging_config
 from .utils import path_safe_str
+from . import countries
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,8 @@ QUERY_DIR_PREFIX = 'query_'
 
 class Config:
 
-    USER_EMAIL = os.getenv("USER_EMAIL", "c.hyde@qcif.edu.au")
+    USER_EMAIL = os.getenv("USER_EMAIL")
+    NCBI_API_KEY = os.getenv("NCBI_API_KEY")
     TIMESTAMP_FILENAME = os.getenv("TIMESTAMP_FILENAME", 'timestamp.txt')
     INPUT_FASTA_FILEPATH = Path(os.getenv("INPUT_FASTA_FILEPATH",
                                           "tests/test-data/query.fasta"))
@@ -32,7 +34,6 @@ class Config:
     QUERY_TITLE_FILE = os.getenv("QUERY_TITLE_FILENAME", 'query_title.txt')
     HITS_JSON = os.getenv("HITS_JSON_FILENAME", 'hits.json')
     HITS_FASTA = os.getenv("HITS_FASTA_FILENAME", 'hits.fasta')
-    FLAGS_JSON = os.getenv("FLAGS_JSON_FILENAME", 'flags.json')
     TAXONOMY_ID_CSV = os.getenv("TAXONOMY_ID_CSV_FILENAME",
                                 'assigned_taxonomy.csv')
     CANDIDATES_FASTA = os.getenv("CANDIDATES_FASTA_FILENAME",
@@ -41,10 +42,18 @@ class Config:
     CANDIDATES_JSON = os.getenv("CANDIDATES_JSON_FILENAME", 'candidates.json')
     CANDIDATES_COUNT_FILE = os.getenv("CANDIDATES_COUNT_FILENAME",
                                       'candidates_count.txt')
+    CANDIDATES_SOURCES_JSON = os.getenv("CANDIDATES_SOURCES_JSON_FILENAME",
+                                        'candidates_sources.json')
     TOI_DETECTED_CSV = os.getenv("TOI_DETECTED_CSV_FILENAME",
                                  'taxa_of_concern_detected.csv')
     PMI_MATCH_CSV = os.getenv("PMI_MATCH_CSV_FILENAME",
                               'preliminary_id_match.csv')
+    DB_COVERAGE_JSON = os.getenv("DB_COVERAGE_JSON_FILENAME",
+                                 'db_coverage.json')
+    DB_COVERAGE_TOI_LIMIT = int(os.getenv("DB_COVERAGE_TOI_LIMIT", 10))
+
+    DB_COVERAGE_MAX_CANDIDATES = 3
+    FLAG_FILE_TEMPLATE = 'flag_{identifier}.txt'
     GBIF_LIMIT_RECORDS = int(os.getenv("GBIF_LIMIT_RECORDS", 500))
     GBIF_ACCEPTED_STATUS = os.getenv(
         "GBIF_ACCEPTED_STATUS",
@@ -56,6 +65,8 @@ class Config:
     ENTREZ_MAX_RETRIES = 3
     GBIF_FAST_LOCK_FILE = 'gbif-fast.lock'
     GBIF_SLOW_LOCK_FILE = 'gbif-slow.lock'
+    GBIF_MAX_RETRIES = 3
+    ERRORS_DIR = 'errors'
 
     class INPUTS:
         METADATA_CSV_HEADER = {
@@ -63,7 +74,7 @@ class Config:
             "locus": "locus",
             "preliminary_id": "preliminary_id",
             "taxa_of_interest": "taxa_of_interest",
-            "country_code": "country_code",
+            "country": "country",
             "host": "host",
         }
         FASTA_FILEPATH = Path(
@@ -98,7 +109,9 @@ class Config:
     class REPORT:
         TITLE = "Taxonomic assignment report"
 
-    def __init__(self):
+    def configure(self, output_dir=None):
+        if output_dir:
+            self.set_output_dir(output_dir)
         conf = get_logging_config(self.output_dir / self.LOG_FILENAME)
         dictConfig(conf)
 
@@ -114,42 +127,6 @@ class Config:
     def configure_query_logger(self, query_dir):
         conf = get_logging_config(query_dir / self.QUERY_LOG_FILENAME)
         dictConfig(conf)
-
-    @property
-    def taxonomy_path(self):
-        return self.output_dir / self.TAXONOMY_FILE
-
-    @property
-    def entrez_lock_file(self):
-        return self.output_dir / self.ENTREZ_LOCK_FILE
-
-    @property
-    def gbif_slow_lock_file(self):
-        return self.output_dir / self.GBIF_SLOW_LOCK_FILE
-
-    @property
-    def gbif_fast_lock_file(self):
-        return self.output_dir / self.GBIF_FAST_LOCK_FILE
-
-    @property
-    def start_time(self) -> datetime:
-        path = self.output_dir / self.TIMESTAMP_FILENAME
-        if path.exists():
-            ts = path.read_text().strip(' \n')
-            return datetime.strptime(ts, "%Y%m%d %H%M%S")
-        now = datetime.now()
-        timestamp = now.strftime("%Y%m%d %H%M%S")
-        path.write_text(timestamp)
-        return now
-
-    def get_report_path(self, query):
-        query_ix = self.get_query_ix(query)
-        return self.get_query_dir(query_ix) / path_safe_str(
-            REPORT_FILENAME.format(
-                sample_id=self.get_sample_id(query_ix).replace('.', '_'),
-                timestamp='NOW',  # self.timestamp, # ! TODO
-            )
-        )
 
     def get_query_ix(self, ix_or_dir):
         """Resolve query index/dir to query index."""
@@ -180,14 +157,34 @@ class Config:
     def get_sample_id(self, query):
         """Resolve query index/dir to sample ID."""
         query_ix = self.get_query_ix(query)
-        return self.read_query_fasta(query_ix).id
+        return self.read_query_fasta(query_ix).id.split('.')[0]
 
-    def get_pmi_for_query(self, query):
-        query_ix = self.get_query_ix(query)
-        sample_id = self.get_sample_id(query_ix)
-        return self.metadata[sample_id][
-            self.INPUTS.METADATA_CSV_HEADER["preliminary_id"]
-        ]
+    @property
+    def taxonomy_path(self):
+        return self.output_dir / self.TAXONOMY_FILE
+
+    @property
+    def entrez_lock_file(self):
+        return self.output_dir / self.ENTREZ_LOCK_FILE
+
+    @property
+    def gbif_slow_lock_file(self):
+        return self.output_dir / self.GBIF_SLOW_LOCK_FILE
+
+    @property
+    def gbif_fast_lock_file(self):
+        return self.output_dir / self.GBIF_FAST_LOCK_FILE
+
+    @property
+    def start_time(self) -> datetime:
+        path = self.output_dir / self.TIMESTAMP_FILENAME
+        if path.exists():
+            ts = path.read_text().strip(' \n')
+            return datetime.strptime(ts, "%Y%m%d %H%M%S")
+        now = datetime.now()
+        timestamp = now.strftime("%Y%m%d %H%M%S")
+        path.write_text(timestamp)
+        return now
 
     @property
     def metadata(self) -> dict[str, dict]:
@@ -198,35 +195,45 @@ class Config:
         with self.INPUTS.METADATA_PATH.open() as f:
             header = self.INPUTS.METADATA_CSV_HEADER
             for row in csv.DictReader(f):
-                sample_id = row.pop(header["sample_id"])
+                sample_id = row.pop(header["sample_id"]).split('.')[0]
                 self._metadata[sample_id] = {
-                    key: (
-                        [
-                            x.strip()
-                            for x in row[colname].split('|')
-                        ]
-                        if key == header["taxa_of_interest"]
-                        else row[colname].strip()
-                    )
+                    key: row[colname].strip()
                     for key, colname in header.items()
                     if key != "sample_id"
                 }
         return self._metadata
 
-    def get_locus_for_query(self, query):
+    def _get_metadata_for_query(self, query, field) -> str:
         sample_id = self.get_sample_id(query)
         return self.metadata[sample_id][
-            self.INPUTS.METADATA_CSV_HEADER["locus"]
+            self.INPUTS.METADATA_CSV_HEADER[field]
         ]
 
-    def read_taxa_of_interest(self, query) -> list[str]:
-        """Read taxa of interest from TOI file."""
-        sample_id = self.get_sample_id(query)
-        metadata = self.metadata
-        colname = self.INPUTS.METADATA_CSV_HEADER["taxa_of_interest"]
-        return metadata[sample_id][colname]
+    def get_locus_for_query(self, query) -> str:
+        return self._get_metadata_for_query(query, "locus")
 
-    def read_query_fasta(self, index=None):
+    def get_pmi_for_query(self, query) -> str:
+        return self._get_metadata_for_query(query, "preliminary_id")
+
+    def get_country_code_for_query(self, query) -> str:
+        country = self._get_metadata_for_query(query, "country")
+        return countries.get_code(country)
+
+    def get_toi_list_for_query(self, query) -> list[str]:
+        """Read taxa of interest from TOI file."""
+        toi_field = self._get_metadata_for_query(query, "taxa_of_interest")
+        return toi_field.split('|')
+
+    def get_report_path(self, query):
+        query_ix = self.get_query_ix(query)
+        return self.get_query_dir(query_ix) / path_safe_str(
+            REPORT_FILENAME.format(
+                sample_id=self.get_sample_id(query_ix).replace('.', '_'),
+                timestamp='NOW',  # self.timestamp, # ! TODO
+            )
+        )
+
+    def read_query_fasta(self, index=None) -> list[SeqIO.SeqRecord]:
         """Read query FASTA file."""
         if not hasattr(self, "query_sequences"):
             self.query_sequences = list(
@@ -241,13 +248,13 @@ class Config:
         path = query_dir / self.HITS_JSON
         return self.read_json(path)
 
-    def read_blast_hits_fasta(self, query):
+    def read_blast_hits_fasta(self, query) -> list[SeqIO.SeqRecord]:
         """Read BLAST hits from JSON file."""
         query_dir = self.get_query_dir(query)
         path = query_dir / self.HITS_FASTA
         return self.read_fasta(path)
 
-    def read_taxonomy_file(self):
+    def read_taxonomy_file(self) -> dict[str, dict[str, str]]:
         """Read taxonomy from CSV file."""
         taxonomies = {}
         with self.taxonomy_path.open() as f:
@@ -264,8 +271,8 @@ class Config:
         """Read FASTA file."""
         return list(SeqIO.parse(path, "fasta"))
 
-    def to_json(self):
-        """Serialize object to JSON."""
+    def to_json(self) -> dict:
+        """Serialize object to JSON-friendly dict."""
         return {
             key: value
             for key, value in self.__dict__.items()

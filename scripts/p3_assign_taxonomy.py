@@ -109,8 +109,6 @@ def _assign_species_id(hits, query_dir):
             if hit["species"] == species["species"]
         )
 
-    taxonomic_id = _write_taxonomic_id(query_dir, candidate_species_strict)
-    _write_pmi_match(taxonomic_id, query_ix, query_dir)
     _write_candidate_flags(
         query_dir,
         candidate_species_strict,
@@ -121,6 +119,8 @@ def _assign_species_id(hits, query_dir):
         candidate_hits_strict or candidate_hits,
         candidate_species_strict or candidate_species,
     )
+    taxonomic_id = _write_taxonomic_id(query_dir, candidate_species_strict)
+    _write_pmi_match(taxonomic_id, query_ix, query_dir)
     return candidate_species_strict or candidate_species
 
 
@@ -238,7 +238,7 @@ def _detect_taxa_of_interest(candidate_species, query_dir):
     Each TOI can be at any taxonomic level, so need to check at appropriate
     taxonomic level.
     """
-    taxa_of_interest = config.read_taxa_of_interest(query_dir)
+    taxa_of_interest = config.get_toi_list_for_query(query_dir)
     if not taxa_of_interest:
         logger.info("No taxa of interest provided - no output written.")
         return
