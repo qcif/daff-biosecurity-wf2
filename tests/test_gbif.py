@@ -18,10 +18,10 @@ class TestFetchRelatedSpecies(unittest.TestCase):
     def test_it_can_fetch_the_correct_relatives(self, mock_search):
         mock_search.return_value = json.loads(
             GBIF_NAME_LOOKUP_RESPONSE.read_text())
-        relatives = RelatedTaxaGBIF('Cheiloxena aitori')
+        taxon = RelatedTaxaGBIF('Cheiloxena aitori')
+        self.assertEqual(len(taxon.relatives), 7)
+        self.assertEqual(taxon.genus_key, 4732783)
         mock_search.assert_called_once()
-        self.assertEqual(len(relatives.relatives), 7)
-        self.assertEqual(relatives.genus_key, 4732783)
 
     @patch('pygbif.species.name_lookup')
     @patch('pygbif.occurrences.search')
