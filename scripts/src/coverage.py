@@ -133,6 +133,7 @@ def assess_coverage(query_dir):
     results = {}
     for future in as_completed(future_to_task):
         func, target = future_to_task[future][:2]
+        logger.info(f"Task completed: {func.__name__} on target '{target}'")
         try:
             if func.__name__ not in results:
                 results[func.__name__] = {}

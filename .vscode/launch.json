@@ -56,7 +56,10 @@
             "program": "${workspaceFolder}/scripts/p5_db_coverage.py",
             "args": [
                 "output/query_001_LC438549"
-            ]
+            ],
+            "env": {
+                "LOGGING_DEBUG": "1",
+            }
         },
         {
             "type": "debugpy",
