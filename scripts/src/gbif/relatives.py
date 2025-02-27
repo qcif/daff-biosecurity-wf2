@@ -6,6 +6,7 @@ import pygbif
 import time
 from pprint import pformat
 from types import SimpleNamespace
+from functools import cached_property
 
 from ..utils import config
 from ..utils.errors import APIError
@@ -17,7 +18,7 @@ MODULE_NAME = 'GBIF API'
 GBIF_SPECIES_BASE_URL = 'https://www.gbif.org/species/'
 
 
-class NoGenusFoundError(Exception):
+class GBIFRecordNotFound(Exception):
     pass
 
 
@@ -82,16 +83,30 @@ class Throttle:
                 time.sleep(1)
 
 
+class RANK:
+    SPECIES = 1
+    GENUS = 2
+    FAMILY = 3
+    ORDER = 4
+    CLASS = 5
+    PHYLUM = 6
+    KINGDOM = 7
+
+    @classmethod
+    def from_string(cls, rank: str) -> str:
+        return getattr(cls, rank.upper(), None)
+
+
 class RelatedTaxaGBIF:
     """Fetch taxonomic relatives for a given taxon from GBIF API."""
 
     INCLUDE_EXTINCT = False
 
-    def __init__(self, taxon, rank='species'):
+    def __init__(self, taxon):
         self.taxon = taxon
-        self.rank = rank
-        self.genus_key = self._get_genus_key(taxon, rank)
-        self.related_species = self.fetch_related()
+        self.record = self._get_taxon_record(taxon)
+        self.genus_key = self.record.get('genusKey')
+        self.rank = RANK.from_string(self.record.get('rank'))
 
     def __str__(self):
         return f"{self.__class__.__name__}: {self.taxon} ({self.rank})"
@@ -99,10 +114,9 @@ class RelatedTaxaGBIF:
     def __repr__(self):
         return self.__str__()
 
-    def _get_genus_key(self, taxon, rank):
+    def _get_taxon_record(self, taxon):
         args = {
             'q': taxon,
-            'rank': rank,
             'limit': 20,
         }
         throttle = Throttle(ENDPOINTS.FAST)
@@ -110,14 +124,14 @@ class RelatedTaxaGBIF:
             pygbif.species.name_suggest,
             args,
         )
-
         for record in res:
-            if self._is_accepted(record) and 'genusKey' in record:
-                logger.info(f"[{MODULE_NAME}] Genus key found for taxon"
-                            f" {taxon}: {record['genusKey']}")
-                return record['genusKey']
-        raise NoGenusFoundError(
-            f"Genus key not found for taxon {taxon}. Taxonomic records cannot"
+            if self._is_accepted(record):
+                logger.info(f"[{MODULE_NAME}] Record found for taxon"
+                            f" '{taxon}' - rank:{record['rank']}"
+                            f" genusKey:{record.get('genusKey')}")
+                return record
+        raise GBIFRecordNotFound(
+            f"No GBIF record found for '{taxon}'. Taxonomic records cannot"
             " be retrieved for this species name - please check that this"
             " species name is correct.")
 
@@ -131,8 +145,9 @@ class RelatedTaxaGBIF:
     def _filter_records(self, records):
         return [r for r in records if self._is_accepted(r)]
 
-    def fetch_related(self):
-        """Fetch related species for self.genus_key."""
+    @cached_property
+    def relatives(self):
+        """Fetch related species with self.genus_key."""
         i = 0
         end_of_records = False
         records = []
@@ -217,6 +232,6 @@ class RelatedTaxaGBIF:
                 species_keys.append(int(species_key))
 
         return [
-            r for r in self.related_species
+            r for r in self.relatives
             if r['speciesKey'] in species_keys
         ]

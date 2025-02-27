@@ -7,12 +7,11 @@ file is used to limit the number of concurrent requests.
 
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from pprint import pformat
 
 from src.entrez import genbank
 from src.utils import errors
 from src.utils.config import Config
-from src.gbif.relatives import NoGenusFoundError, RelatedTaxaGBIF
+from src.gbif.relatives import GBIFRecordNotFound, RANK, RelatedTaxaGBIF
 from src.taxonomy import extract
 
 logger = logging.getLogger(__name__)
@@ -67,7 +66,7 @@ def assess_coverage(query_dir):
         )
     targets = candidates + toi_list + [pmi]
     target_taxids = extract.taxids(targets)
-    taxid_to_species = {v: k for k, v in target_taxids.items()}
+    taxid_to_taxon = {v: k for k, v in target_taxids.items()}
 
     logger.info(
         f"[{MODULE_NAME}]: Assessing database coverage for {len(targets)}"
@@ -75,10 +74,11 @@ def assess_coverage(query_dir):
     )
 
     target_gbif_taxa = {}
+    higher_taxon_targets = {}  # Taxa at rank 'family' or higher
     for target in targets:
         try:
             gbif_target = RelatedTaxaGBIF(target)
-        except NoGenusFoundError as exc:
+        except GBIFRecordNotFound as exc:
             msg = (f"No genus found for target species '{target}'. This target"
                    " could not be evaluated.")
             logger.warning(
@@ -91,7 +91,11 @@ def assess_coverage(query_dir):
                 data={"target": target},
             )
             continue
-        target_gbif_taxa[target] = gbif_target
+        if gbif_target.rank > RANK.GENUS:
+            # These get processed differently - GB record counts only
+            higher_taxon_targets[target] = gbif_target
+        else:
+            target_gbif_taxa[target] = gbif_target
 
     tasks = [
         get_args(
@@ -108,11 +112,18 @@ def assess_coverage(query_dir):
             get_related_coverage,
             get_related_country_coverage,
         )
+        if target in target_gbif_taxa
     ]
 
-    with ThreadPoolExecutor() as executor:
+    tasks += [
+        (get_target_coverage, taxid, locus)
+        for target, taxid in target_taxids.items()
+        if target in higher_taxon_targets
+    ]
+
+    with ThreadPoolExecutor(max_workers=50) as executor:
         logger.debug(
-            f"[{MODULE_NAME}]: Threading tasks: {pformat(tasks)}."
+            f"[{MODULE_NAME}]: Threading {len(tasks)} tasks..."
         )
         future_to_task = {
             executor.submit(*task): task
@@ -131,7 +142,7 @@ def assess_coverage(query_dir):
                 f"[{MODULE_NAME}]: Error processing {func.__name__} for"
                 f" {target}:\n{exc}")
             species_name = (
-                taxid_to_species[target]
+                taxid_to_taxon[target]
                 if isinstance(target, str)
                 else target
             )
@@ -155,33 +166,33 @@ def assess_coverage(query_dir):
     pmi_results = {}
 
     for taxid in target_taxids.values():
-        species_name = taxid_to_species[taxid]
+        target_taxon = taxid_to_taxon[taxid]
         result = results[get_target_coverage.__name__][taxid]
-        if species_name in candidates:
-            candidate_results[species_name] = candidate_results.get(
-                species_name, {})
-            candidate_results[species_name]['target'] = result
-        if species_name in toi_list:
-            toi_results[species_name] = toi_results.get(species_name, {})
-            toi_results[species_name]['target'] = result
-        if species_name == pmi:
-            pmi_results[species_name] = {
+        if target_taxon in candidates:
+            candidate_results[target_taxon] = candidate_results.get(
+                target_taxon, {})
+            candidate_results[target_taxon]['target'] = result
+        if target_taxon in toi_list:
+            toi_results[target_taxon] = toi_results.get(target_taxon, {})
+            toi_results[target_taxon]['target'] = result
+        if target_taxon == pmi:
+            pmi_results[target_taxon] = {
                 'target': result,
             }
 
-    for species_name, gbif_taxon in target_gbif_taxa.items():
+    for target_taxon, gbif_taxon in target_gbif_taxa.items():
         related_result = results[get_related_coverage.__name__][gbif_taxon]
         country_result = results[get_related_country_coverage.__name__][
             gbif_taxon]
-        if species_name in candidates:
-            candidate_results[species_name]['related'] = related_result
-            candidate_results[species_name]['country'] = country_result
-        if species_name in toi_list:
-            toi_results[species_name]['related'] = related_result
-            toi_results[species_name]['country'] = country_result
-        if species_name == pmi:
-            pmi_results[species_name]['related'] = related_result
-            pmi_results[species_name]['country'] = country_result
+        if target_taxon in candidates:
+            candidate_results[target_taxon]['related'] = related_result
+            candidate_results[target_taxon]['country'] = country_result
+        if target_taxon in toi_list:
+            toi_results[target_taxon]['related'] = related_result
+            toi_results[target_taxon]['country'] = country_result
+        if target_taxon == pmi:
+            pmi_results[target_taxon]['related'] = related_result
+            pmi_results[target_taxon]['country'] = country_result
 
     return {
         "candidates": candidate_results,
@@ -206,7 +217,7 @@ def get_related_coverage(gbif_target, locus, query_dir):
     """
     species_names = list({
         r["canonicalName"]
-        for r in gbif_target.related_species
+        for r in gbif_target.relatives
     })
     if not species_names:
         return {}, []

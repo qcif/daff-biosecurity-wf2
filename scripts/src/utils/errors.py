@@ -33,6 +33,7 @@ class LOCATIONS:
 def write(location, msg, exc, query_dir=None, data=None):
     parent = query_dir or config.output_dir
     next_path = parent / config.ERRORS_DIR / 'next.txt'
+    next_path.parent.mkdir(parents=True, exist_ok=True)
     if next_path.exists():
         i = int(next_path.read_text())
     else:
