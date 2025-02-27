@@ -1,5 +1,7 @@
 """Define error handling logic."""
 
+import json
+
 from .config import Config
 
 config = Config()
@@ -8,6 +10,7 @@ ERROR_CSV_HEADER = [
     "location",
     "message",
     "exception",
+    "data",
 ]
 
 
@@ -21,18 +24,25 @@ class LOCATIONS:
     can be used to display it in the appropriate location in the report.
     """
     DATABASE_COVERAGE = 5.0
+    DATABASE_COVERAGE_NO_GENUS = 5.01
     DB_COVERAGE_TARGET = 5.1
     DB_COVERAGE_RELATED = 5.2
     DB_COVERAGE_RELATED_COUNTRY = 5.3
 
 
-def write(location, msg, exc, query_dir=None):
-    path = (query_dir or config.output_dir) / config.ERROR_FILENAME
-    if not path.exists():
-        path.write_text(','.join(ERROR_CSV_HEADER) + '\n')
-    with path.open('a') as f:
-        f.write(','.join[
-            str(location),
-            msg,
-            str(exc),
-        ] + '\n')
+def write(location, msg, exc, query_dir=None, data=None):
+    parent = query_dir or config.output_dir
+    next_path = parent / config.ERRORS_DIR / 'next.txt'
+    if next_path.exists():
+        i = int(next_path.read_text())
+    else:
+        i = 1
+    next_path.write_text(str(i + 1))
+    path = parent / config.ERRORS_DIR / f'{i}.json'
+    with path.open('w') as f:
+        json.dump({
+            "location": location,
+            "message": msg,
+            "exception": str(exc),
+            "data": data,
+        }, f)

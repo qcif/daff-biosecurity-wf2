@@ -10,10 +10,15 @@ from types import SimpleNamespace
 from ..utils import config
 from ..utils.errors import APIError
 
-GBIF_SPECIES_BASE_URL = 'https://www.gbif.org/species/'
-
 logger = logging.getLogger(__name__)
 config = config.Config()
+
+MODULE_NAME = 'GBIF API'
+GBIF_SPECIES_BASE_URL = 'https://www.gbif.org/species/'
+
+
+class NoGenusFoundError(Exception):
+    pass
 
 
 class ENDPOINTS:
@@ -108,10 +113,10 @@ class RelatedTaxaGBIF:
 
         for record in res:
             if self._is_accepted(record) and 'genusKey' in record:
-                logger.info(f"Genus key found for taxon {taxon}:"
-                            f" {record['genusKey']}")
+                logger.info(f"[{MODULE_NAME}] Genus key found for taxon"
+                            f" {taxon}: {record['genusKey']}")
                 return record['genusKey']
-        raise ValueError(
+        raise NoGenusFoundError(
             f"Genus key not found for taxon {taxon}. Taxonomic records cannot"
             " be retrieved for this species name - please check that this"
             " species name is correct.")
@@ -127,6 +132,7 @@ class RelatedTaxaGBIF:
         return [r for r in records if self._is_accepted(r)]
 
     def fetch_related(self):
+        """Fetch related species for self.genus_key."""
         i = 0
         end_of_records = False
         records = []
@@ -134,15 +140,29 @@ class RelatedTaxaGBIF:
             'rank': 'species',
             'higherTaxonKey': self.genus_key,
             'limit': config.GBIF_LIMIT_RECORDS,
-            'offset': i * config.GBIF_LIMIT_RECORDS,
         }
 
         while not end_of_records:
+            args['offset'] = i * config.GBIF_LIMIT_RECORDS
             throttle = Throttle(ENDPOINTS.SLOW)
             res = throttle.with_retry(
                 pygbif.species.name_lookup,
                 args,
             )
+            if i > 5:
+                first_name = self._filter_records(
+                    res['results'])[0]['canonicalName']
+                if [
+                    r for r in records
+                    if r['canonicalName'] == first_name
+                ]:
+                    logger.warning(
+                        'GBIF API claims endofRecords=False after >5 requests,'
+                        ' but an existing canonicalName was returned.'
+                        ' Exiting early to avoid infinite loop '
+                        f' - {len(records)} records have been fetched.'
+                        f' Taxon: {self.taxon}, Genus key: {self.genus_key}.'
+                    )
             records += self._filter_records(res['results'])
             end_of_records = res['endOfRecords']
             i += 1

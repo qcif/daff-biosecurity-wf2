@@ -13,7 +13,7 @@ def get_logging_config(log_file):
         "handlers": {
             "console": {
                 "class": "logging.StreamHandler",
-                "level": "INFO",
+                "level": "DEBUG",
                 "formatter": "default",
             },
             "file": {
@@ -25,7 +25,7 @@ def get_logging_config(log_file):
             },
         },
         "root": {
-            "level": "DEBUG",
+            "level": "INFO",
             "handlers": ["console", "file"],
         },
     }

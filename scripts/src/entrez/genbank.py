@@ -250,6 +250,7 @@ def fetch_gb_records(
         [f'"{term}"[Gene name]' for term in gene_names])
     query += f' AND txid{taxid}[Organism])'
     max_results = 1 if count else 100
+    logger.debug(f"Submitting Entrez query: <<{query}>>")
     results = fetch_entrez(
         endpoint=Entrez.esearch,
         term=query,

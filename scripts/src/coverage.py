@@ -12,7 +12,7 @@ from pprint import pformat
 from src.entrez import genbank
 from src.utils import errors
 from src.utils.config import Config
-from src.gbif.relatives import RelatedTaxaGBIF
+from src.gbif.relatives import NoGenusFoundError, RelatedTaxaGBIF
 from src.taxonomy import extract
 
 logger = logging.getLogger(__name__)
@@ -41,8 +41,30 @@ def assess_coverage(query_dir):
     locus = config.get_locus_for_query(query_dir)
     country = config.get_country_code_for_query(query_dir)
     candidates = read_candidate_species(query_dir)
+    if len(candidates) > config.DB_COVERAGE_MAX_CANDIDATES:
+        logger.info(
+            f"[{MODULE_NAME}]: Skipping database coverage assessment:"
+            f" more than {config.DB_COVERAGE_MAX_CANDIDATES} candidates"
+            f" species have been identified ({len(candidates)})."
+        )
+        candidates = []
     pmi = config.get_pmi_for_query(query_dir)
     toi_list = config.get_toi_list_for_query(query_dir)
+    if len(toi_list) > config.DB_COVERAGE_TOI_LIMIT:
+        toi_list = toi_list[:config.DB_COVERAGE_TOI_LIMIT]
+        excluded_tois = toi_list[config.DB_COVERAGE_TOI_LIMIT:]
+        msg = (
+            f"Only the first {config.DB_COVERAGE_TOI_LIMIT} taxa of interest"
+            f" will be evaluated. The following taxa of interest will be"
+            f" excluded: {', '.join(excluded_tois)}. This limit can be raised"
+            f" by setting the 'DB_COVERAGE_TOI_LIMIT' environment variable.")
+        logger.warning(f"[{MODULE_NAME}]: {msg}")
+        errors.write(
+            errors.LOCATIONS.DATABASE_COVERAGE,
+            msg,
+            None,
+            query_dir=query_dir,
+        )
     targets = candidates + toi_list + [pmi]
     target_taxids = extract.taxids(targets)
     taxid_to_species = {v: k for k, v in target_taxids.items()}
@@ -52,10 +74,24 @@ def assess_coverage(query_dir):
         f" species at locus '{locus}' in country '{country}'."
     )
 
-    target_gbif_taxa = {
-        target: RelatedTaxaGBIF(target)
-        for target in targets
-    }
+    target_gbif_taxa = {}
+    for target in targets:
+        try:
+            gbif_target = RelatedTaxaGBIF(target)
+        except NoGenusFoundError as exc:
+            msg = (f"No genus found for target species '{target}'. This target"
+                   " could not be evaluated.")
+            logger.warning(
+                f"[{MODULE_NAME}]: {msg}")
+            errors.write(
+                errors.LOCATIONS.DATABASE_COVERAGE_NO_GENUS,
+                msg,
+                exc,
+                query_dir=query_dir,
+                data={"target": target},
+            )
+            continue
+        target_gbif_taxa[target] = gbif_target
 
     tasks = [
         get_args(
@@ -120,16 +156,18 @@ def assess_coverage(query_dir):
 
     for taxid in target_taxids.values():
         species_name = taxid_to_species[taxid]
-        candidate_results[species_name] = {}
-        toi_results[species_name] = {}
-        pmi_results[species_name] = {}
         result = results[get_target_coverage.__name__][taxid]
         if species_name in candidates:
+            candidate_results[species_name] = candidate_results.get(
+                species_name, {})
             candidate_results[species_name]['target'] = result
         if species_name in toi_list:
+            toi_results[species_name] = toi_results.get(species_name, {})
             toi_results[species_name]['target'] = result
         if species_name == pmi:
-            pmi_results[species_name]['target'] = result
+            pmi_results[species_name] = {
+                'target': result,
+            }
 
     for species_name, gbif_taxon in target_gbif_taxa.items():
         related_result = results[get_related_coverage.__name__][gbif_taxon]
@@ -155,6 +193,10 @@ def assess_coverage(query_dir):
 def get_target_coverage(taxid, locus):
     """Return a count of the number of accessions for the given target."""
     # TODO: potential for caching gb count result here
+    logger.info(
+        f"[{MODULE_NAME}]: Fetching Genbank records for target taxid:"
+        f"{taxid}, locus: '{locus}'..."
+    )
     return genbank.fetch_gb_records(locus, taxid, count=True)
 
 
@@ -162,16 +204,16 @@ def get_related_coverage(gbif_target, locus, query_dir):
     """Return a count of the number of related species (same genus) and the
     number of species which have at least one accession in the database.
     """
-    species_names = [
+    species_names = list({
         r["canonicalName"]
         for r in gbif_target.related_species
-    ]
+    })
     if not species_names:
         return {}, []
     logger.info(
         f"[{MODULE_NAME}]: Fetching Genbank records for target"
-        f" {gbif_target.taxon} (locus: '{locus}') - {len(species_names)}"
-        f" related species"
+        f" '{gbif_target.taxon}' (locus: '{locus}') - {len(species_names)}"
+        f" related species..."
     )
     # TODO: potential for caching GBIF related taxa here
     results, errors = fetch_gb_records_for_species(species_names, locus)
@@ -203,8 +245,8 @@ def get_related_country_coverage(
     # TODO: potential for caching GBIF related/country taxa here
     logger.info(
         f"[{MODULE_NAME}]: Fetching Genbank records for target"
-        f" {gbif_target.taxon} (locus: '{locus}'; country: '{country}') -"
-        f" {len(species_names)} related species"
+        f" '{gbif_target.taxon}' (locus: '{locus}'; country: '{country}')"
+        f" - {len(species_names)} related species"
     )
     results, errors = fetch_gb_records_for_species(species_names, locus)
     if errors:

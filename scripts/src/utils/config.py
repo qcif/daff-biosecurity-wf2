@@ -50,7 +50,9 @@ class Config:
                               'preliminary_id_match.csv')
     DB_COVERAGE_JSON = os.getenv("DB_COVERAGE_JSON_FILENAME",
                                  'db_coverage.json')
+    DB_COVERAGE_TOI_LIMIT = int(os.getenv("DB_COVERAGE_TOI_LIMIT", 10))
 
+    DB_COVERAGE_MAX_CANDIDATES = 3
     FLAG_FILE_TEMPLATE = 'flag_{identifier}.txt'
     GBIF_LIMIT_RECORDS = int(os.getenv("GBIF_LIMIT_RECORDS", 500))
     GBIF_ACCEPTED_STATUS = os.getenv(
@@ -64,7 +66,7 @@ class Config:
     GBIF_FAST_LOCK_FILE = 'gbif-fast.lock'
     GBIF_SLOW_LOCK_FILE = 'gbif-slow.lock'
     GBIF_MAX_RETRIES = 3
-    ERROR_FILENAME = 'errors.csv'
+    ERRORS_DIR = 'errors'
 
     class INPUTS:
         METADATA_CSV_HEADER = {
