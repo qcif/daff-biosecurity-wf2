@@ -182,7 +182,7 @@ class RelatedTaxaGBIF:
             end_of_records = res['endOfRecords']
             i += 1
 
-        if self.rank == 'species':
+        if self.rank == RANK.SPECIES:
             records = [
                 r for r in records
                 if r['canonicalName'].lower() != self.taxon.lower()
