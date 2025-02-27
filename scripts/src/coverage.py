@@ -122,6 +122,7 @@ def assess_coverage(query_dir):
     ]
 
     with ThreadPoolExecutor(max_workers=50) as executor:
+        results = {}
         logger.debug(
             f"[{MODULE_NAME}]: Threading {len(tasks)} tasks..."
         )
@@ -129,38 +130,37 @@ def assess_coverage(query_dir):
             executor.submit(*task): task
             for task in tasks
         }
-
-    results = {}
-    for future in as_completed(future_to_task):
-        func, target = future_to_task[future][:2]
-        logger.info(f"Task completed: {func.__name__} on target '{target}'")
-        try:
-            if func.__name__ not in results:
-                results[func.__name__] = {}
-            results[func.__name__][target] = future.result()
-        except Exception as exc:
-            logger.error(
-                f"[{MODULE_NAME}]: Error processing {func.__name__} for"
-                f" {target}:\n{exc}")
-            species_name = (
-                taxid_to_taxon[target]
-                if isinstance(target, str)
-                else target
-            )
-            target_source = (
-                "candidate" if species_name in candidates
-                else "taxon of interest" if species_name in toi_list
-                else "preliminary ID"
-            )
-            msg = (
-                f"Error processing {func.__name__} for target species"
-                f" '{species_name}' ({target_source}). This target could not"
-                f" be evaluated.")
-            errors.write(
-                errors.LOCATIONS.DATABASE_COVERAGE,
-                msg,
-                exc,
-                query_dir=query_dir)
+        for future in as_completed(future_to_task):
+            func, target = future_to_task[future][:2]
+            logger.info(f"Task completed: {func.__name__} on target"
+                        f" '{target}'")
+            try:
+                if func.__name__ not in results:
+                    results[func.__name__] = {}
+                results[func.__name__][target] = future.result()
+            except Exception as exc:
+                logger.error(
+                    f"[{MODULE_NAME}]: Error processing {func.__name__} for"
+                    f" {target}:\n{exc}")
+                species_name = (
+                    taxid_to_taxon[target]
+                    if isinstance(target, str)
+                    else target
+                )
+                target_source = (
+                    "candidate" if species_name in candidates
+                    else "taxon of interest" if species_name in toi_list
+                    else "preliminary ID"
+                )
+                msg = (
+                    f"Error processing {func.__name__} for target species"
+                    f" '{species_name}' ({target_source}). This target could"
+                    f" not be evaluated.")
+                errors.write(
+                    errors.LOCATIONS.DATABASE_COVERAGE,
+                    msg,
+                    exc,
+                    query_dir=query_dir)
 
     logger.debug("Results collected from tasks:")
     for func, result in results.items():
