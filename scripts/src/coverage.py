@@ -162,6 +162,11 @@ def assess_coverage(query_dir):
                 exc,
                 query_dir=query_dir)
 
+    logger.debug("Results collected from tasks:")
+    for func, result in results.items():
+        for k in result:
+            logger.debug(f"{func}: {k}")
+
     candidate_results = {}
     toi_results = {}
     pmi_results = {}
