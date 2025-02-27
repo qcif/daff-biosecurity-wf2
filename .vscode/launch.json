@@ -13,7 +13,7 @@
                 "-b",
             ],
             "env": {
-                "GENBANK_CONCURRENCY_TEST": "1",  // High network traffic
+                "GENBANK_CONCURRENCY_TEST": "0",  // High network traffic
                 "PYTHONPATH": "${workspaceFolder}/scripts",
             },
             "console": "integratedTerminal",
