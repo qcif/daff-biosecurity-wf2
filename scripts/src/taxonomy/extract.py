@@ -8,7 +8,7 @@ from ..utils.config import Config
 logger = logging.getLogger(__name__)
 config = Config()
 
-TAXONKIT_DATA = Path('~/.taxonkit').expanduser()
+
 TAXONOMIC_RANKS = [
     "superkingdom",
     'kingdom',
@@ -23,7 +23,7 @@ TAXONOMIC_RANKS = [
 
 def taxonomies(
     taxids: list[str],
-    taxdb: Path = Path(TAXONKIT_DATA),
+    taxdb: Path = Path(config.TAXONKIT_DATA),
 ) -> dict[str, dict[str, str]]:
     """Use taxonkit lineage to extract taxonomic data for given taxids."""
     with tempfile.NamedTemporaryFile(mode='w+') as temp_file:
@@ -77,10 +77,21 @@ def taxids(species_list: list[str]) -> dict[str, str]:
                 'taxonkit',
                 'name2taxid',
                 temp_file.name,
-                '--data-dir', TAXONKIT_DATA,
+                '--data-dir', config.TAXONKIT_DATA,
             ],
             capture_output=True,
-            text=True
+            text=True,
+            check=True,
+        )
+
+    logger.debug(
+        "[extract.taxids] taxonkit name2taxid stdout returned:\n"
+        + result.stdout.strip()
+    )
+    if result.stderr.strip():
+        logger.warning(
+            "[extract.taxids] taxonkit name2taxid stderr returned:\n"
+            + result.stderr.strip()
         )
 
     taxid_data = {}

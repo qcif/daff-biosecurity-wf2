@@ -34,7 +34,7 @@
             "name": "P3 Assign taxonomy",
             "program": "${workspaceFolder}/scripts/p3_assign_taxonomy.py",
             "args": [
-                "output/query_001_LC438549"
+                "output/query_001_LC438549.1"
             ],
             "env": {
                 "INPUT_TOI_FILEPATH": "tests/test-data/taxa_of_interest.txt",

@@ -26,7 +26,7 @@ from src.utils.flags import Flag, FLAGS
 
 logger = logging.getLogger(__name__)
 config = Config()
-
+MAX_CANDIDATES_FOR_ANALYSIS = 3
 CANDIDATE_CSV_HEADER = [
     "species",
     "taxid",

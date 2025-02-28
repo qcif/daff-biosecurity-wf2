@@ -7,6 +7,7 @@ file is used to limit the number of concurrent requests.
 
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from pprint import pformat
 
 from src.entrez import genbank
 from src.utils import errors
@@ -65,12 +66,30 @@ def assess_coverage(query_dir):
             query_dir=query_dir,
         )
     targets = candidates + toi_list + [pmi]
+
+    if not targets:
+        logger.info(
+            f"[{MODULE_NAME}]: Skipping analysis - no target species"
+            " identified for database coverage assessment."
+        )
+        return None
+
     target_taxids = extract.taxids(targets)
     taxid_to_taxon = {v: k for k, v in target_taxids.items()}
 
     logger.info(
         f"[{MODULE_NAME}]: Assessing database coverage for {len(targets)}"
         f" species at locus '{locus}' in country '{country}'."
+    )
+    logger.debug(
+        f"[{MODULE_NAME}]: collected targets:\n"
+        f"  - Candidates: {candidates}\n"
+        f"  - Taxa of interest: {toi_list}\n"
+        f"  - PMI: {pmi}"
+    )
+    logger.debug(
+        f"[{MODULE_NAME}]: Taxids for targets (extracted by taxonkit):\n"
+        + pformat(target_taxids, indent=2)
     )
 
     target_gbif_taxa = {}
@@ -97,6 +116,15 @@ def assess_coverage(query_dir):
         else:
             target_gbif_taxa[target] = gbif_target
 
+    logger.debug(
+        f"[{MODULE_NAME}]: Targets identified at rank genus or lower:\n"
+        + pformat(list(target_gbif_taxa.keys()), indent=2)
+    )
+    logger.debug(
+        f"[{MODULE_NAME}]: Targets identified at rank family or higher:\n"
+        + pformat(list(higher_taxon_targets.keys()), indent=2)
+    )
+
     tasks = [
         get_args(
             func,
@@ -120,6 +148,11 @@ def assess_coverage(query_dir):
         for target, taxid in target_taxids.items()
         if target in higher_taxon_targets
     ]
+
+    if not len(tasks):
+        raise ValueError(
+            "No tasks created for database coverage assessment. This likely"
+            " indicates a bug in the code - please report this issue.")
 
     with ThreadPoolExecutor(max_workers=50) as executor:
         results = {}
