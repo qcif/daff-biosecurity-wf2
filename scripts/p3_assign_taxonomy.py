@@ -119,6 +119,12 @@ def _assign_species_id(hits, query_dir):
         candidate_hits_strict or candidate_hits,
         candidate_species_strict or candidate_species,
     )
+
+    if len(
+        candidate_hits_strict or candidate_hits
+    ) > 3:  # TODO: Change to constant
+        _write_boxplot(query_dir, candidate_hits_strict or candidate_hits)
+
     taxonomic_id = _write_taxonomic_id(query_dir, candidate_species_strict)
     _write_pmi_match(taxonomic_id, query_ix, query_dir)
     return candidate_species_strict or candidate_species
@@ -230,6 +236,16 @@ def _write_pmi_match(taxonomic_identity, query_ix, query_dir):
                 f.write(','.join(match[0]))
     else:
         logger.info("No PMI match found - no flag written.")
+
+
+def _write_boxplot(query_dir, hits):
+    genera = {}
+    for hit in hits:
+        genus = hit['species'].split(' ')[0]
+        if genus not in genera:
+            genera[genus] = []
+        genera[genus].append(hit['identity'])
+    # Create plot with matplotlib
 
 
 def _detect_taxa_of_interest(candidate_species, query_dir):
