@@ -18,6 +18,7 @@ import csv
 import json
 import logging
 from Bio import SeqIO
+from matplotlib import pyplot as plt
 from pathlib import Path
 
 from src.utils import deduplicate, existing_path
@@ -122,7 +123,7 @@ def _assign_species_id(hits, query_dir):
 
     if len(
         candidate_hits_strict or candidate_hits
-    ) > 3:  # TODO: Change to constant
+    ) > MAX_CANDIDATES_FOR_ANALYSIS:
         _write_boxplot(query_dir, candidate_hits_strict or candidate_hits)
 
     taxonomic_id = _write_taxonomic_id(query_dir, candidate_species_strict)
@@ -245,7 +246,19 @@ def _write_boxplot(query_dir, hits):
         if genus not in genera:
             genera[genus] = []
         genera[genus].append(hit['identity'])
-    # Create plot with matplotlib
+
+    plt.figure(figsize=(10, 6))
+    plt.boxplot(genera.values(), labels=genera.keys(), patch_artist=True)
+
+    plt.xlabel('Genus')
+    plt.ylabel('Identity')
+    plt.title('Boxplot of Identity by Genus')
+
+    boxplot_image_path = query_dir / config.BOXPLOT_IMG
+    plt.savefig(boxplot_image_path)
+    plt.close()
+
+    logger.info(f"Boxplot saved to {boxplot_image_path}")
 
 
 def _detect_taxa_of_interest(candidate_species, query_dir):
