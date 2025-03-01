@@ -43,9 +43,9 @@ def assess_coverage(query_dir):
     candidates = read_candidate_species(query_dir)
     if len(candidates) > config.DB_COVERAGE_MAX_CANDIDATES:
         logger.info(
-            f"[{MODULE_NAME}]: Skipping database coverage assessment:"
-            f" more than {config.DB_COVERAGE_MAX_CANDIDATES} candidates"
-            f" species have been identified ({len(candidates)})."
+            f"[{MODULE_NAME}]: Skipping database coverage assessment for"
+            f" candidates: more than {config.DB_COVERAGE_MAX_CANDIDATES}"
+            f" candidates species have been identified ({len(candidates)})."
         )
         candidates = []
     pmi = config.get_pmi_for_query(query_dir)

@@ -30,16 +30,34 @@ def taxonomies(
         temp_file.write("\n".join(taxids))
         temp_file.flush()
         temp_file_name = temp_file.name
-        result = subprocess.run(
-            [
-                'taxonkit',
-                'lineage',
-                '-R',
-                '-c', temp_file_name,
-                '--data-dir', taxdb,
-            ],
-            capture_output=True,
-            text=True
+        try:
+            result = subprocess.run(
+                [
+                    'taxonkit',
+                    'lineage',
+                    '-R',
+                    '-c', temp_file_name,
+                    '--data-dir', taxdb,
+                ],
+                capture_output=True,
+                check=True,
+                text=True,
+            )
+        except subprocess.CalledProcessError as exc:
+            logger.error(
+                "[extract.taxonomies] taxonkit lineage failed with error:\n"
+                + exc.stderr
+            )
+            raise exc
+
+    logger.debug(
+        "[extract.taxids] taxonkit name2taxid stdout:\n"
+        + result.stdout
+    )
+    if result.stderr.strip():
+        logger.warning(
+            "[extract.taxids] taxonkit name2taxid stderr:\n"
+            + result.stderr
         )
 
     taxonomy_data = {}
@@ -69,29 +87,41 @@ def taxids(species_list: list[str]) -> dict[str, str]:
     These species did not come from the core_nt database, so they might not
     even have a taxid if they are unsequenced/rare/new species.
     """
+    logger.debug(
+        "[extract.taxids] Extracting taxids for species using taxonkit"
+        f" name2taxid with {len(species_list)} species:\n"
+        + "\n".join(species_list[:3] + ['...'])
+    )
     with tempfile.NamedTemporaryFile(mode='w+') as temp_file:
         temp_file.write("\n".join(species_list))
         temp_file.flush()
-        result = subprocess.run(
-            [
-                'taxonkit',
-                'name2taxid',
-                temp_file.name,
-                '--data-dir', config.TAXONKIT_DATA,
-            ],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
+        try:
+            result = subprocess.run(
+                [
+                    'taxonkit',
+                    'name2taxid',
+                    temp_file.name,
+                    '--data-dir', config.TAXONKIT_DATA,
+                ],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+        except subprocess.CalledProcessError as exc:
+            logger.error(
+                "[extract.taxids] taxonkit name2taxid failed with error:\n"
+                + exc.stderr
+            )
+            raise exc
 
     logger.debug(
-        "[extract.taxids] taxonkit name2taxid stdout returned:\n"
-        + result.stdout.strip()
+        "[extract.taxids] taxonkit name2taxid stdout:\n"
+        + result.stdout
     )
     if result.stderr.strip():
         logger.warning(
-            "[extract.taxids] taxonkit name2taxid stderr returned:\n"
-            + result.stderr.strip()
+            "[extract.taxids] taxonkit name2taxid stderr:\n"
+            + result.stderr
         )
 
     taxid_data = {}
