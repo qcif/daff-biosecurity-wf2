@@ -67,7 +67,7 @@ class Config:
     LOG_FILENAME = 'run.log'
     QUERY_LOG_FILENAME = 'query.log'
     ENTREZ_LOCK_FILE = 'entrez.lock'
-    ENTREZ_MAX_RETRIES = 3
+    ENTREZ_MAX_RETRIES = 0  #!REMOVE
     GBIF_FAST_LOCK_FILE = 'gbif-fast.lock'
     GBIF_SLOW_LOCK_FILE = 'gbif-slow.lock'
     GBIF_MAX_RETRIES = 3

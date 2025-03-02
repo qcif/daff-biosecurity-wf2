@@ -24,7 +24,8 @@ class LOCATIONS:
     can be used to display it in the appropriate location in the report.
     """
     DATABASE_COVERAGE = 5.0
-    DATABASE_COVERAGE_NO_GENUS = 5.01
+    DATABASE_COVERAGE_NO_GBIF_RECORD = 5.01
+    DATABASE_COVERAGE_NO_TAXID = 5.02
     DB_COVERAGE_TARGET = 5.1
     DB_COVERAGE_RELATED = 5.2
     DB_COVERAGE_RELATED_COUNTRY = 5.3
