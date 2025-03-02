@@ -49,7 +49,7 @@ class Config:
     PMI_MATCH_CSV = os.getenv("PMI_MATCH_CSV_FILENAME",
                               'preliminary_id_match.csv')
     BOXPLOT_IMG = os.getenv("BOXPLOT_IMG_FILENAME",
-                              'boxplot_image.png')
+                            'boxplot_image.png')
     DB_COVERAGE_JSON = os.getenv("DB_COVERAGE_JSON_FILENAME",
                                  'db_coverage.json')
     DB_COVERAGE_TOI_LIMIT = int(os.getenv("DB_COVERAGE_TOI_LIMIT", 10))
@@ -67,7 +67,7 @@ class Config:
     LOG_FILENAME = 'run.log'
     QUERY_LOG_FILENAME = 'query.log'
     ENTREZ_LOCK_FILE = 'entrez.lock'
-    ENTREZ_MAX_RETRIES = 0  #!REMOVE
+    ENTREZ_MAX_RETRIES = 3
     GBIF_FAST_LOCK_FILE = 'gbif-fast.lock'
     GBIF_SLOW_LOCK_FILE = 'gbif-slow.lock'
     GBIF_MAX_RETRIES = 3
