@@ -22,6 +22,7 @@ LOCI = {  # TODO: update with DAFF - maybe read from allowed_loci.txt file?
 
 REQUEST_INTERVAL_SECONDS = 0.11 if config.NCBI_API_KEY else 0.34
 Entrez.email = config.USER_EMAIL
+Entrez.local_cache = config.entrez_cache_dir
 if config.NCBI_API_KEY:
     Entrez.api_key = config.NCBI_API_KEY
 

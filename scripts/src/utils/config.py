@@ -68,6 +68,7 @@ class Config:
     QUERY_LOG_FILENAME = 'query.log'
     ENTREZ_LOCK_FILE = 'entrez.lock'
     ENTREZ_MAX_RETRIES = 3
+    ENTREZ_CACHE_DIRNAME = 'entrez_cache'
     GBIF_FAST_LOCK_FILE = 'gbif-fast.lock'
     GBIF_SLOW_LOCK_FILE = 'gbif-slow.lock'
     GBIF_MAX_RETRIES = 3
@@ -171,6 +172,10 @@ class Config:
     @property
     def entrez_lock_file(self):
         return self.output_dir / self.ENTREZ_LOCK_FILE
+
+    @property
+    def entrez_cache_dir(self):
+        return self.output_dir / self.ENTREZ_CACHE_DIRNAME
 
     @property
     def gbif_slow_lock_file(self):
