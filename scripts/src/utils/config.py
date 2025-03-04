@@ -49,13 +49,10 @@ class Config:
     PMI_MATCH_CSV = os.getenv("PMI_MATCH_CSV_FILENAME",
                               'preliminary_id_match.csv')
     BOXPLOT_IMG = os.getenv("BOXPLOT_IMG_FILENAME",
-                            'boxplot_image.png')
+                            'identity-boxplot.png')
     DB_COVERAGE_JSON = os.getenv("DB_COVERAGE_JSON_FILENAME",
                                  'db_coverage.json')
     DB_COVERAGE_TOI_LIMIT = int(os.getenv("DB_COVERAGE_TOI_LIMIT", 10))
-    TAXONKIT_DATA = Path(
-        os.getenv("TAXONKIT_DATA", '~/.taxonkit')
-    ).expanduser().absolute()
 
     DB_COVERAGE_MAX_CANDIDATES = 3
     FLAG_FILE_TEMPLATE = 'flag_{identifier}.txt'
