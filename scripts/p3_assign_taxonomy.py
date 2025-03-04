@@ -19,6 +19,7 @@ import json
 import logging
 from Bio import SeqIO
 from pathlib import Path
+import matplotlib.pyplot as plt
 
 from src.utils import deduplicate, existing_path
 from src.utils.config import Config
@@ -27,6 +28,7 @@ from src.utils.flags import Flag, FLAGS
 logger = logging.getLogger(__name__)
 config = Config()
 MAX_CANDIDATES_FOR_ANALYSIS = 3
+IDENTITY_PERCENTAGE = 100
 CANDIDATE_CSV_HEADER = [
     "species",
     "taxid",
@@ -119,6 +121,12 @@ def _assign_species_id(hits, query_dir):
         candidate_hits_strict or candidate_hits,
         candidate_species_strict or candidate_species,
     )
+
+    if len(
+        candidate_hits_strict or candidate_hits
+    ) > MAX_CANDIDATES_FOR_ANALYSIS:
+        _write_boxplot(query_dir, candidate_hits_strict or candidate_hits)
+
     taxonomic_id = _write_taxonomic_id(query_dir, candidate_species_strict)
     _write_pmi_match(taxonomic_id, query_ix, query_dir)
     return candidate_species_strict or candidate_species
@@ -230,6 +238,28 @@ def _write_pmi_match(taxonomic_identity, query_ix, query_dir):
                 f.write(','.join(match[0]))
     else:
         logger.info("No PMI match found - no flag written.")
+
+
+def _write_boxplot(query_dir, hits):
+    genera = {}
+    for hit in hits:
+        genus = hit['species'].split(' ')[0]
+        if genus not in genera:
+            genera[genus] = []
+        genera[genus].append(hit['identity'] * IDENTITY_PERCENTAGE)
+    # Create plot with matplotlib
+    plt.figure(figsize=(10, 6))
+    plt.boxplot(genera.values(), labels=genera.keys(), patch_artist=True)
+
+    plt.xlabel('Genus')
+    plt.ylabel('Identity (%)')
+    plt.title('Boxplot of Identity by Genus')
+
+    boxplot_image_path = query_dir / config.BOXPLOT_IMG
+    plt.savefig(boxplot_image_path)
+    plt.close()
+
+    logger.info(f"Boxplot saved to {boxplot_image_path}")
 
 
 def _detect_taxa_of_interest(candidate_species, query_dir):
