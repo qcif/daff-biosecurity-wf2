@@ -43,9 +43,9 @@ def assess_coverage(query_dir):
     candidates = read_candidate_species(query_dir)
     if len(candidates) > config.DB_COVERAGE_MAX_CANDIDATES:
         logger.info(
-            f"[{MODULE_NAME}]: Skipping database coverage assessment:"
-            f" more than {config.DB_COVERAGE_MAX_CANDIDATES} candidates"
-            f" species have been identified ({len(candidates)})."
+            f"[{MODULE_NAME}]: Skipping database coverage assessment for"
+            f" candidates: more than {config.DB_COVERAGE_MAX_CANDIDATES}"
+            f" candidates species have been identified ({len(candidates)})."
         )
         candidates = []
     pmi = config.get_pmi_for_query(query_dir)
@@ -75,6 +75,24 @@ def assess_coverage(query_dir):
         return None
 
     target_taxids = extract.taxids(targets)
+    if len(target_taxids) != len(targets):
+        msg = (
+            "Taxonkit failed to produce taxids for some target species."
+            " Database coverage for these species is assumed to be zero, since"
+            " this likely means they are not represented in the reference"
+            " database.")
+        logger.warning(
+            f"[{MODULE_NAME}]: {msg}")
+        errors.write(
+            errors.LOCATIONS.DATABASE_COVERAGE_NO_TAXID,
+            msg,
+            None,
+            query_dir=query_dir,
+            data={
+                "targets": [k for k, v in target_taxids.items() if not v],
+            },
+        )
+
     taxid_to_taxon = {v: k for k, v in target_taxids.items()}
 
     logger.info(
@@ -98,12 +116,12 @@ def assess_coverage(query_dir):
         try:
             gbif_target = RelatedTaxaGBIF(target)
         except GBIFRecordNotFound as exc:
-            msg = (f"No genus found for target species '{target}'. This target"
-                   " could not be evaluated.")
+            msg = (f"No GBIF record found for target species '{target}'."
+                   " This target could not be evaluated.")
             logger.warning(
                 f"[{MODULE_NAME}]: {msg}")
             errors.write(
-                errors.LOCATIONS.DATABASE_COVERAGE_NO_GENUS,
+                errors.LOCATIONS.DATABASE_COVERAGE_NO_GBIF_RECORD,
                 msg,
                 exc,
                 query_dir=query_dir,
@@ -111,7 +129,7 @@ def assess_coverage(query_dir):
             )
             continue
         if gbif_target.rank > RANK.GENUS:
-            # These get processed differently - GB record counts only
+            # These get processed differently - broad GB record count only
             higher_taxon_targets[target] = gbif_target
         else:
             target_gbif_taxa[target] = gbif_target
@@ -155,7 +173,11 @@ def assess_coverage(query_dir):
             " indicates a bug in the code - please report this issue.")
 
     with ThreadPoolExecutor(max_workers=50) as executor:
-        results = {}
+        results = {
+            get_target_coverage.__name__: {},
+            get_related_coverage.__name__: {},
+            get_related_country_coverage.__name__: {},
+        }
         logger.debug(
             f"[{MODULE_NAME}]: Threading {len(tasks)} tasks..."
         )
@@ -168,13 +190,8 @@ def assess_coverage(query_dir):
             logger.info(f"Task completed: {func.__name__} on target"
                         f" '{target}'")
             try:
-                if func.__name__ not in results:
-                    results[func.__name__] = {}
                 results[func.__name__][target] = future.result()
             except Exception as exc:
-                logger.error(
-                    f"[{MODULE_NAME}]: Error processing {func.__name__} for"
-                    f" {target}:\n{exc}")
                 species_name = (
                     taxid_to_taxon[target]
                     if isinstance(target, str)
@@ -188,12 +205,25 @@ def assess_coverage(query_dir):
                 msg = (
                     f"Error processing {func.__name__} for target species"
                     f" '{species_name}' ({target_source}). This target could"
-                    f" not be evaluated.")
+                    f" not be evaluated: {exc}")
+                logger.error(f"[{MODULE_NAME}]: {msg}")
                 errors.write(
                     errors.LOCATIONS.DATABASE_COVERAGE,
                     msg,
                     exc,
                     query_dir=query_dir)
+                if 'failure in name resolution' in str(exc):
+                    raise errors.APIError(
+                        f"Fatal error fetching data from Entrez API: '{exc}'"
+                        " This error occurred multiple times and indicates a"
+                        " network issue - please resume this"
+                        " job at a later time when network issues have"
+                        " resolved. If this issue persists, you may need to"
+                        " contact the development team to diagnose the"
+                        " issue. You can check the status of the Entrez API"
+                        " by visiting"
+                        " https://eutils.ncbi.nlm.nih.gov"
+                        "/entrez/eutils/efetch.fcgi in your browser.")
 
     logger.debug("Results collected from tasks:")
     for func, result in results.items():
@@ -206,7 +236,8 @@ def assess_coverage(query_dir):
 
     for taxid in target_taxids.values():
         target_taxon = taxid_to_taxon[taxid]
-        result = results[get_target_coverage.__name__][taxid]
+        result = results[get_target_coverage.__name__].get(taxid)
+
         if target_taxon in candidates:
             candidate_results[target_taxon] = candidate_results.get(
                 target_taxon, {})
@@ -220,9 +251,9 @@ def assess_coverage(query_dir):
             }
 
     for target_taxon, gbif_taxon in target_gbif_taxa.items():
-        related_result = results[get_related_coverage.__name__][gbif_taxon]
-        country_result = results[get_related_country_coverage.__name__][
-            gbif_taxon]
+        related_result = results[get_related_coverage.__name__].get(gbif_taxon)
+        country_result = results[get_related_country_coverage.__name__].get(
+            gbif_taxon)
         if target_taxon in candidates:
             candidate_results[target_taxon]['related'] = related_result
             candidate_results[target_taxon]['country'] = country_result
@@ -266,9 +297,9 @@ def get_related_coverage(gbif_target, locus, query_dir):
         f" related species..."
     )
     # TODO: potential for caching GBIF related taxa here
-    results, errors = fetch_gb_records_for_species(species_names, locus)
-    if errors:
-        for species, exc in errors:
+    results, err = fetch_gb_records_for_species(species_names, locus)
+    if err:
+        for species, exc in err:
             msg = (
                 f"Error fetching related species records from Entrez API:\n"
                 f"(species: '{species}').")
@@ -298,9 +329,9 @@ def get_related_country_coverage(
         f" '{gbif_target.taxon}' (locus: '{locus}'; country: '{country}')"
         f" - {len(species_names)} related species"
     )
-    results, errors = fetch_gb_records_for_species(species_names, locus)
-    if errors:
-        for species, exc in errors.items():
+    results, err = fetch_gb_records_for_species(species_names, locus)
+    if err:
+        for species, exc in err:
             msg = (
                 f"Error fetching related/country species records from Entrez"
                 f" API (species: '{species}').")
