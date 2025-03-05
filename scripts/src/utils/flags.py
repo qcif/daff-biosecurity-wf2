@@ -5,7 +5,6 @@ import logging
 from .config import Config
 
 logger = logging.getLogger(__name__)
-
 config = Config()
 
 
@@ -121,19 +120,26 @@ class Flag:
         """Write flags value to JSON file.
 
         target: the target taxon name
-        target_type: one of ['candidate', 'pmi', 'toi']
+        target_type: one of TARGETS.[candidate, pmi, toi]
         """
-        identifier = (
-            f"{flag_id}[{target_type}-{target}]"
-            if target
-            else flag_id
-        ).replace(' ', '_')
+        identifier = flag_id
+        target_str = ''
+        if target:
+            type_str = f"{target_type}-" if target_type else ''
+            target_str = f"[{type_str}{target}]".replace(' ', '_')
+            identifier += target_str
+            target_str = ' ' + target_str
         path = query_dir / config.FLAG_FILE_TEMPLATE.format(
             identifier=identifier)
         with path.open('w') as f:
             f.write(value)
-        target_str = f" (target {target_type}:{target})" if target else ""
         logger.info(f"Flag {flag_id}{value}{target_str} written to {path}")
+
+
+class TARGETS:
+    CANDIDATE = "candidate"
+    PMI = "pmi"
+    TOI = "toi"
 
 
 class FLAGS:
@@ -151,12 +157,6 @@ class FLAGS:
     C = "C"
     D = "D"
     E = "E"
-
-
-class TARGETS:
-    CANDIDATE = "candidate"
-    PMI = "pmi"
-    TOI = "toi"
 
 
 FLAG_DETAILS = {
@@ -243,11 +243,13 @@ FLAG_DETAILS = {
             FLAGS.A: ">90% of species have sequence for this locus",
             FLAGS.B: "10-90% of species have sequence for this locus",
             FLAGS.C: "<=10% of species have sequence for this locus",
+            # FLAGS.D: "No other species were found in this genus",
         },
         "level": {
             FLAGS.A: 1,
             FLAGS.B: 2,
             FLAGS.C: 3,
+            # FLAGS.D: 0,  # TODO: no related species to check? Grey or green?
         },
     },
     FLAGS.DB_COVERAGE_RELATED_COUNTRY: {
@@ -255,12 +257,11 @@ FLAG_DETAILS = {
                 " origin",
         "explanation": {
             FLAGS.A: "All species in genus with observations in country of"
-                " origin have sequence for this locus",
+                " origin have reference sequence(s) for this locus",
             FLAGS.B: "Not all species in genus with observations in country of"
-                " origin have"
-                " sequence for this locus",
-            FLAGS.C: "No data: No species in genus with observations in"
-                " country of origin",
+                " origin have reference sequence(s) for this locus",
+            FLAGS.C: "No species in genus have been observed in country of"
+                " origin",
         },
         "level": {
             FLAGS.A: 1,

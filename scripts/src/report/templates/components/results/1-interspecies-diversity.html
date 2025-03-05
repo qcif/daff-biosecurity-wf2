@@ -24,7 +24,7 @@
             <strong>Minimum alignment length</strong>
           </td>
           <td>
-            <code>{{ config.ALIGNMENT.MIN_NT }}bp</code>
+            <code>{{ config.CRITERIA.ALIGNMENT_MIN_NT }}bp</code>
           </td>
         </tr>
         <tr>
@@ -32,7 +32,7 @@
             <strong>Minimum query coverage</strong>
           </td>
           <td>
-            <code>{{ config.ALIGNMENT.MIN_Q_COVERAGE * 100 }}%</code>
+            <code>{{ config.CRITERIA.ALIGNMENT_MIN_Q_COVERAGE * 100 }}%</code>
           </td>
         </tr>
       </table>
@@ -54,7 +54,7 @@
             <strong>STRONG MATCH</strong>
           </td>
           <td>
-            &ge; {{ config.ALIGNMENT.MIN_IDENTITY_STRICT * 100 }}%
+            &ge; {{ config.CRITERIA.ALIGNMENT_MIN_IDENTITY_STRICT * 100 }}%
           </td>
           {% if candidates.strict %}
           <td>{{ candidates.hits | length }}</td>
@@ -69,7 +69,7 @@
             <strong>MODERATE MATCH</strong>
           </td>
           <td>
-            &ge; {{ config.ALIGNMENT.MIN_IDENTITY * 100 }}%
+            &ge; {{ config.CRITERIA.ALIGNMENT_MIN_IDENTITY * 100 }}%
           </td>
           {% if not candidates.strict %}
           <td>{{ candidates.hits | length }}</td>
@@ -82,7 +82,7 @@
         <tr>
           <td>NO MATCH</td>
           <td>
-            &lt; {{ config.ALIGNMENT.MIN_IDENTITY * 100 }}%
+            &lt; {{ config.CRITERIA.ALIGNMENT_MIN_IDENTITY * 100 }}%
           </td>
           <td></td>
           <td></td>

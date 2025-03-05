@@ -70,9 +70,10 @@ def _assign_species_id(hits, query_dir):
     candidate_hits = [
         hit for hit in hits
         if (
-            hit["alignment_length"] >= config.ALIGNMENT.MIN_NT
-            or hit["query_coverage"] >= config.ALIGNMENT.MIN_Q_COVERAGE
-        ) and hit["identity"] >= config.ALIGNMENT.MIN_IDENTITY
+            hit["alignment_length"] >= config.CRITERIA.ALIGNMENT_MIN_NT
+            or hit["query_coverage"]
+            >= config.CRITERIA.ALIGNMENT_MIN_Q_COVERAGE
+        ) and hit["identity"] >= config.CRITERIA.ALIGNMENT_MIN_IDENTITY
     ]
     for hit in candidate_hits:
         tax = taxonomies.get(hit["accession"])
@@ -90,7 +91,7 @@ def _assign_species_id(hits, query_dir):
                 " species list.")
     candidate_hits_strict = [
         hit for hit in candidate_hits
-        if hit["identity"] >= config.ALIGNMENT.MIN_IDENTITY_STRICT
+        if hit["identity"] >= config.CRITERIA.ALIGNMENT_MIN_IDENTITY_STRICT
     ]
     candidate_species = deduplicate([
         hit for hit in candidate_hits

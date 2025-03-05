@@ -95,11 +95,21 @@ class Config:
                 / 'tests/test-data/metadata.csv')
         )
 
-    class ALIGNMENT:
-        MIN_NT = int(os.getenv('MIN_NT', 400))
-        MIN_Q_COVERAGE = float(os.getenv('MIN_Q_COVERAGE', 0.85))
-        MIN_IDENTITY = float(os.getenv('MIN_IDENTITY', 0.935))
-        MIN_IDENTITY_STRICT = float(os.getenv('MIN_IDENTITY_STRICT', 0.985))
+    class CRITERIA:
+        ALIGNMENT_MIN_NT = int(os.getenv('MIN_NT', 400))
+        ALIGNMENT_MIN_Q_COVERAGE = float(os.getenv('MIN_Q_COVERAGE', 0.85))
+        ALIGNMENT_MIN_IDENTITY = float(os.getenv('MIN_IDENTITY', 0.935))
+        ALIGNMENT_MIN_IDENTITY_STRICT = float(
+            os.getenv('MIN_IDENTITY_STRICT', 0.985))
+        SOURCES_MIN_COUNT = int(os.getenv('MIN_SOURCE_COUNT', 5))
+        DB_COV_TARGET_MIN_A = int(os.getenv('DB_COV_MIN_A', 5))
+        DB_COV_TARGET_MIN_B = int(os.getenv('DB_COV_MIN_B', 1))
+        DB_COV_RELATED_MIN_A = int(os.getenv('DB_COV_RELATED_MIN_A', 90))
+        DB_COV_RELATED_MIN_B = int(os.getenv('DB_COV_RELATED_MIN_B', 10))
+        DB_COV_COUNTRY_MISSING_A = int(
+            os.getenv('DB_COV_COUNTRY_MISSING_A', 90))
+        DB_COV_COUNTRY_MISSING_B = int(
+            os.getenv('DB_COV_COUNTRY_MISSING_B', 10))
 
     class OUTPUTS:
         TOI_DETECTED_HEADER = [

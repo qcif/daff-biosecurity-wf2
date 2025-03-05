@@ -1,4 +1,4 @@
-"""Analyze the diversity of reference sequence sources.
+"""Analyze the diversity of reference sequence sources oer target.
 
 A source is defined as a publication or set of authors that are linked to the
 genbank record for that sequence. If there are no references, no sources are
@@ -14,6 +14,7 @@ import json
 import logging
 
 from src.entrez import genbank
+from src.utils.flags import Flag, FLAGS
 from src.utils import existing_path, serialize
 from src.utils.config import Config
 
@@ -27,6 +28,7 @@ def main():
     config.configure_query_logger(args.query_dir)
     species, hits = _read_candidate_hits(args.query_dir)
     species, hits = _collect_sources_per_species(species, hits)
+    _set_flags(species, args.query_dir)
     candidates = {
         "species": species,
         "hits": hits,
@@ -75,6 +77,23 @@ def _read_candidate_hits(query_dir):
     species = candidates["species"]
     hits = candidates["hits"]
     return species, hits
+
+
+def _set_flags(species_sources, query_dir):
+    """Set flag 4 (source diversity) from output data."""
+    for species in species_sources:
+        flag_value = (
+            FLAGS.A
+            if species['independent_sources']
+            > config.CRITERIA.SOURCES_MIN_COUNT
+            else FLAGS.B
+        )
+        Flag.write(
+            query_dir,
+            FLAGS.SOURCES,
+            flag_value,
+            target=species['species'],
+        )
 
 
 if __name__ == '__main__':
