@@ -26,6 +26,8 @@ class Config:
 
     USER_EMAIL = os.getenv("USER_EMAIL")
     NCBI_API_KEY = os.getenv("NCBI_API_KEY")
+    TAXONKIT_DATA = os.getenv("TAXONKIT_DATA",
+                              Path('~/.taxonkit').expanduser())
     TIMESTAMP_FILENAME = os.getenv("TIMESTAMP_FILENAME", 'timestamp.txt')
     INPUT_FASTA_FILEPATH = Path(os.getenv("INPUT_FASTA_FILEPATH",
                                           "tests/test-data/query.fasta"))
