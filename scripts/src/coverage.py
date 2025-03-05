@@ -30,17 +30,7 @@ def read_candidate_species(query_dir):
     ]
 
 
-def assess_coverage(query_dir):
-    def get_args(func, query_dir, target, taxid, locus, country):
-        if func == get_target_coverage:
-            return func, taxid, locus
-        elif func == get_related_coverage:
-            return func, target, locus, query_dir
-        elif func == get_related_country_coverage:
-            return func, target, locus, country, query_dir
-
-    locus = config.get_locus_for_query(query_dir)
-    country = config.get_country_code_for_query(query_dir)
+def _get_targets(query_dir):
     candidates = read_candidate_species(query_dir)
     if len(candidates) > config.DB_COVERAGE_MAX_CANDIDATES:
         logger.info(
@@ -66,15 +56,10 @@ def assess_coverage(query_dir):
             None,
             query_dir=query_dir,
         )
-    targets = candidates + toi_list + [pmi]
+    return candidates, toi_list, pmi
 
-    if not targets:
-        logger.info(
-            f"[{MODULE_NAME}]: Skipping analysis - no target species"
-            " identified for database coverage assessment."
-        )
-        return None
 
+def _get_taxids(targets, query_dir):
     target_taxids = extract.taxids(targets)
     if len(target_taxids) != len(targets):
         msg = (
@@ -93,24 +78,10 @@ def assess_coverage(query_dir):
                 "targets": [k for k, v in target_taxids.items() if not v],
             },
         )
+    return target_taxids
 
-    taxid_to_taxon = {v: k for k, v in target_taxids.items()}
 
-    logger.info(
-        f"[{MODULE_NAME}]: Assessing database coverage for {len(targets)}"
-        f" species at locus '{locus}' in country '{country}'."
-    )
-    logger.debug(
-        f"[{MODULE_NAME}]: collected targets:\n"
-        f"  - Candidates: {candidates}\n"
-        f"  - Taxa of interest: {toi_list}\n"
-        f"  - PMI: {pmi}"
-    )
-    logger.debug(
-        f"[{MODULE_NAME}]: Taxids for targets (extracted by taxonkit):\n"
-        + pformat(target_taxids, indent=2)
-    )
-
+def _fetch_target_taxa(targets, query_dir):
     target_gbif_taxa = {}
     higher_taxon_targets = {}  # Taxa at rank 'family' or higher
     for target in targets:
@@ -144,35 +115,19 @@ def assess_coverage(query_dir):
         + pformat(list(higher_taxon_targets.keys()), indent=2)
     )
 
-    tasks = [
-        get_args(
-            func,
-            query_dir,
-            target_gbif_taxa[target],
-            taxid,
-            locus,
-            country,
-        )
-        for target, taxid in target_taxids.items()
-        for func in (
-            get_target_coverage,
-            get_related_coverage,
-            get_related_country_coverage,
-        )
-        if target in target_gbif_taxa
-    ]
+    return target_gbif_taxa, higher_taxon_targets
 
-    tasks += [
-        (get_target_coverage, taxid, locus)
-        for target, taxid in target_taxids.items()
-        if target in higher_taxon_targets
-    ]
 
-    if not len(tasks):
-        raise ValueError(
-            "No tasks created for database coverage assessment. This likely"
-            " indicates a bug in the code - please report this issue.")
-
+def _parallel_process_tasks(
+    tasks,
+    query_dir,
+    target_taxids,
+    target_gbif_taxa,
+    taxid_to_taxon,
+    candidate_list,
+    toi_list,
+    pmi,
+):
     with ThreadPoolExecutor(max_workers=50) as executor:
         results = {
             get_target_coverage.__name__: {},
@@ -199,7 +154,7 @@ def assess_coverage(query_dir):
                     else target
                 )
                 target_source = (
-                    "candidate" if species_name in candidates
+                    "candidate" if species_name in candidate_list
                     else "taxon of interest" if species_name in toi_list
                     else "preliminary ID"
                 )
@@ -231,6 +186,26 @@ def assess_coverage(query_dir):
         for k in result:
             logger.debug(f"{func}: {k}")
 
+    return _collect_results(
+        results,
+        target_taxids,
+        target_gbif_taxa,
+        taxid_to_taxon,
+        candidate_list,
+        toi_list,
+        pmi,
+    )
+
+
+def _collect_results(
+    results,
+    target_taxids,
+    target_gbif_taxa,
+    taxid_to_taxon,
+    candidate_list,
+    toi_list,
+    pmi,
+):
     candidate_results = {}
     toi_results = {}
     pmi_results = {}
@@ -239,7 +214,7 @@ def assess_coverage(query_dir):
         target_taxon = taxid_to_taxon[taxid]
         result = results[get_target_coverage.__name__].get(taxid)
 
-        if target_taxon in candidates:
+        if target_taxon in candidate_list:
             candidate_results[target_taxon] = candidate_results.get(
                 target_taxon, {})
             candidate_results[target_taxon]['target'] = result
@@ -255,7 +230,7 @@ def assess_coverage(query_dir):
         related_result = results[get_related_coverage.__name__].get(gbif_taxon)
         country_result = results[get_related_country_coverage.__name__].get(
             gbif_taxon)
-        if target_taxon in candidates:
+        if target_taxon in candidate_list:
             candidate_results[target_taxon]['related'] = related_result
             candidate_results[target_taxon]['country'] = country_result
         if target_taxon in toi_list:
@@ -265,13 +240,95 @@ def assess_coverage(query_dir):
             pmi_results[target_taxon]['related'] = related_result
             pmi_results[target_taxon]['country'] = country_result
 
-    data = {
+    return {
         "candidates": candidate_results,
         "tois": toi_results,
         "pmi": pmi_results,
     }
-    _set_flags(data, query_dir)
-    return data
+
+
+def assess_coverage(query_dir) -> dict[str, dict[str, dict]]:
+    def get_args(func, query_dir, target, taxid, locus, country):
+        if func == get_target_coverage:
+            return func, taxid, locus
+        elif func == get_related_coverage:
+            return func, target, locus, query_dir
+        elif func == get_related_country_coverage:
+            return func, target, locus, country, query_dir
+
+    locus = config.get_locus_for_query(query_dir)
+    country = config.get_country_code_for_query(query_dir)
+    candidate_list, toi_list, pmi = _get_targets(query_dir)
+    targets = candidate_list + toi_list + [pmi]
+    if not targets:
+        logger.info(
+            f"[{MODULE_NAME}]: Skipping analysis - no target species"
+            " identified for database coverage assessment."
+        )
+        return None
+
+    target_taxids = _get_taxids(targets, query_dir)
+    taxid_to_taxon = {v: k for k, v in target_taxids.items()}
+    logger.info(
+        f"[{MODULE_NAME}]: Assessing database coverage for {len(targets)}"
+        f" species at locus '{locus}' in country '{country}'."
+    )
+    logger.debug(
+        f"[{MODULE_NAME}]: collected targets:\n"
+        f"  - Candidates: {candidate_list}\n"
+        f"  - Taxa of interest: {toi_list}\n"
+        f"  - PMI: {pmi}"
+    )
+    logger.debug(
+        f"[{MODULE_NAME}]: Taxids for targets (extracted by taxonkit):\n"
+        + pformat(target_taxids, indent=2)
+    )
+
+    # 'Higher taxa' are at rank 'family' or higher
+    target_gbif_taxa, higher_taxon_targets = _fetch_target_taxa(
+        targets, query_dir)
+
+    tasks = [
+        get_args(
+            func,
+            query_dir,
+            target_gbif_taxa[target],
+            taxid,
+            locus,
+            country,
+        )
+        for target, taxid in target_taxids.items()
+        for func in (
+            get_target_coverage,
+            get_related_coverage,
+            get_related_country_coverage,
+        )
+        if target in target_gbif_taxa
+    ]
+
+    tasks += [
+        (get_target_coverage, taxid, locus)
+        for target, taxid in target_taxids.items()
+        if target in higher_taxon_targets
+    ]
+
+    if not len(tasks):
+        raise ValueError(
+            "No tasks created for database coverage assessment. This likely"
+            " indicates a bug in the code - please report this issue.")
+
+    results = _parallel_process_tasks(
+        tasks,
+        query_dir,
+        target_taxids,
+        target_gbif_taxa,
+        taxid_to_taxon,
+        candidate_list,
+        toi_list,
+        pmi,
+    )
+    _set_flags(results, query_dir)
+    return results
 
 
 def get_target_coverage(taxid, locus):
