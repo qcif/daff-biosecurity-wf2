@@ -10,10 +10,11 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pprint import pformat
 
 from src.entrez import genbank
-from src.utils import errors
-from src.utils.config import Config
+from src.utils.flags import Flag, FLAGS
 from src.gbif.relatives import GBIFRecordNotFound, RANK, RelatedTaxaGBIF
 from src.taxonomy import extract
+from src.utils import errors
+from src.utils.config import Config
 
 logger = logging.getLogger(__name__)
 config = Config()
@@ -264,11 +265,13 @@ def assess_coverage(query_dir):
             pmi_results[target_taxon]['related'] = related_result
             pmi_results[target_taxon]['country'] = country_result
 
-    return {
+    data = {
         "candidates": candidate_results,
         "tois": toi_results,
         "pmi": pmi_results,
     }
+    _set_flags(data, query_dir)
+    return data
 
 
 def get_target_coverage(taxid, locus):
@@ -290,7 +293,7 @@ def get_related_coverage(gbif_target, locus, query_dir):
         for r in gbif_target.relatives
     })
     if not species_names:
-        return {}, []
+        return {}
     logger.info(
         f"[{MODULE_NAME}]: Fetching Genbank records for target"
         f" '{gbif_target.taxon}' (locus: '{locus}') - {len(species_names)}"
@@ -322,7 +325,7 @@ def get_related_country_coverage(
         for r in gbif_target.for_country(country)
     ]
     if not species_names:
-        return {}, []
+        return {}
     # TODO: potential for caching GBIF related/country taxa here
     logger.info(
         f"[{MODULE_NAME}]: Fetching Genbank records for target"
@@ -391,3 +394,94 @@ def fetch_gb_records_for_species(species_names, locus):
     })
     # TODO: potential for caching related species counts here
     return species_counts, errors
+
+
+def _set_flags(db_coverage, query_dir):
+    """Set flags 5.1 - 5.3 (DB coverage) for each target."""
+    def set_target_coverage_flag(target, target_type, count):
+        if count is None:
+            # TODO: this would indicate an error which should be reported
+            # elsewhere
+            return
+        if count > config.CRITERIA.DB_COV_TARGET_MIN_A:
+            flag_value = FLAGS.A
+        elif count > config.CRITERIA.DB_COV_TARGET_MIN_B:
+            flag_value = FLAGS.B
+        else:
+            flag_value = FLAGS.C
+        Flag.write(
+            query_dir,
+            FLAGS.DB_COVERAGE_TARGET,
+            flag_value,
+            target=target,
+            target_type=target_type,
+        )
+
+    def set_related_coverage_flag(target, target_type, species_counts):
+        if species_counts is None:
+            return  # TODO: Indicates a fatal error
+        if not species_counts:
+            return  # TODO: no species to check? Flag D??
+        total_species = len(species_counts)
+        represented_species = len([
+            count for count in species_counts.values()
+            if count > 0
+        ])
+        percent_coverage = 100 * represented_species / total_species
+        if percent_coverage > config.CRITERIA.DB_COV_RELATED_MIN_A:
+            flag_value = FLAGS.A
+        elif percent_coverage > config.CRITERIA.DB_COV_RELATED_MIN_B:
+            flag_value = FLAGS.B
+        else:
+            flag_value = FLAGS.C
+        Flag.write(
+            config.output_dir,
+            FLAGS.DB_COVERAGE_RELATED,
+            flag_value,
+            target=target,
+            target_type=target_type,
+        )
+
+    def set_country_coverage_flag(target, target_type, species_counts):
+        if species_counts is None:
+            return  # TODO: Indicates a fatal error
+        total_species = len(species_counts)
+        represented_species = len([
+            count for count in species_counts.values()
+            if count > 0
+        ])
+        unrepresented_species = total_species - represented_species
+        if not species_counts:
+            flag_value = FLAGS.C
+        elif unrepresented_species <= config.CRITERIA.DB_COV_COUNTRY_MISSING_A:
+            flag_value = FLAGS.A
+        elif unrepresented_species <= config.CRITERIA.DB_COV_COUNTRY_MISSING_B:
+            flag_value = FLAGS.B
+        Flag.write(
+            config.output_dir,
+            FLAGS.DB_COVERAGE_RELATED_COUNTRY,
+            flag_value,
+            target=target,
+            target_type=target_type,
+        )
+
+    for target_type, target_data in db_coverage.items():
+        for target_species, coverage_data in target_data.items():
+            if not coverage_data.get('related'):
+                # No related coverage - target rank is family or higher
+                continue
+            set_target_coverage_flag(
+                target_species,
+                target_type,
+                coverage_data['target'],
+            )
+            set_related_coverage_flag(
+                target_species,
+                target_type,
+                coverage_data['related'],
+            )
+            set_country_coverage_flag(
+                target_species,
+                target_type,
+                coverage_data['country'],
+            )

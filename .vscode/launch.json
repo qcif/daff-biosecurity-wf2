@@ -72,7 +72,7 @@
                 "output/query_001_LC438549"
             ],
             "env": {
-                "LOGGING_DEBUG": "1",
+                // "LOGGING_DEBUG": "1",
             }
         },
         {
