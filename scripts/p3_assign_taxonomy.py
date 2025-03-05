@@ -111,6 +111,9 @@ def _assign_species_id(hits, query_dir):
             if hit["species"] == species["species"]
         )
 
+    selected_species = candidate_species_strict or candidate_species
+    selected_hits = candidate_hits_strict or candidate_hits
+
     _write_candidate_flags(
         query_dir,
         candidate_species_strict,
@@ -118,18 +121,16 @@ def _assign_species_id(hits, query_dir):
     )
     _write_candidates(
         query_dir,
-        candidate_hits_strict or candidate_hits,
-        candidate_species_strict or candidate_species,
+        selected_hits,
+        selected_species,
     )
 
-    if len(
-        candidate_hits_strict or candidate_hits
-    ) > MAX_CANDIDATES_FOR_ANALYSIS:
-        _write_boxplot(query_dir, candidate_hits_strict or candidate_hits)
+    if len(selected_species) > MAX_CANDIDATES_FOR_ANALYSIS:
+        _write_boxplot(query_dir, selected_hits)
 
     taxonomic_id = _write_taxonomic_id(query_dir, candidate_species_strict)
     _write_pmi_match(taxonomic_id, query_ix, query_dir)
-    return candidate_species_strict or candidate_species
+    return selected_species
 
 
 def _write_taxonomic_id(query_dir, candidate_species_strict):
@@ -237,7 +238,7 @@ def _write_pmi_match(taxonomic_identity, query_ix, query_dir):
                 f.write(','.join(('rank', 'taxon')))
                 f.write(','.join(match[0]))
     else:
-        logger.info("No PMI match found - no flag written.")
+        logger.info("No taxonomic ID - no PMI flag (7) written.")
 
 
 def _write_boxplot(query_dir, hits):
@@ -247,19 +248,19 @@ def _write_boxplot(query_dir, hits):
         if genus not in genera:
             genera[genus] = []
         genera[genus].append(hit['identity'] * IDENTITY_PERCENTAGE)
-    # Create plot with matplotlib
-    plt.figure(figsize=(10, 6))
-    plt.boxplot(genera.values(), labels=genera.keys(), patch_artist=True)
-
-    plt.xlabel('Genus')
-    plt.ylabel('Identity (%)')
-    plt.title('Boxplot of Identity by Genus')
-
+    labels = []
+    identities = []
+    for genus, values in genera.items():
+        labels.append(genus)
+        identities.append(values)
+    plt.figure(figsize=(12, 6))
+    plt.boxplot(identities, tick_labels=labels, patch_artist=True)
+    plt.xlabel('Genus', fontsize=14)
+    plt.ylabel('Identity (%)', fontsize=14)
     boxplot_image_path = query_dir / config.BOXPLOT_IMG
     plt.savefig(boxplot_image_path)
     plt.close()
-
-    logger.info(f"Boxplot saved to {boxplot_image_path}")
+    logger.info(f"Written boxplot PNG to {boxplot_image_path}")
 
 
 def _detect_taxa_of_interest(candidate_species, query_dir):
