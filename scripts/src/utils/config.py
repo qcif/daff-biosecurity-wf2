@@ -57,7 +57,7 @@ class Config:
     DB_COVERAGE_TOI_LIMIT = int(os.getenv("DB_COVERAGE_TOI_LIMIT", 10))
 
     DB_COVERAGE_MAX_CANDIDATES = 3
-    FLAG_FILE_TEMPLATE = 'flag_{identifier}.txt'
+    FLAG_FILE_TEMPLATE = '{identifier}.flag'
     GBIF_LIMIT_RECORDS = int(os.getenv("GBIF_LIMIT_RECORDS", 500))
     GBIF_ACCEPTED_STATUS = os.getenv(
         "GBIF_ACCEPTED_STATUS",
