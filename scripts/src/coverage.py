@@ -10,7 +10,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pprint import pformat
 
 from src.entrez import genbank
-from src.utils.flags import Flag, FLAGS
+from src.utils.flags import Flag, FLAGS, TARGETS
 from src.gbif.relatives import GBIFRecordNotFound, RANK, RelatedTaxaGBIF
 from src.taxonomy import extract
 from src.utils import errors
@@ -248,9 +248,9 @@ def _collect_results(
             pmi_results[target_taxon]['country'] = country_result
 
     return {
-        "candidates": candidate_results,
-        "tois": toi_results,
-        "pmi": pmi_results,
+        TARGETS.CANDIDATE: candidate_results,
+        TARGETS.TOI: toi_results,
+        TARGETS.PMI: pmi_results,
     }, error_detected
 
 

@@ -11,7 +11,7 @@ from pathlib import Path
 
 from .outcomes import DetectedTaxon
 from ..utils import config
-from ..utils.flags import Flag, FLAGS  # , TARGETS
+from ..utils.flags import Flag, FLAGS, TARGETS
 
 logger = logging.getLogger(__name__)
 config = config.Config()
@@ -188,18 +188,20 @@ def _get_pmi_result(flags):
             'confirmed': False,
             'explanation': "Inconclusive taxonomic identity (Flag"
                            f" {FLAGS.POSITIVE_ID}{flag_1.value})",
-            'bs-class': None,
+            'bs-class': 'secondary',
         }
     flag_7 = flags[FLAGS.PMI]
     if flag_7.value == FLAGS.A:
         return {
             'confirmed': True,
-            'explanation': flag_7.explanation(),
+            'explanation': f'<strong>Flag 7{flag_7.value}</strong>:'
+                           f' {flag_7.explanation}',
             'bs-class': 'success',
         }
     return {
         'confirmed': False,
-        'explanation': flag_7.explanation(),
+        'explanation': f'<strong>Flag 7{flag_7.value}</strong>:'
+                       f' {flag_7.explanation}',
         'bs-class': 'danger',
     }
 
@@ -219,44 +221,43 @@ def _get_toi_result(query_ix, flags):
             if row.get(config.OUTPUTS.TOI_DETECTED_HEADER[1])
         ]
     flag_2 = flags[FLAGS.TOI]
-    criteria_2 = f"Flag {flag_2}: {flag_2.explanation()}"
-
-    # TODO
-    # flag_5_1 = flags[FLAGS.DB_COVERAGE_TARGET]
-    # flag_5_2 = flags[FLAGS.DB_COVERAGE_RELATED]
-    # flag_5_1_value = flag_5_1.value_for_target(TARGETS.TOI, max_only=True)
-    # criteria_5_1 = (
-    #     f"Flag {flag_5_1} for taxa of concern:"
-    #     f" {flag_5_1.explanation(flag_5_1_value)}")
-    # flag_5_2_value = flag_5_2.value_for_target(TARGETS.TOI, max_only=True)
-    # criteria_5_2 = (
-    #     f"Flag {flag_5_2} for taxa of concern:"
-    #     f" {flag_5_2.explanation(flag_5_2_value)}")
+    flags_5_1_targets = flags[FLAGS.DB_COVERAGE_TARGET][TARGETS.TOI]
+    flag_5_1_max = max(flags_5_1_targets.values(), key=lambda x: x.value)
+    flags_5_2_targets = flags[FLAGS.DB_COVERAGE_RELATED][TARGETS.TOI]
+    flag_5_2_max = max(flags_5_2_targets.values(), key=lambda x: x.value)
+    criteria_2 = f"<strong>Flag {flag_2}</strong>: {flag_2.explanation}"
+    criteria_5_1 = (
+        f"<strong>Flag {flag_5_1_max}</strong>:"
+        f" {flag_5_1_max.explanation}")
+    criteria_5_2 = (
+        f"<strong>Flag {flag_5_2_max}</strong>:"
+        f" {flag_5_2_max.explanation}")
+    ruled_out = (
+        flag_2.value == FLAGS.A
+        and flag_5_1_max.value == FLAGS.A
+        and flag_5_2_max.value == FLAGS.A
+    )
     return {
         'detected': detected_tois,
         'criteria': [
             {
                 'message': criteria_2,
-                'level': flag_2.get_level(),
-                'bs-class': flag_2.get_bs_class(),
+                'level': flag_2.level,
+                'bs-class': flag_2.bs_class,
             },
-            # { # TODO
-            #     'message': criteria_5_1,
-            #     'level': flag_5_1.get_level(flag_5_1_value),
-            #     'bs-class': flag_5_1.get_bs_class(flag_5_1_value),
-            # },
-            # {
-            #     'message': criteria_5_2,
-            #     'level': flag_5_2.get_level(flag_5_2_value),
-            #     'bs-class': flag_5_2.get_bs_class(flag_5_2_value),
-            # },
+            {
+                'message': criteria_5_1,
+                'level': flag_5_1_max.level,
+                'bs-class': flag_5_1_max.bs_class,
+            },
+            {
+                'message': criteria_5_2,
+                'level': flag_5_2_max.level,
+                'bs-class': flag_5_2_max.bs_class,
+            },
         ],
-        'ruled_out': (
-            flag_2.value == FLAGS.A
-            # and flag_5_1_value == FLAGS.A  # TODO
-            # and flag_5_2_value == FLAGS.A  # TODO
-        ),
-        'bs-class': 'success' if flag_2.value == FLAGS.A else 'danger',
+        'ruled_out': ruled_out,
+        'bs-class': 'success' if ruled_out else 'danger',
     }
 
 

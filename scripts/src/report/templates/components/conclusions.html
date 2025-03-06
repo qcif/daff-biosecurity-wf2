@@ -22,7 +22,7 @@
     <td>Preliminary morphology ID confirmed</td>
     <td style="width: 75px;">
       {% if conclusions.summary.result.confirmed %}
-      <strong class="text-{% if conclusions.summary.pmi.confirmed %}success{% else %}danger{% endif %}">
+      <strong class="text-{{ conclusions.summary.pmi['bs-class'] }}">
         {{ conclusions.summary.pmi.confirmed }}
       </strong>
       {% else %}
@@ -32,11 +32,11 @@
   </tr>
   <tr>
     <td colspan="2">
-      <ul class="font-small">
-        <li>
-          {{ conclusions.summary.pmi.explanation }}
-        </li>
-      </ul>
+      <small>
+        <p class="alert mb-1 p-2">
+          {{ conclusions.summary.pmi.explanation | safe }}
+        </p>
+      </small>
     </td>
   </tr>
 </table>
@@ -54,13 +54,13 @@
   </tr>
   <tr>
     <td colspan="2">
-      <ul class="font-small">
+      <small>
         {% for item in conclusions.summary.toi.criteria %}
-        <li {% if item.level > 1 %}class="text-{{ item['bs-class'] }}"{% endif %}>
-          {{ item.message }}
-        </li>
+        <p class="alert alert-{{ item['bs-class'] }} mb-1 p-2">
+          {{ item.message | safe }}
+        </p>
         {% endfor %}
-      </ul>
+      </small>
     </td>
   </tr>
 </table>
