@@ -26,7 +26,8 @@
             "program": "${workspaceFolder}/scripts/p1_parse_blast.py",
             "args": [
                 "tests/test-data/output.xml",
-            ]
+            ],
+            "preLaunchTask": "clear-log-files"
         },
         {
             "type": "debugpy",
@@ -36,7 +37,8 @@
             "args": [
                 "output/taxids.csv",
                 "--output_dir", "output",
-            ]
+            ],
+            "preLaunchTask": "clear-log-files"
         },
         {
             "type": "debugpy",
@@ -52,7 +54,8 @@
             ],
             "env": {
                 "INPUT_TOI_FILEPATH": "tests/test-data/taxa_of_interest.txt",
-            }
+            },
+            "preLaunchTask": "clear-log-files"
         },
         {
             "type": "debugpy",
@@ -61,7 +64,8 @@
             "program": "${workspaceFolder}/scripts/p4_source_diversity.py",
             "args": [
                 "output/query_001_LC438549"
-            ]
+            ],
+            "preLaunchTask": "clear-log-files"
         },
         {
             "type": "debugpy",
@@ -73,7 +77,8 @@
             ],
             "env": {
                 // "LOGGING_DEBUG": "1",
-            }
+            },
+            "preLaunchTask": "clear-log-files"
         },
         {
             "type": "debugpy",
@@ -97,7 +102,8 @@
             "env": {
                 "OUTPUT_DIR": "../output",
                 "INPUT_FASTA_FILEPATH": "../tests/test-data/query.fasta",
-            }
+            },
+            "preLaunchTask": "clear-log-files"
         }
     ]
 }

@@ -13,8 +13,9 @@ Database coverage is analysed at three levels:
 import argparse
 import json
 import logging
+import sys
 
-from src.utils import existing_path
+from src.utils import existing_path, errors
 from src.utils.config import Config
 from src.coverage import assess_coverage
 
@@ -28,8 +29,24 @@ def main():
     args = parse_args()
     config.configure(args.output_dir)
     config.configure_query_logger(args.query_dir)
-    results = assess_coverage(args.query_dir)
+    results, error_detected = assess_coverage(args.query_dir)
     write_db_coverage(args.query_dir, results)
+    if error_detected:
+        error_file_path = args.query_dir / 'error.p5.log'
+        sys.stderr.write(
+            f'[Query {args.query_dir}] An error occurred during database'
+            ' coverage assessment that'
+            ' prevented one or more target species from being assessed.'
+            ' For further details, please consult the workflow report or error'
+            f' file: {error_file_path}'
+        )
+        errors.report(
+            error_file_path,
+            query_dir=args.query_dir,
+            location_min=errors.LOCATIONS.DATABASE_COVERAGE,
+            location_max=errors.LOCATIONS.DB_COVERAGE_RELATED_COUNTRY,
+        )
+        sys.exit(1)
 
 
 def parse_args():

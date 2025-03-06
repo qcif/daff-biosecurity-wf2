@@ -206,6 +206,7 @@ def _collect_results(
     toi_list,
     pmi,
 ):
+    error_detected = False
     candidate_results = {}
     toi_results = {}
     pmi_results = {}
@@ -213,6 +214,7 @@ def _collect_results(
     for taxid in target_taxids.values():
         target_taxon = taxid_to_taxon[taxid]
         result = results[get_target_coverage.__name__].get(taxid)
+        error_detected = error_detected or result is None
 
         if target_taxon in candidate_list:
             candidate_results[target_taxon] = candidate_results.get(
@@ -230,6 +232,11 @@ def _collect_results(
         related_result = results[get_related_coverage.__name__].get(gbif_taxon)
         country_result = results[get_related_country_coverage.__name__].get(
             gbif_taxon)
+        error_detected = (
+            error_detected
+            or related_result is None
+            or country_result is None
+        )
         if target_taxon in candidate_list:
             candidate_results[target_taxon]['related'] = related_result
             candidate_results[target_taxon]['country'] = country_result
@@ -244,7 +251,7 @@ def _collect_results(
         "candidates": candidate_results,
         "tois": toi_results,
         "pmi": pmi_results,
-    }
+    }, error_detected
 
 
 def assess_coverage(query_dir) -> dict[str, dict[str, dict]]:
@@ -317,7 +324,7 @@ def assess_coverage(query_dir) -> dict[str, dict[str, dict]]:
             "No tasks created for database coverage assessment. This likely"
             " indicates a bug in the code - please report this issue.")
 
-    results = _parallel_process_tasks(
+    results, is_error = _parallel_process_tasks(
         tasks,
         query_dir,
         target_taxids,
@@ -328,7 +335,7 @@ def assess_coverage(query_dir) -> dict[str, dict[str, dict]]:
         pmi,
     )
     _set_flags(results, query_dir)
-    return results
+    return results, is_error
 
 
 def get_target_coverage(taxid, locus):
