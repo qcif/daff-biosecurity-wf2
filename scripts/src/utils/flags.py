@@ -31,17 +31,17 @@ class Flag:
         return f"{self.flag_id}{self.value}"
 
     def __repr__(self):
-        return f"{self.flag_id}{self.value}"
+        return f"{self.flagCRITERIA.ALIGNMENT_MIN_id}{self.value}"
 
     def to_json(self):
         data = {
             "flag_id": self.flag_id,
             "value": self.value,
             "target": self.target,
-            "level": self.get_level(),
-            "outcome": self.outcome(),
-            "explanation": self.explanation(),
-            "bs-class": self.get_bs_class(),
+            "level": self.level,
+            "outcome": self.outcome,
+            "explanation": self.explanation,
+            "bs-class": self.bs_class,
         }
 
         return data
@@ -50,19 +50,23 @@ class Flag:
     def name(self):
         return FLAG_DETAILS[self.flag_id]["name"]
 
+    @property
     def explanation(self):
         return FLAG_DETAILS[self.flag_id]["explanation"][self.value]
 
+    @property
     def outcome(self):
         return FLAG_DETAILS[self.flag_id]["outcome"][self.value]
 
-    def get_level(self):
+    @property
+    def level(self):
         """Return the warning level for the given value."""
         return FLAG_DETAILS[self.flag_id]['level'][self.value]
 
-    def get_bs_class(self):
-        """Return the warning level for the given value."""
-        level = self.get_level()
+    @property
+    def bs_class(self):
+        """Return the bootstrap css class for self.level."""
+        level = self.level
         if level == 0:
             return "secondary"
         if level == 1:
@@ -97,15 +101,16 @@ class Flag:
 
     def _parse_flag_filename(path):
         """Parse flag filename to extract flag_id, target, target_type."""
-        stem = path.stem.split('flag_', 1)[1]
-        if '[' in stem:
-            flag_id, target = stem.split("[")
-            target_type, target = target.split("-")
-            target = target.replace("]", "").replace("_", " ")
+        stem = path.stem
+        target_type = None
+        if '-' in stem:
+            flag_id, target = stem.lsplit("-", 1)
+            if '-' in target:
+                target_type, target = target.split("-")
+            target = target.replace("_", " ")
         else:
             flag_id = stem
             target = None
-            target_type = None
         return flag_id, target, target_type
 
     @classmethod
@@ -126,7 +131,7 @@ class Flag:
         target_str = ''
         if target:
             type_str = f"{target_type}-" if target_type else ''
-            target_str = f"[{type_str}{target}]".replace(' ', '_')
+            target_str = f"-{type_str}{target}".replace(' ', '_')
             identifier += target_str
             target_str = ' ' + target_str
         path = query_dir / config.FLAG_FILE_TEMPLATE.format(
