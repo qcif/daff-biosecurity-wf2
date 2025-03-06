@@ -103,7 +103,6 @@
                 "OUTPUT_DIR": "../output",
                 "INPUT_FASTA_FILEPATH": "../tests/test-data/query.fasta",
             },
-            "preLaunchTask": "clear-log-files"
         }
     ]
 }
