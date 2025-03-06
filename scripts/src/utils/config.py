@@ -103,6 +103,8 @@ class Config:
         ALIGNMENT_MIN_IDENTITY = float(os.getenv('MIN_IDENTITY', 0.935))
         ALIGNMENT_MIN_IDENTITY_STRICT = float(
             os.getenv('MIN_IDENTITY_STRICT', 0.985))
+        MAX_CANDIDATES_FOR_ANALYSIS = int(
+            os.getenv('MAX_CANDIDATES_FOR_ANALYSIS', 3))
         SOURCES_MIN_COUNT = int(os.getenv('MIN_SOURCE_COUNT', 5))
         DB_COV_TARGET_MIN_A = int(os.getenv('DB_COV_MIN_A', 5))
         DB_COV_TARGET_MIN_B = int(os.getenv('DB_COV_MIN_B', 1))
@@ -265,7 +267,7 @@ class Config:
                 flag['level'] = flag.get('level', {})
                 flag['explanation'][row['value']] = row['explanation']
                 flag['outcome'][row['value']] = row['outcome']
-                flag['level'][row['value']] = row['level']
+                flag['level'][row['value']] = int(row['level'])
                 data[row['id']] = flag
         return data
 

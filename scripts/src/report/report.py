@@ -91,6 +91,7 @@ def _get_report_context(query_ix):
         'conclusions': _draw_conclusions(query_ix),
         'hits': config.read_blast_hits_json(query_ix)['hits'],
         'candidates': _get_candidates(query_ix),
+        'candidates_boxplot_src': _get_boxplot_src(query_ix),
     }
 
 
@@ -148,10 +149,7 @@ def _draw_conclusions(query_ix):
     """Determine conclusions from outputs flags and files."""
     flags = Flag.read(query_ix)
     return {
-        'flags': {
-            ix: flag.to_json()
-            for ix, flag in flags.items()
-        },
+        'flags': flags,
         'summary': {
             'result': _get_taxonomic_result(query_ix, flags),
             'pmi': _get_pmi_result(flags),
@@ -165,7 +163,7 @@ def _get_taxonomic_result(query_ix, flags):
     path = config.get_query_dir(query_ix) / config.TAXONOMY_ID_CSV
     flag_1 = flags[FLAGS.POSITIVE_ID]
     explanation = (f"Flag {FLAGS.POSITIVE_ID}{flag_1.value}: "
-                   + flag_1.explanation())
+                   + flag_1.explanation)
     if flag_1.value == FLAGS.A:
         with path.open() as f:
             reader = csv.DictReader(f)
@@ -276,6 +274,14 @@ def _get_candidates(query_ix):
         flags[FLAGS.POSITIVE_ID].value
         not in (FLAGS.D, FLAGS.E))
     return candidates
+
+
+def _get_boxplot_src(query_ix) -> Path:
+    """Return the path to the boxplot image if it exists."""
+    path = config.get_query_dir(query_ix) / config.BOXPLOT_IMG
+    if path.exists():
+        return _get_img_src(path)
+    return None
 
 
 if __name__ == '__main__':

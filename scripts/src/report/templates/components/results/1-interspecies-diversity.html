@@ -2,13 +2,22 @@
 
 <h3>Interspecies diversity</h3>
 
-<p class="my-3 alert alert-{{ conclusions.flags['1']['bs-class'] }}">
-  <strong>Flag 1{{ conclusions.flags['1']['value'] }}</strong>:
-  {{ conclusions.flags['1']['explanation'] }}
-</p>
+<p class="my-3 alert alert-{{ conclusions.flags['1'].bs_class }}">
+  <strong>
+    Flag 1{{ conclusions.flags['1'].value }}:
+    {{ conclusions.flags['1'].outcome }}
+    {% if conclusions.summary.result.species %}
+    -
+    <em>
+      {{ conclusions.summary.result.species }}
+    </em>
+    {% endif %}
+  </strong>
 
-<p class="lead">
-  {{ conclusions.flags['1']['outcome'] }}
+  <br>
+  <em>
+    {{ conclusions.flags['1'].explanation }}
+  </em>
 </p>
 
 <div class="row my-5">
@@ -126,5 +135,14 @@
     {% include 'components/results/1a-blast-hits-modal.html' %}
   </div>
 </div>
+
+{% if candidates_boxplot_src %}
+<div class="my-5">
+  <img class="img-fluid my-3" src="{{ candidates_boxplot_src }}" alt="Boxplot of BLAST hit identity percent grouped by genus">
+  <p>
+    The boxplot above shows the identity (%) of BLAST hits grouped by genus. Each data point shows the alignment identity between the query and matched reference sequence. The analyst may wish to use this to make a subjective genus-level identification for the sample.
+  </p>
+</div>
+{% endif %}
 
 {{ render_subjective_input(2) }}

@@ -27,8 +27,7 @@ from src.utils.flags import Flag, FLAGS
 
 logger = logging.getLogger(__name__)
 config = Config()
-MAX_CANDIDATES_FOR_ANALYSIS = 3
-IDENTITY_PERCENTAGE = 100
+
 CANDIDATE_CSV_HEADER = [
     "species",
     "taxid",
@@ -126,7 +125,7 @@ def _assign_species_id(hits, query_dir):
         selected_species,
     )
 
-    if len(selected_species) > MAX_CANDIDATES_FOR_ANALYSIS:
+    if len(selected_species) > config.CRITERIA.MAX_CANDIDATES_FOR_ANALYSIS:
         _write_boxplot(query_dir, selected_hits)
 
     taxonomic_id = _write_taxonomic_id(query_dir, candidate_species_strict)
@@ -248,18 +247,18 @@ def _write_boxplot(query_dir, hits):
         genus = hit['species'].split(' ')[0]
         if genus not in genera:
             genera[genus] = []
-        genera[genus].append(hit['identity'] * IDENTITY_PERCENTAGE)
+        genera[genus].append(hit['identity'] * 100)
     labels = []
     identities = []
     for genus, values in genera.items():
         labels.append(genus)
         identities.append(values)
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(12, 3))
     plt.boxplot(identities, tick_labels=labels, patch_artist=True)
     plt.xlabel('Genus', fontsize=14)
-    plt.ylabel('Identity (%)', fontsize=14)
+    plt.ylabel('Identity to query (%)', fontsize=14)
     boxplot_image_path = query_dir / config.BOXPLOT_IMG
-    plt.savefig(boxplot_image_path)
+    plt.savefig(boxplot_image_path, bbox_inches='tight', dpi=150)
     plt.close()
     logger.info(f"Written boxplot PNG to {boxplot_image_path}")
 
