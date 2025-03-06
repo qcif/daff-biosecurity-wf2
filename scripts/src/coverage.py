@@ -499,7 +499,7 @@ def _set_flags(db_coverage, query_dir):
         else:
             flag_value = FLAGS.C
         Flag.write(
-            config.output_dir,
+            query_dir,
             FLAGS.DB_COVERAGE_RELATED,
             flag_value,
             target=target,
@@ -522,7 +522,7 @@ def _set_flags(db_coverage, query_dir):
         elif unrepresented_species <= config.CRITERIA.DB_COV_COUNTRY_MISSING_B:
             flag_value = FLAGS.B
         Flag.write(
-            config.output_dir,
+            query_dir,
             FLAGS.DB_COVERAGE_RELATED_COUNTRY,
             flag_value,
             target=target,

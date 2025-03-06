@@ -34,11 +34,11 @@ def main():
     if error_detected:
         error_file_path = args.query_dir / 'error.p5.log'
         sys.stderr.write(
-            f'[Query {args.query_dir}] An error occurred during database'
+            f'[Query {args.query_dir.name}] An error occurred during database'
             ' coverage assessment that'
             ' prevented one or more target species from being assessed.'
             ' For further details, please consult the workflow report or error'
-            f' file: {error_file_path}'
+            f' file: {error_file_path}\n'
         )
         errors.report(
             error_file_path,
