@@ -1,0 +1,24 @@
+id,name,value,explanation,outcome,level
+1,Interspecies diversity,A,1 candidate species matched with high stringency (identity >= 98.5%),Positive species identification,1
+1,Interspecies diversity,B,2-3 candidate species matched with high stringency (identity >= 98.5%),The analyst should attempt subjective species identification at the genus level,2
+1,Interspecies diversity,C,>3 candidate species matched with high stringency (identity >= 98.5%),The analyst should attempt subjective species identification at the genus level,3
+1,Interspecies diversity,D,At least one candidate species matched with moderate stringency (identity >=93.5% and <98.5%),The analyst should attempt subjective species identification at the genus level,2
+1,Interspecies diversity,E,No candidate species matched,Identification not possible (potential unknown species),3
+2,Taxa of interest,A,Taxon of interest NOT detected,None of the taxa of interest matched the candidates species,1
+2,Taxa of interest,B,Taxon of interest detected,At least one of the taxa of interest matched the candidates species,3
+4,Reference sequence source diversity,A,There are diverse results (>5 sources) for this species in the results,Reference sequences are from diverse sources and therefore likely to be reliable,1
+4,Reference sequence source diversity,B,There are limited results (1-5) for this species in the results,Reference sequences sources lack diversity and may therefore be unreliable,2
+5.1,Database representation for target taxon,A,The given locus for this taxon is well represented in reference database (>5 entries),The reference data supports this taxon well,1
+5.1,Database representation for target taxon,B,The given locus for this taxon has limited representation in reference database (<=5 entries),The reference data has some support for this taxon,2
+5.1,Database representation for target taxon,C,The given locus for this taxon is not present in reference database (0 entries),The reference database is likely to be unreliable for this species,3
+5.2,Database representation for related taxon,A,>90% of taxon have reference sequence(s) at the given locus,The database supports species in this genus well,1
+5.2,Database representation for related taxon,B,10-90% of taxon have reference sequence(s) at the given locus,The database has some support for species in this genus,2
+5.2,Database representation for related taxon,C,<=10% of taxon have reference sequence(s) at the given locus,The database has poor support for species in this genus,3
+5.3,Database representation for related species in country of origin,A,All species in genus from country of origin have reference sequence(s) for this locus,Probability that a different related species from the country of origin is the true taxonomic identity: LOW,1
+5.3,Database representation for related species in country of origin,B,Not all species in genus from the country of origin have reference sequence(s) for this locus,Probability that a different related species from the country of origin is the true taxonomic identity: MODERATE,2
+5.3,Database representation for related species in country of origin,C,No species in genus have been observed in the country of origin,Probability that a different related species from the country of origin is the true taxonomic identity: LOW,0
+6,Intraspecies diversity,A,Candidate species grouped within single clade,The query sequence is genetically consistent with sequences of the best-matching species,1
+6,Intraspecies diversity,B,The query sequence clusters as sister to a species-specific clade or as a single branch in a tree,"The sample is genetically distinct from the sequences of the best-matching species, and may lack representation in the reference database. This indicates that the sample organism is either poorly studied or a potential novel species.",2
+6,Intraspecies diversity,C,Genotype diversity grouped into multiple diverse groups,The matched sequence is likely to be ,3
+7,Preliminary identification confirmation,A,Candidate species is consistent with preliminary morphology ID,The preliminary identification is supported by the molecular data,1
+7,Preliminary identification confirmation,B,Candidate species is not consistent with preliminary morphology ID,The preliminary identification is inconsistent with the molecular data,3

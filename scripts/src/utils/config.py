@@ -63,6 +63,8 @@ class Config:
         "GBIF_ACCEPTED_STATUS",
         'accepted,doubtful',
     ).upper().replace(' ', '').split(',')
+    FLAG_DETAILS_CSV_PATH = (
+        Path(__file__).parent.parent.parent.parent / 'flags.csv')
     LOG_FILENAME = 'run.log'
     QUERY_LOG_FILENAME = 'query.log'
     ENTREZ_LOCK_FILE = 'entrez.lock'
@@ -251,6 +253,21 @@ class Config:
                 timestamp='NOW',  # self.timestamp, # ! TODO
             )
         )
+
+    def read_flag_details_csv(self) -> dict[str, dict[str, dict]]:
+        data = {}
+        with self.FLAG_DETAILS_CSV_PATH.open() as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                flag = data.get(row['id'], {'name': row['name']})
+                flag['explanation'] = flag.get('explanation', {})
+                flag['outcome'] = flag.get('outcome', {})
+                flag['level'] = flag.get('level', {})
+                flag['explanation'][row['value']] = row['explanation']
+                flag['outcome'][row['value']] = row['outcome']
+                flag['level'][row['value']] = row['level']
+                data[row['id']] = flag
+        return data
 
     def read_query_fasta(self, index=None) -> list[SeqIO.SeqRecord]:
         """Read query FASTA file."""
