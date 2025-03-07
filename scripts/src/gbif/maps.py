@@ -18,7 +18,9 @@ def fetch_gbif_map(taxon_key: str, path: Path):
             for record in res['results']
             if 'decimalLongitude' in record]
     df = pd.DataFrame({'latitude': lats, 'longitude': lons})
-    gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df['longitude'], df['latitude']))
+    gdf = gpd.GeoDataFrame(df,
+                           geometry=gpd.points_from_xy(df['longitude'],
+                                                       df['latitude']))
 
     with fsspec.open(f"simplecache::{NATURALEARTH_LOWRES_URL}") as file:
         world = gpd.read_file(file)
