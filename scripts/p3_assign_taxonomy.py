@@ -255,6 +255,8 @@ def _write_boxplot(query_dir, hits):
         identities.append(values)
     plt.figure(figsize=(12, 3))
     plt.boxplot(identities, tick_labels=labels, patch_artist=True)
+    if len(genera) > 5:
+        plt.xticks(rotation=80)
     plt.xlabel('Genus', fontsize=14)
     plt.ylabel('Identity to query (%)', fontsize=14)
     boxplot_image_path = query_dir / config.BOXPLOT_IMG

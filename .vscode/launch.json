@@ -54,6 +54,7 @@
             ],
             "env": {
                 "INPUT_TOI_FILEPATH": "tests/test-data/taxa_of_interest.txt",
+                // "MAX_CANDIDATES_FOR_ANALYSIS": "0",  // Force boxplot
             },
             "preLaunchTask": "clear-log-files"
         },
