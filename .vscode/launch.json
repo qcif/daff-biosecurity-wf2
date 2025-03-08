@@ -84,25 +84,14 @@
         {
             "type": "debugpy",
             "request": "launch",
-            "name": "Genbank",
-            "module": "entrez.genbank",
-            "cwd": "${workspaceFolder}/scripts"
-        },
-        {
-            "type": "debugpy",
-            "request": "launch",
-            "name": "GBIF related species",
-            "program": "${workspaceFolder}/scripts/src/gbif/relatives.py",
-        },
-        {
-            "type": "debugpy",
-            "request": "launch",
-            "name": "Workflow report",
-            "module": "src.report.report",
-            "cwd": "${workspaceFolder}/scripts",
+            "name": "P6 Workflow report",
+            "program": "${workspaceFolder}/scripts/p6_report.py",
+            "args": [
+                "output/query_001_LC438549",
+                "--output_dir", "output",
+            ],
             "env": {
-                "OUTPUT_DIR": "../output",
-                "INPUT_FASTA_FILEPATH": "../tests/test-data/query.fasta",
+                "INPUT_FASTA_FILEPATH": "tests/test-data/query.fasta",
             },
         }
     ]

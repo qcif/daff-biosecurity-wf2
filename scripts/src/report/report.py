@@ -20,8 +20,9 @@ TEMPLATE_DIR = Path(__file__).parent / 'templates'
 STATIC_DIR = Path(__file__).parent / 'static'
 
 
-def render(query_ix):
+def render(query):
     """Render to HTML report to the configured output directory."""
+    query_ix = config.get_query_ix(query)
     j2 = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
     template = j2.get_template('index.html')
     context = _get_report_context(query_ix)
