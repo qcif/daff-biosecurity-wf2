@@ -25,14 +25,15 @@ class GBIFRecordNotFound(Exception):
 class ENDPOINTS:
     """Define configuration for throttling different GBIF endpoints."""
 
-    FAST = SimpleNamespace(  # occurence and name_suggest - 12 req/sec
-        interval_sec=0.1,
-        lock_file=config.gbif_fast_lock_file,
-    )
-    SLOW = SimpleNamespace(  # name_lookup - 1.25 req/sec
-        interval_sec=0.8,
-        lock_file=config.gbif_slow_lock_file,
-    )
+    def __init__(self):
+        self.FAST = SimpleNamespace(  # occurence and name_suggest - 12 req/sec
+            interval_sec=0.1,
+            lock_file=config.gbif_fast_lock_file,
+        )
+        self.SLOW = SimpleNamespace(  # name_lookup - 1.25 req/sec
+            interval_sec=0.8,
+            lock_file=config.gbif_slow_lock_file,
+        )
 
 
 class Throttle:
@@ -119,7 +120,8 @@ class RelatedTaxaGBIF:
             'q': taxon,
             'limit': 20,
         }
-        throttle = Throttle(ENDPOINTS.FAST)
+        endpoints = ENDPOINTS()
+        throttle = Throttle(endpoints.FAST)
         res = throttle.with_retry(
             pygbif.species.name_suggest,
             args,
@@ -159,7 +161,8 @@ class RelatedTaxaGBIF:
 
         while not end_of_records:
             args['offset'] = i * config.GBIF_LIMIT_RECORDS
-            throttle = Throttle(ENDPOINTS.SLOW)
+            endpoints = ENDPOINTS()
+            throttle = Throttle(endpoints.SLOW)
             res = throttle.with_retry(
                 pygbif.species.name_lookup,
                 args,
@@ -203,7 +206,8 @@ class RelatedTaxaGBIF:
                 'offset': i * config.GBIF_LIMIT_RECORDS,
                 'limit': 1,  # don't need every occurence for each species
             }
-            throttle = Throttle(ENDPOINTS.FAST)
+            endpoints = ENDPOINTS()
+            throttle = Throttle(endpoints.FAST)
             res = throttle.with_retry(
                 pygbif.occurrences.search,
                 args,
