@@ -335,7 +335,7 @@ class Config:
     def cleanup(self):
         """Remove temporary files."""
         logger.info("Cleaning temporary files from output dir...")
-        for filename in self.QUERY_TEMP_FILES:
+        for filename in self.TEMP_FILES:
             path = self.output_dir / filename
             if path.exists():
                 if path.is_dir():

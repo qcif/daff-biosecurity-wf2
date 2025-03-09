@@ -145,7 +145,11 @@ class RelatedTaxaGBIF:
         )
 
     def _filter_records(self, records):
-        return [r for r in records if self._is_accepted(r)]
+        return [
+            r for r in records
+            if self._is_accepted(r)
+            and 'canonicalName' in r
+        ]
 
     @cached_property
     def relatives(self):
