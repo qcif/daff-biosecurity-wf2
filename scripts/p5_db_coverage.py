@@ -31,6 +31,7 @@ def main():
     config.configure_query_logger(args.query_dir)
     results, error_detected = assess_coverage(args.query_dir)
     write_db_coverage(args.query_dir, results)
+    config.cleanup()
     if error_detected:
         error_file_path = args.query_dir / 'error.p5.log'
         sys.stderr.write(

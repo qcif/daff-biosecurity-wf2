@@ -36,6 +36,7 @@ def main():
     }
     _write_candidates(candidates, args.query_dir)
     _write_sources(aggregated_sources, args.query_dir)
+    config.cleanup()
 
 
 def _parse_args():

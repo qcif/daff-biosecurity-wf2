@@ -7,6 +7,7 @@ import os
 import csv
 import json
 import logging
+import shutil
 from Bio import SeqIO
 from datetime import datetime
 from logging.config import dictConfig
@@ -76,6 +77,13 @@ class Config:
     GBIF_SLOW_LOCK_FILE = 'gbif-slow.lock'
     GBIF_MAX_RETRIES = 3
     ERRORS_DIR = 'errors'
+
+    TEMP_FILES = [
+        ENTREZ_LOCK_FILE,
+        ENTREZ_CACHE_DIRNAME,
+        GBIF_FAST_LOCK_FILE,
+        GBIF_SLOW_LOCK_FILE,
+    ]
 
     class INPUTS:
         METADATA_CSV_HEADER = {
@@ -323,3 +331,14 @@ class Config:
 
     def url_from_accession(self, accession):
         return f"https://www.ncbi.nlm.nih.gov/nuccore/{accession}"
+
+    def cleanup(self):
+        """Remove temporary files."""
+        logger.info("Cleaning temporary files from output dir...")
+        for filename in self.QUERY_TEMP_FILES:
+            path = self.output_dir / filename
+            if path.exists():
+                if path.is_dir():
+                    shutil.rmtree(path)
+                else:
+                    path.unlink()
