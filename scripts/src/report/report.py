@@ -224,31 +224,38 @@ def _get_toi_result(query_ix, flags):
             for row in reader
             if row.get(config.OUTPUTS.TOI_DETECTED_HEADER[1])
         ]
+    if not len(detected_tois):
+        logger.info("No taxa of interest to report on.")
+        return
     flag_2 = flags[FLAGS.TOI]
-    flags_5_1_targets = flags[FLAGS.DB_COVERAGE_TARGET][TARGETS.TOI]
-    flag_5_1_max = max(flags_5_1_targets.values(), key=lambda x: x.value)
-    flags_5_2_targets = flags[FLAGS.DB_COVERAGE_RELATED][TARGETS.TOI]
-    flag_5_2_max = max(flags_5_2_targets.values(), key=lambda x: x.value)
     criteria_2 = f"<strong>Flag {flag_2}</strong>: {flag_2.explanation}"
-    criteria_5_1 = (
-        f"<strong>Flag {flag_5_1_max}</strong>:"
-        f" {flag_5_1_max.explanation}")
-    criteria_5_2 = (
-        f"<strong>Flag {flag_5_2_max}</strong>:"
-        f" {flag_5_2_max.explanation}")
-    ruled_out = (
-        flag_2.value == FLAGS.A
-        and flag_5_1_max.value == FLAGS.A
-        and flag_5_2_max.value == FLAGS.A
-    )
-    return {
-        'detected': detected_tois,
-        'criteria': [
-            {
-                'message': criteria_2,
-                'level': flag_2.level,
-                'bs-class': flag_2.bs_class,
-            },
+    ruled_out = flag_2.value == FLAGS.A
+    criteria = [
+        {
+            'message': criteria_2,
+            'level': flag_2.level,
+            'bs-class': flag_2.bs_class,
+        },
+
+    ]
+
+    if TARGETS.TOI in flags[FLAGS.DB_COVERAGE_TARGET]:
+        flags_5_1_targets = flags[FLAGS.DB_COVERAGE_TARGET][TARGETS.TOI]
+        flag_5_1_max = max(flags_5_1_targets.values(), key=lambda x: x.value)
+        flags_5_2_targets = flags[FLAGS.DB_COVERAGE_RELATED][TARGETS.TOI]
+        flag_5_2_max = max(flags_5_2_targets.values(), key=lambda x: x.value)
+        criteria_5_1 = (
+            f"<strong>Flag {flag_5_1_max}</strong>:"
+            f" {flag_5_1_max.explanation}")
+        criteria_5_2 = (
+            f"<strong>Flag {flag_5_2_max}</strong>:"
+            f" {flag_5_2_max.explanation}")
+        ruled_out = (
+            ruled_out
+            and flag_5_1_max.value == FLAGS.A
+            and flag_5_2_max.value == FLAGS.A
+        )
+        criteria += [
             {
                 'message': criteria_5_1,
                 'level': flag_5_1_max.level,
@@ -259,7 +266,11 @@ def _get_toi_result(query_ix, flags):
                 'level': flag_5_2_max.level,
                 'bs-class': flag_5_2_max.bs_class,
             },
-        ],
+        ]
+
+    return {
+        'detected': detected_tois,
+        'criteria': criteria,
         'ruled_out': ruled_out,
         'bs-class': 'success' if ruled_out else 'danger',
     }

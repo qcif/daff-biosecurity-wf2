@@ -100,6 +100,11 @@ class Flag:
                         flags[flag_id][target] = value
                 else:
                     flags[flag_id] = value
+        for flag, data in flags.items():
+            if flag.startswith('5'):
+                for ttype in [TARGETS.CANDIDATE, TARGETS.PMI, TARGETS.TOI]:
+                    if ttype not in data:
+                        data[ttype] = {}
         return flags
 
     def _parse_flag_filename(path):

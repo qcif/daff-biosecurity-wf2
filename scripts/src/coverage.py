@@ -161,7 +161,8 @@ def _parallel_process_tasks(
                 msg = (
                     f"Error processing {func.__name__} for target species"
                     f" '{species_name}' ({target_source}). This target could"
-                    f" not be evaluated: {exc}")
+                    f" not be evaluated."
+                    f" Exception: {type(exc).__name__}: {exc}")
                 logger.error(f"[{MODULE_NAME}]: {msg}")
                 errors.write(
                     errors.LOCATIONS.DATABASE_COVERAGE,
