@@ -42,58 +42,78 @@
     </p>
 
     <div class="border p-5">
-      <p>
-        The matching reference sequences for this species have been annotated by
-        {{ src_groups|length }} independent sources. A source is considered
-        independent if the author list or publication title is distinct.
-      </p>
+      <div class="row">
+        <div class="col">
+          {% set flag = conclusions.flags['4'][species] %}
+          <p class="alert alert-{{ flag.bs_class }} p-3">
+            <strong>
+              Flag {{ flag.flag_id }}{{ flag.value }}:
+            </strong>
+            {{ flag.outcome }}
+            <br>
+            <strong>Reasoning:</strong> {{ flag.explanation }}
+            (found {{ src_groups|length }} sources)
+          </p>
+        </div>
+        <div class="col">
+          <p class="lead px-3">
+            {{ src_groups|length }} independent sources
+          </p>
+          <p class="px-3">
+            The matching reference sequences for this species have been annotated by {{ src_groups|length }} independent sources. A source is considered independent if the author list or publication title is distinct.
+          </p>
+        </div>
+      </div>
+
 
       {% for src_group in src_groups %}
-      <p class="lead">
-        Group {{ loop.index }}
-      </p>
-      <table class="table table-striped mb-5">
-        <thead>
-          <tr>
-            <th style="white-space: nowrap;">Hit accession</th>
-            <th>Automated</th>
-            <th>Authors</th>
-            <th>Title</th>
-            <th>Journal</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for src in src_group %}
-          {% for publication in src.publications %}
-          <tr>
-            <td>
-              <a href="{{ url_from_accession(src['accession']) }}" target="_blank">
-                {{ src.accession }}
-              </a>
-            </td>
-            <td>{{ src.is_automated }}</td>
-            <td class="font-small">
-              {% for author in publication.authors %}
-              {{ author }}{% if not loop.last %}<br>{% endif %}
-              {% endfor %}
-            </td>
-            <td class="font-small">{{ publication.title }}</td>
-            <td class="font-small">{{ publication.journal }}</td>
-          </tr>
-          {% endfor %}
+      <div class="source">
+        <p class="lead">
+          Source {{ loop.index }}
+        </p>
+        <table class="table table-striped mb-5">
+          <thead>
+            <tr>
+              <th style="white-space: nowrap;">Hit accession</th>
+              <th>Automated</th>
+              <th>Authors</th>
+              <th>Title</th>
+              <th>Journal</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for src in src_group %}
+            {% for publication in src.publications %}
+            <tr>
+              <td>
+                <a href="{{ url_from_accession(src['accession']) }}" target="_blank">
+                  {{ src.accession }}
+                </a>
+              </td>
+              <td>{{ src.is_automated }}</td>
+              <td class="font-small">
+                {% for author in publication.authors %}
+                {{ author }}{% if not loop.last %}<br>{% endif %}
+                {% endfor %}
+              </td>
+              <td class="font-small">{{ publication.title }}</td>
+              <td class="font-small">{{ publication.journal }}</td>
+            </tr>
+            {% endfor %}
 
-          {% if not src.publications %}
-          <tr>
-            <td>{{ src.accession }}</td>
-            <td>{{ src.is_automated }}</td>
-            <td colspan="3">No publications for this record</td>
-          </tr>
-          {% endif %}
+            {% if not src.publications %}
+            <tr>
+              <td>{{ src.accession }}</td>
+              <td>{{ src.is_automated }}</td>
+              <td colspan="3">No publications for this record</td>
+            </tr>
+            {% endif %}
 
-          {% endfor %}
+            {% endfor %}
 
-        </tbody>
-      </table>
+          </tbody>
+        </table>
+      </div>
       {% endfor %}
     </div>
   </div>

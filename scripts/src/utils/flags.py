@@ -92,9 +92,12 @@ class Flag:
                     value = Flag(flag_id, value=value, target=target)
                 if target:
                     flags[flag_id] = flags.get(flag_id, {})
-                    flags[flag_id][target_type] = flags[flag_id].get(
-                        target_type, {})
-                    flags[flag_id][target_type][target] = value
+                    if target_type:
+                        flags[flag_id][target_type] = flags[flag_id].get(
+                            target_type, {})
+                        flags[flag_id][target_type][target] = value
+                    else:
+                        flags[flag_id][target] = value
                 else:
                     flags[flag_id] = value
         return flags
