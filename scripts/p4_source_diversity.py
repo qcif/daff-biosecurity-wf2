@@ -27,16 +27,15 @@ def main():
     config.set_output_dir(args.output_dir)
     config.configure_query_logger(args.query_dir)
     species, hits = _read_candidate_hits(args.query_dir)
-    species, hits = _collect_sources_per_species(species, hits)
+    species, hits, aggregated_sources = _collect_sources_per_species(
+        species, hits)
     _set_flags(species, args.query_dir)
     candidates = {
         "species": species,
         "hits": hits,
     }
-    path = args.query_dir / config.CANDIDATES_SOURCES_JSON
-    with path.open('w') as f:
-        json.dump(candidates, f, default=serialize, indent=2)
-    logger.info(f"Candidate hits with source diversity data written to {path}")
+    _write_candidates(candidates, args.query_dir)
+    _write_sources(aggregated_sources, args.query_dir)
 
 
 def _parse_args():
@@ -52,6 +51,7 @@ def _parse_args():
 
 
 def _collect_sources_per_species(species, hits) -> list[dict]:
+    aggregated_sources = {}
     accession_sources = genbank.fetch_sources([
         hit["accession"] for hit in hits
     ])
@@ -61,15 +61,20 @@ def _collect_sources_per_species(species, hits) -> list[dict]:
         for hit_ix, hit in enumerate(hits):
             if hit["species"] == species_str:
                 source = accession_sources[hit["accession"]]
-                if not any(
-                    source.matches(agg_src)
-                    for agg_src in independent_sources
-                ):
-                    independent_sources.append(source)
+                matched = False
+                for j, independent_source in enumerate(independent_sources):
+                    for src in independent_source:
+                        if source.matches(src):
+                            independent_sources[j].append(source)
+                            matched = True
+                            break
+                if not matched:
+                    independent_sources.append([source])
                 hits[hit_ix]["source"] = source
         species[sp_ix]['independent_sources'] = len(independent_sources)
         species[sp_ix]['hit_count'] = hit_ix + 1
-    return species, hits
+        aggregated_sources[species_str] = independent_sources
+    return species, hits, aggregated_sources
 
 
 def _read_candidate_hits(query_dir):
@@ -94,6 +99,20 @@ def _set_flags(species_sources, query_dir):
             flag_value,
             target=species['species'],
         )
+
+
+def _write_candidates(candidates, query_dir):
+    path = query_dir / config.CANDIDATES_SOURCES_JSON
+    with path.open('w') as f:
+        json.dump(candidates, f, default=serialize, indent=2)
+    logger.info(f"Candidate hits with source diversity data written to {path}")
+
+
+def _write_sources(sources, query_dir):
+    path = query_dir / config.INDEPENDENT_SOURCES_JSON
+    with path.open('w') as f:
+        json.dump(sources, f, default=serialize, indent=2)
+    logger.info(f"Aggregated reference sequence sources written to {path}")
 
 
 if __name__ == '__main__':

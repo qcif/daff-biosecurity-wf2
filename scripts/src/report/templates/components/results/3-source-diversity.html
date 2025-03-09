@@ -1,0 +1,101 @@
+<h2>Reference sequence source diversity</h2>
+
+<p>
+  This analysis evaluates how many independent sources have contributed reference sequences for each candidate species. This provides a measure of confidence in the taxonomic annotation of the references sequences, because a sequence that has been annotated by multiple independent sources is more likely to have a correct taxonomic annotation.
+</p>
+
+<div class="d-flex align-items-start my-5">
+  <div
+    class="nav flex-column nav-pills"
+    id="v-pills-tab"
+    role="tablist"
+    aria-orientation="vertical"
+  >
+    <p class="mb-3 text-center">
+      <strong>Candidate</strong>
+    </p>
+    {% for species in aggregated_sources %}
+    {% set species_id = 'p4-' + species.replace(' ', '-') %}
+    <button
+      class="nav-link{% if not loop.index0 %} active{% endif %}"
+      id="{{ species_id }}-tab"
+      data-bs-toggle="pill"
+      data-bs-target="#{{ species_id }}"
+      type="button"
+      role="tab"
+      aria-controls="{{ species_id }}"
+      aria-selected="true"
+    >{{ species }}</button>
+    {% endfor %}
+  </div>
+
+  {% for species, src_groups in aggregated_sources.items() %}
+  {% set species_id = 'p4-' + species.replace(' ', '-') %}
+  <div
+    class="tab-pane fade{% if not loop.index0 %} show active{% endif %}"
+    id="{{ species_id }}"
+    role="tabpanel"
+    aria-labelledby="{{ species_id }}-tab"
+  >
+    <p class="mb-3 text-center">
+      <strong>Independent sources</strong>
+    </p>
+
+    <div class="border p-5">
+      <p>
+        The matching reference sequences for this species have been annotated by
+        {{ src_groups|length }} independent sources. A source is considered
+        independent if the author list or publication title is distinct.
+      </p>
+
+      {% for src_group in src_groups %}
+      <p class="lead">
+        Group {{ loop.index }}
+      </p>
+      <table class="table table-striped mb-5">
+        <thead>
+          <tr>
+            <th style="white-space: nowrap;">Hit accession</th>
+            <th>Automated</th>
+            <th>Authors</th>
+            <th>Title</th>
+            <th>Journal</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for src in src_group %}
+          {% for publication in src.publications %}
+          <tr>
+            <td>
+              <a href="{{ url_from_accession(src['accession']) }}" target="_blank">
+                {{ src.accession }}
+              </a>
+            </td>
+            <td>{{ src.is_automated }}</td>
+            <td class="font-small">
+              {% for author in publication.authors %}
+              {{ author }}{% if not loop.last %}<br>{% endif %}
+              {% endfor %}
+            </td>
+            <td class="font-small">{{ publication.title }}</td>
+            <td class="font-small">{{ publication.journal }}</td>
+          </tr>
+          {% endfor %}
+
+          {% if not src.publications %}
+          <tr>
+            <td>{{ src.accession }}</td>
+            <td>{{ src.is_automated }}</td>
+            <td colspan="3">No publications for this record</td>
+          </tr>
+          {% endif %}
+
+          {% endfor %}
+
+        </tbody>
+      </table>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+</div>

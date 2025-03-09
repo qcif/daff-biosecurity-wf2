@@ -62,6 +62,7 @@ class GbRecordSource:
 
     def to_json(self) -> dict:
         return {
+            'accession': self.accession,
             'is_automated': self.is_automated,
             'publications': self.publications,
         }

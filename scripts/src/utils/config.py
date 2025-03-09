@@ -46,6 +46,8 @@ class Config:
                                       'candidates_count.txt')
     CANDIDATES_SOURCES_JSON = os.getenv("CANDIDATES_SOURCES_JSON_FILENAME",
                                         'candidates_sources.json')
+    INDEPENDENT_SOURCES_JSON = os.getenv("INDEPENDENT_SOURCES_JSON_FILENAME",
+                                         'aggregated_sources.json')
     TOI_DETECTED_CSV = os.getenv("TOI_DETECTED_CSV_FILENAME",
                                  'taxa_of_concern_detected.csv')
     PMI_MATCH_CSV = os.getenv("PMI_MATCH_CSV_FILENAME",
@@ -318,3 +320,6 @@ class Config:
                 'query_sequences',
             )
         }
+
+    def url_from_accession(self, accession):
+        return f"https://www.ncbi.nlm.nih.gov/nuccore/{accession}"

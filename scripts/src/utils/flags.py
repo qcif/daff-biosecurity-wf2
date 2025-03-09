@@ -133,7 +133,7 @@ class Flag:
             type_str = f"{target_type}-" if target_type else ''
             target_str = f"-{type_str}{target}".replace(' ', '_')
             identifier += target_str
-            target_str = ' ' + target_str
+            target_str = ' ' + target_str.strip('-')
         path = query_dir / config.FLAG_FILE_TEMPLATE.format(
             identifier=identifier)
         with path.open('w') as f:

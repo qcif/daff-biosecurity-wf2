@@ -80,6 +80,7 @@ def _get_report_context(query_ix):
     """Build the context for the report template."""
     query_fasta_str = config.read_query_fasta(query_ix).format('fasta')
     return {
+        'url_from_accession': config.url_from_accession,
         'title': config.REPORT.TITLE,
         'facility': "Hogwarts",  # ! TODO
         'analyst_name': "John Doe",  # ! TODO
@@ -93,6 +94,8 @@ def _get_report_context(query_ix):
         'hits': config.read_blast_hits_json(query_ix)['hits'],
         'candidates': _get_candidates(query_ix),
         'candidates_boxplot_src': _get_boxplot_src(query_ix),
+        'toi_rows': _read_toi_detected(query_ix),
+        'aggregated_sources': _read_source_diversity(query_ix),
     }
 
 
@@ -284,6 +287,21 @@ def _get_boxplot_src(query_ix) -> Path:
     if path.exists():
         return _get_img_src(path)
     return None
+
+
+def _read_toi_detected(query_ix):
+    """Read the taxa of interest detected from the CSV file."""
+    path = config.get_query_dir(query_ix) / config.TOI_DETECTED_CSV
+    with path.open() as f:
+        reader = csv.DictReader(f)
+        return [row for row in reader]
+
+
+def _read_source_diversity(query_ix):
+    """Read the source diversity table from the CSV file."""
+    path = config.get_query_dir(query_ix) / config.INDEPENDENT_SOURCES_JSON
+    with path.open() as f:
+        return json.load(f)
 
 
 if __name__ == '__main__':
