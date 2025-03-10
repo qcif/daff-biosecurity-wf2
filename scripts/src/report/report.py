@@ -236,7 +236,6 @@ def _get_toi_result(query_ix, flags):
             'level': flag_2.level,
             'bs-class': flag_2.bs_class,
         },
-
     ]
 
     if TARGETS.TOI in flags[FLAGS.DB_COVERAGE_TARGET]:
