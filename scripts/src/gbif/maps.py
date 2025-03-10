@@ -19,23 +19,17 @@ def fetch_gbif_map(taxon_key: str, path: Path):
             for record in res['results']
             if 'decimalLongitude' in record]
     df = pd.DataFrame({'latitude': lats, 'longitude': lons})
-    # gdf = gpd.GeoDataFrame(df,
-    #                        geometry=gpd.points_from_xy(df['longitude'],
-    #                                                    df['latitude']))
 
     with fsspec.open(f"simplecache::{NATURALEARTH_LOWRES_URL}") as file:
         world = gpd.read_file(file)
-    
+
     fig, ax = plt.subplots(figsize=(16, 12))
     fig.patch.set_facecolor('#d0e8f2')
     ax.set_facecolor('#d0e8f2')
     world.plot(ax=ax, color='lightgray')
-    # ax = world.plot(figsize=(10, 6), color='white', edgecolor='black')
-    # gdf.plot(ax=ax, color='red', markersize=10, alpha=0.5, label='Occurrences')
     hb = ax.hexbin(
         x=df['longitude'], y=df['latitude'], gridsize=50,
-        cmap='Reds', mincnt=1, alpha=0.8, norm=LogNorm()  # Adjust color and transparency
-    )
+        cmap='Reds', mincnt=1, alpha=0.8, norm=LogNorm()
 
     # Add a colorbar to show density scale
     cb = fig.colorbar(hb, ax=ax, orientation='vertical', shrink=0.7)
@@ -43,8 +37,7 @@ def fetch_gbif_map(taxon_key: str, path: Path):
     ax.set_axis_off()
 
     plt.savefig(path, bbox_inches='tight', dpi=300)
-    plt.close()  # Close the plot to free memory
-
+    plt.close() 
 
 # Example usage
 if __name__ == "__main__":
