@@ -3,3 +3,4 @@ biopython==1.*
 jinja2
 filelock
 pycountry
+fsspec
