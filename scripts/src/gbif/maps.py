@@ -30,6 +30,7 @@ def fetch_gbif_map(taxon_key: str, path: Path):
     hb = ax.hexbin(
         x=df['longitude'], y=df['latitude'], gridsize=50,
         cmap='Reds', mincnt=1, alpha=0.8, norm=LogNorm()
+    )
 
     # Add a colorbar to show density scale
     cb = fig.colorbar(hb, ax=ax, orientation='vertical', shrink=0.7)
@@ -37,7 +38,8 @@ def fetch_gbif_map(taxon_key: str, path: Path):
     ax.set_axis_off()
 
     plt.savefig(path, bbox_inches='tight', dpi=300)
-    plt.close() 
+    plt.close()
+
 
 # Example usage
 if __name__ == "__main__":
