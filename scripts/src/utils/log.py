@@ -36,7 +36,7 @@ def get_logging_config(log_file):
                 "formatter": "default",
                 "filename": log_file,
                 "filters": ["exclude_lock"],
-                "mode": "w",
+                "mode": "a",
             },
         },
         "root": {

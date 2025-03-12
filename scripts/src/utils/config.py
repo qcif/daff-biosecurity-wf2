@@ -7,6 +7,7 @@ import os
 import csv
 import json
 import logging
+import shutil
 from Bio import SeqIO
 from datetime import datetime
 from logging.config import dictConfig
@@ -26,6 +27,8 @@ class Config:
 
     USER_EMAIL = os.getenv("USER_EMAIL")
     NCBI_API_KEY = os.getenv("NCBI_API_KEY")
+    TAXONKIT_DATA = os.getenv("TAXONKIT_DATA",
+                              Path('~/.taxonkit').expanduser())
     TIMESTAMP_FILENAME = os.getenv("TIMESTAMP_FILENAME", 'timestamp.txt')
     INPUT_FASTA_FILEPATH = Path(os.getenv("INPUT_FASTA_FILEPATH",
                                           "tests/test-data/query.fasta"))
@@ -44,6 +47,8 @@ class Config:
                                       'candidates_count.txt')
     CANDIDATES_SOURCES_JSON = os.getenv("CANDIDATES_SOURCES_JSON_FILENAME",
                                         'candidates_sources.json')
+    INDEPENDENT_SOURCES_JSON = os.getenv("INDEPENDENT_SOURCES_JSON_FILENAME",
+                                         'aggregated_sources.json')
     TOI_DETECTED_CSV = os.getenv("TOI_DETECTED_CSV_FILENAME",
                                  'taxa_of_concern_detected.csv')
     PMI_MATCH_CSV = os.getenv("PMI_MATCH_CSV_FILENAME",
@@ -55,12 +60,14 @@ class Config:
     DB_COVERAGE_TOI_LIMIT = int(os.getenv("DB_COVERAGE_TOI_LIMIT", 10))
 
     DB_COVERAGE_MAX_CANDIDATES = 3
-    FLAG_FILE_TEMPLATE = 'flag_{identifier}.txt'
+    FLAG_FILE_TEMPLATE = '{identifier}.flag'
     GBIF_LIMIT_RECORDS = int(os.getenv("GBIF_LIMIT_RECORDS", 500))
     GBIF_ACCEPTED_STATUS = os.getenv(
         "GBIF_ACCEPTED_STATUS",
         'accepted,doubtful',
     ).upper().replace(' ', '').split(',')
+    FLAG_DETAILS_CSV_PATH = (
+        Path(__file__).parent.parent.parent.parent / 'flags.csv')
     LOG_FILENAME = 'run.log'
     QUERY_LOG_FILENAME = 'query.log'
     ENTREZ_LOCK_FILE = 'entrez.lock'
@@ -70,6 +77,13 @@ class Config:
     GBIF_SLOW_LOCK_FILE = 'gbif-slow.lock'
     GBIF_MAX_RETRIES = 3
     ERRORS_DIR = 'errors'
+
+    TEMP_FILES = [
+        ENTREZ_LOCK_FILE,
+        ENTREZ_CACHE_DIRNAME,
+        GBIF_FAST_LOCK_FILE,
+        GBIF_SLOW_LOCK_FILE,
+    ]
 
     class INPUTS:
         METADATA_CSV_HEADER = {
@@ -93,11 +107,23 @@ class Config:
                 / 'tests/test-data/metadata.csv')
         )
 
-    class ALIGNMENT:
-        MIN_NT = int(os.getenv('MIN_NT', 400))
-        MIN_Q_COVERAGE = float(os.getenv('MIN_Q_COVERAGE', 0.85))
-        MIN_IDENTITY = float(os.getenv('MIN_IDENTITY', 0.935))
-        MIN_IDENTITY_STRICT = float(os.getenv('MIN_IDENTITY_STRICT', 0.985))
+    class CRITERIA:
+        ALIGNMENT_MIN_NT = int(os.getenv('MIN_NT', 400))
+        ALIGNMENT_MIN_Q_COVERAGE = float(os.getenv('MIN_Q_COVERAGE', 0.85))
+        ALIGNMENT_MIN_IDENTITY = float(os.getenv('MIN_IDENTITY', 0.935))
+        ALIGNMENT_MIN_IDENTITY_STRICT = float(
+            os.getenv('MIN_IDENTITY_STRICT', 0.985))
+        MAX_CANDIDATES_FOR_ANALYSIS = int(
+            os.getenv('MAX_CANDIDATES_FOR_ANALYSIS', 3))
+        SOURCES_MIN_COUNT = int(os.getenv('MIN_SOURCE_COUNT', 5))
+        DB_COV_TARGET_MIN_A = int(os.getenv('DB_COV_MIN_A', 5))
+        DB_COV_TARGET_MIN_B = int(os.getenv('DB_COV_MIN_B', 1))
+        DB_COV_RELATED_MIN_A = int(os.getenv('DB_COV_RELATED_MIN_A', 90))
+        DB_COV_RELATED_MIN_B = int(os.getenv('DB_COV_RELATED_MIN_B', 10))
+        DB_COV_COUNTRY_MISSING_A = int(
+            os.getenv('DB_COV_COUNTRY_MISSING_A', 90))
+        DB_COV_COUNTRY_MISSING_B = int(
+            os.getenv('DB_COV_COUNTRY_MISSING_B', 10))
 
     class OUTPUTS:
         TOI_DETECTED_HEADER = [
@@ -204,7 +230,11 @@ class Config:
             for row in csv.DictReader(f):
                 sample_id = row.pop(header["sample_id"]).split('.')[0]
                 self._metadata[sample_id] = {
-                    key: row[colname].strip()
+                    key: (
+                        row[colname].strip().split('|')
+                        if 'interest' in key.lower()
+                        else row[colname].strip()
+                    )
                     for key, colname in header.items()
                     if key != "sample_id"
                 }
@@ -222,9 +252,11 @@ class Config:
     def get_pmi_for_query(self, query) -> str:
         return self._get_metadata_for_query(query, "preliminary_id")
 
-    def get_country_code_for_query(self, query) -> str:
+    def get_country_for_query(self, query, code=False) -> str:
         country = self._get_metadata_for_query(query, "country")
-        return countries.get_code(country)
+        if code:
+            return countries.get_code(country)
+        return country
 
     def get_toi_list_for_query(self, query) -> list[str]:
         """Read taxa of interest from TOI file."""
@@ -239,6 +271,21 @@ class Config:
                 timestamp='NOW',  # self.timestamp, # ! TODO
             )
         )
+
+    def read_flag_details_csv(self) -> dict[str, dict[str, dict]]:
+        data = {}
+        with self.FLAG_DETAILS_CSV_PATH.open() as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                flag = data.get(row['id'], {'name': row['name']})
+                flag['explanation'] = flag.get('explanation', {})
+                flag['outcome'] = flag.get('outcome', {})
+                flag['level'] = flag.get('level', {})
+                flag['explanation'][row['value']] = row['explanation']
+                flag['outcome'][row['value']] = row['outcome']
+                flag['level'][row['value']] = int(row['level'])
+                data[row['id']] = flag
+        return data
 
     def read_query_fasta(self, index=None) -> list[SeqIO.SeqRecord]:
         """Read query FASTA file."""
@@ -287,3 +334,17 @@ class Config:
                 'query_sequences',
             )
         }
+
+    def url_from_accession(self, accession):
+        return f"https://www.ncbi.nlm.nih.gov/nuccore/{accession}"
+
+    def cleanup(self):
+        """Remove temporary files."""
+        logger.info("Cleaning temporary files from output dir...")
+        for filename in self.TEMP_FILES:
+            path = self.output_dir / filename
+            if path.exists():
+                if path.is_dir():
+                    shutil.rmtree(path)
+                else:
+                    path.unlink()

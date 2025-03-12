@@ -10,10 +10,11 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pprint import pformat
 
 from src.entrez import genbank
-from src.utils import errors
-from src.utils.config import Config
+from src.utils.flags import Flag, FLAGS, TARGETS
 from src.gbif.relatives import GBIFRecordNotFound, RANK, RelatedTaxaGBIF
 from src.taxonomy import extract
+from src.utils import errors
+from src.utils.config import Config
 
 logger = logging.getLogger(__name__)
 config = Config()
@@ -29,17 +30,7 @@ def read_candidate_species(query_dir):
     ]
 
 
-def assess_coverage(query_dir):
-    def get_args(func, query_dir, target, taxid, locus, country):
-        if func == get_target_coverage:
-            return func, taxid, locus
-        elif func == get_related_coverage:
-            return func, target, locus, query_dir
-        elif func == get_related_country_coverage:
-            return func, target, locus, country, query_dir
-
-    locus = config.get_locus_for_query(query_dir)
-    country = config.get_country_code_for_query(query_dir)
+def _get_targets(query_dir):
     candidates = read_candidate_species(query_dir)
     if len(candidates) > config.DB_COVERAGE_MAX_CANDIDATES:
         logger.info(
@@ -65,15 +56,10 @@ def assess_coverage(query_dir):
             None,
             query_dir=query_dir,
         )
-    targets = candidates + toi_list + [pmi]
+    return candidates, toi_list, pmi
 
-    if not targets:
-        logger.info(
-            f"[{MODULE_NAME}]: Skipping analysis - no target species"
-            " identified for database coverage assessment."
-        )
-        return None
 
+def _get_taxids(targets, query_dir):
     target_taxids = extract.taxids(targets)
     if len(target_taxids) != len(targets):
         msg = (
@@ -92,24 +78,10 @@ def assess_coverage(query_dir):
                 "targets": [k for k, v in target_taxids.items() if not v],
             },
         )
+    return target_taxids
 
-    taxid_to_taxon = {v: k for k, v in target_taxids.items()}
 
-    logger.info(
-        f"[{MODULE_NAME}]: Assessing database coverage for {len(targets)}"
-        f" species at locus '{locus}' in country '{country}'."
-    )
-    logger.debug(
-        f"[{MODULE_NAME}]: collected targets:\n"
-        f"  - Candidates: {candidates}\n"
-        f"  - Taxa of interest: {toi_list}\n"
-        f"  - PMI: {pmi}"
-    )
-    logger.debug(
-        f"[{MODULE_NAME}]: Taxids for targets (extracted by taxonkit):\n"
-        + pformat(target_taxids, indent=2)
-    )
-
+def _fetch_target_taxa(targets, query_dir):
     target_gbif_taxa = {}
     higher_taxon_targets = {}  # Taxa at rank 'family' or higher
     for target in targets:
@@ -143,6 +115,187 @@ def assess_coverage(query_dir):
         + pformat(list(higher_taxon_targets.keys()), indent=2)
     )
 
+    return target_gbif_taxa, higher_taxon_targets
+
+
+def _parallel_process_tasks(
+    tasks,
+    query_dir,
+    target_taxids,
+    target_gbif_taxa,
+    taxid_to_taxon,
+    candidate_list,
+    toi_list,
+    pmi,
+):
+    with ThreadPoolExecutor(max_workers=50) as executor:
+        results = {
+            get_target_coverage.__name__: {},
+            get_related_coverage.__name__: {},
+            get_related_country_coverage.__name__: {},
+        }
+        logger.debug(
+            f"[{MODULE_NAME}]: Threading {len(tasks)} tasks..."
+        )
+        future_to_task = {
+            executor.submit(*task): task
+            for task in tasks
+        }
+        for future in as_completed(future_to_task):
+            func, target = future_to_task[future][:2]
+            logger.info(f"Task completed: {func.__name__} on target"
+                        f" '{target}'")
+            try:
+                results[func.__name__][target] = future.result()
+            except Exception as exc:
+                species_name = (
+                    taxid_to_taxon[target]
+                    if isinstance(target, str)
+                    else target
+                )
+                target_source = (
+                    "candidate" if species_name in candidate_list
+                    else "taxon of interest" if species_name in toi_list
+                    else "preliminary ID"
+                )
+                msg = (
+                    f"Error processing {func.__name__} for target species"
+                    f" '{species_name}' ({target_source}). This target could"
+                    f" not be evaluated."
+                    f" Exception: {type(exc).__name__}: {exc}")
+                logger.error(f"[{MODULE_NAME}]: {msg}")
+                errors.write(
+                    errors.LOCATIONS.DATABASE_COVERAGE,
+                    msg,
+                    exc,
+                    query_dir=query_dir)
+                if 'failure in name resolution' in str(exc):
+                    raise errors.APIError(
+                        f"Fatal error fetching data from Entrez API: '{exc}'"
+                        " This error occurred multiple times and indicates a"
+                        " network issue - please resume this"
+                        " job at a later time when network issues have"
+                        " resolved. If this issue persists, you may need to"
+                        " contact the development team to diagnose the"
+                        " issue. You can check the status of the Entrez API"
+                        " by visiting"
+                        " https://eutils.ncbi.nlm.nih.gov"
+                        "/entrez/eutils/efetch.fcgi in your browser.")
+
+    logger.debug("Results collected from tasks:")
+    for func, result in results.items():
+        for k in result:
+            logger.debug(f"{func}: {k}")
+
+    return _collect_results(
+        results,
+        target_taxids,
+        target_gbif_taxa,
+        taxid_to_taxon,
+        candidate_list,
+        toi_list,
+        pmi,
+    )
+
+
+def _collect_results(
+    results,
+    target_taxids,
+    target_gbif_taxa,
+    taxid_to_taxon,
+    candidate_list,
+    toi_list,
+    pmi,
+):
+    error_detected = False
+    candidate_results = {}
+    toi_results = {}
+    pmi_results = {}
+
+    for taxid in target_taxids.values():
+        target_taxon = taxid_to_taxon[taxid]
+        result = results[get_target_coverage.__name__].get(taxid)
+        error_detected = error_detected or result is None
+
+        if target_taxon in candidate_list:
+            candidate_results[target_taxon] = candidate_results.get(
+                target_taxon, {})
+            candidate_results[target_taxon]['target'] = result
+        if target_taxon in toi_list:
+            toi_results[target_taxon] = toi_results.get(target_taxon, {})
+            toi_results[target_taxon]['target'] = result
+        if target_taxon == pmi:
+            pmi_results[target_taxon] = {
+                'target': result,
+            }
+
+    for target_taxon, gbif_taxon in target_gbif_taxa.items():
+        related_result = results[get_related_coverage.__name__].get(gbif_taxon)
+        country_result = results[get_related_country_coverage.__name__].get(
+            gbif_taxon)
+        error_detected = (
+            error_detected
+            or related_result is None
+            or country_result is None
+        )
+        if target_taxon in candidate_list:
+            candidate_results[target_taxon]['related'] = related_result
+            candidate_results[target_taxon]['country'] = country_result
+        if target_taxon in toi_list:
+            toi_results[target_taxon]['related'] = related_result
+            toi_results[target_taxon]['country'] = country_result
+        if target_taxon == pmi:
+            pmi_results[target_taxon]['related'] = related_result
+            pmi_results[target_taxon]['country'] = country_result
+
+    return {
+        TARGETS.CANDIDATE: candidate_results,
+        TARGETS.TOI: toi_results,
+        TARGETS.PMI: pmi_results,
+    }, error_detected
+
+
+def assess_coverage(query_dir) -> dict[str, dict[str, dict]]:
+    def get_args(func, query_dir, target, taxid, locus, country):
+        if func == get_target_coverage:
+            return func, taxid, locus
+        elif func == get_related_coverage:
+            return func, target, locus, query_dir
+        elif func == get_related_country_coverage:
+            return func, target, locus, country, query_dir
+
+    locus = config.get_locus_for_query(query_dir)
+    country = config.get_country_for_query(query_dir, code=True)
+    candidate_list, toi_list, pmi = _get_targets(query_dir)
+    targets = candidate_list + toi_list + [pmi]
+    if not targets:
+        logger.info(
+            f"[{MODULE_NAME}]: Skipping analysis - no target species"
+            " identified for database coverage assessment."
+        )
+        return None
+
+    target_taxids = _get_taxids(targets, query_dir)
+    taxid_to_taxon = {v: k for k, v in target_taxids.items()}
+    logger.info(
+        f"[{MODULE_NAME}]: Assessing database coverage for {len(targets)}"
+        f" species at locus '{locus}' in country '{country}'."
+    )
+    logger.debug(
+        f"[{MODULE_NAME}]: collected targets:\n"
+        f"  - Candidates: {candidate_list}\n"
+        f"  - Taxa of interest: {toi_list}\n"
+        f"  - PMI: {pmi}"
+    )
+    logger.debug(
+        f"[{MODULE_NAME}]: Taxids for targets (extracted by taxonkit):\n"
+        + pformat(target_taxids, indent=2)
+    )
+
+    # 'Higher taxa' are at rank 'family' or higher
+    target_gbif_taxa, higher_taxon_targets = _fetch_target_taxa(
+        targets, query_dir)
+
     tasks = [
         get_args(
             func,
@@ -172,103 +325,18 @@ def assess_coverage(query_dir):
             "No tasks created for database coverage assessment. This likely"
             " indicates a bug in the code - please report this issue.")
 
-    with ThreadPoolExecutor(max_workers=50) as executor:
-        results = {
-            get_target_coverage.__name__: {},
-            get_related_coverage.__name__: {},
-            get_related_country_coverage.__name__: {},
-        }
-        logger.debug(
-            f"[{MODULE_NAME}]: Threading {len(tasks)} tasks..."
-        )
-        future_to_task = {
-            executor.submit(*task): task
-            for task in tasks
-        }
-        for future in as_completed(future_to_task):
-            func, target = future_to_task[future][:2]
-            logger.info(f"Task completed: {func.__name__} on target"
-                        f" '{target}'")
-            try:
-                results[func.__name__][target] = future.result()
-            except Exception as exc:
-                species_name = (
-                    taxid_to_taxon[target]
-                    if isinstance(target, str)
-                    else target
-                )
-                target_source = (
-                    "candidate" if species_name in candidates
-                    else "taxon of interest" if species_name in toi_list
-                    else "preliminary ID"
-                )
-                msg = (
-                    f"Error processing {func.__name__} for target species"
-                    f" '{species_name}' ({target_source}). This target could"
-                    f" not be evaluated: {exc}")
-                logger.error(f"[{MODULE_NAME}]: {msg}")
-                errors.write(
-                    errors.LOCATIONS.DATABASE_COVERAGE,
-                    msg,
-                    exc,
-                    query_dir=query_dir)
-                if 'failure in name resolution' in str(exc):
-                    raise errors.APIError(
-                        f"Fatal error fetching data from Entrez API: '{exc}'"
-                        " This error occurred multiple times and indicates a"
-                        " network issue - please resume this"
-                        " job at a later time when network issues have"
-                        " resolved. If this issue persists, you may need to"
-                        " contact the development team to diagnose the"
-                        " issue. You can check the status of the Entrez API"
-                        " by visiting"
-                        " https://eutils.ncbi.nlm.nih.gov"
-                        "/entrez/eutils/efetch.fcgi in your browser.")
-
-    logger.debug("Results collected from tasks:")
-    for func, result in results.items():
-        for k in result:
-            logger.debug(f"{func}: {k}")
-
-    candidate_results = {}
-    toi_results = {}
-    pmi_results = {}
-
-    for taxid in target_taxids.values():
-        target_taxon = taxid_to_taxon[taxid]
-        result = results[get_target_coverage.__name__].get(taxid)
-
-        if target_taxon in candidates:
-            candidate_results[target_taxon] = candidate_results.get(
-                target_taxon, {})
-            candidate_results[target_taxon]['target'] = result
-        if target_taxon in toi_list:
-            toi_results[target_taxon] = toi_results.get(target_taxon, {})
-            toi_results[target_taxon]['target'] = result
-        if target_taxon == pmi:
-            pmi_results[target_taxon] = {
-                'target': result,
-            }
-
-    for target_taxon, gbif_taxon in target_gbif_taxa.items():
-        related_result = results[get_related_coverage.__name__].get(gbif_taxon)
-        country_result = results[get_related_country_coverage.__name__].get(
-            gbif_taxon)
-        if target_taxon in candidates:
-            candidate_results[target_taxon]['related'] = related_result
-            candidate_results[target_taxon]['country'] = country_result
-        if target_taxon in toi_list:
-            toi_results[target_taxon]['related'] = related_result
-            toi_results[target_taxon]['country'] = country_result
-        if target_taxon == pmi:
-            pmi_results[target_taxon]['related'] = related_result
-            pmi_results[target_taxon]['country'] = country_result
-
-    return {
-        "candidates": candidate_results,
-        "tois": toi_results,
-        "pmi": pmi_results,
-    }
+    results, is_error = _parallel_process_tasks(
+        tasks,
+        query_dir,
+        target_taxids,
+        target_gbif_taxa,
+        taxid_to_taxon,
+        candidate_list,
+        toi_list,
+        pmi,
+    )
+    _set_flags(results, query_dir)
+    return results, is_error
 
 
 def get_target_coverage(taxid, locus):
@@ -290,7 +358,7 @@ def get_related_coverage(gbif_target, locus, query_dir):
         for r in gbif_target.relatives
     })
     if not species_names:
-        return {}, []
+        return {}
     logger.info(
         f"[{MODULE_NAME}]: Fetching Genbank records for target"
         f" '{gbif_target.taxon}' (locus: '{locus}') - {len(species_names)}"
@@ -322,7 +390,7 @@ def get_related_country_coverage(
         for r in gbif_target.for_country(country)
     ]
     if not species_names:
-        return {}, []
+        return {}
     # TODO: potential for caching GBIF related/country taxa here
     logger.info(
         f"[{MODULE_NAME}]: Fetching Genbank records for target"
@@ -391,3 +459,96 @@ def fetch_gb_records_for_species(species_names, locus):
     })
     # TODO: potential for caching related species counts here
     return species_counts, errors
+
+
+def _set_flags(db_coverage, query_dir):
+    """Set flags 5.1 - 5.3 (DB coverage) for each target."""
+    def set_target_coverage_flag(target, target_type, count):
+        if count is None:
+            # Indicates a higher level taxon (family or higher)
+            flag_value = FLAGS.NA
+        if count > config.CRITERIA.DB_COV_TARGET_MIN_A:
+            flag_value = FLAGS.A
+        elif count > config.CRITERIA.DB_COV_TARGET_MIN_B:
+            flag_value = FLAGS.B
+        else:
+            flag_value = FLAGS.C
+        Flag.write(
+            query_dir,
+            FLAGS.DB_COVERAGE_TARGET,
+            flag_value,
+            target=target,
+            target_type=target_type,
+        )
+
+    def set_related_coverage_flag(target, target_type, species_counts):
+        if species_counts is None:
+            return  # TODO: Indicates a fatal error
+        if not species_counts:
+            return  # TODO: no species to check? Flag D??
+        total_species = len(species_counts)
+        represented_species = len([
+            count for count in species_counts.values()
+            if count > 0
+        ])
+        percent_coverage = 100 * represented_species / total_species
+        if percent_coverage > config.CRITERIA.DB_COV_RELATED_MIN_A:
+            flag_value = FLAGS.A
+        elif percent_coverage > config.CRITERIA.DB_COV_RELATED_MIN_B:
+            flag_value = FLAGS.B
+        else:
+            flag_value = FLAGS.C
+        Flag.write(
+            query_dir,
+            FLAGS.DB_COVERAGE_RELATED,
+            flag_value,
+            target=target,
+            target_type=target_type,
+        )
+
+    def set_country_coverage_flag(target, target_type, species_counts):
+        if species_counts is None:
+            return  # TODO: Indicates a fatal error
+        total_species = len(species_counts)
+        represented_species = len([
+            count for count in species_counts.values()
+            if count > 0
+        ])
+        unrepresented_species = total_species - represented_species
+        if not species_counts:
+            flag_value = FLAGS.C
+        elif unrepresented_species <= config.CRITERIA.DB_COV_COUNTRY_MISSING_A:
+            flag_value = FLAGS.A
+        elif unrepresented_species <= config.CRITERIA.DB_COV_COUNTRY_MISSING_B:
+            flag_value = FLAGS.B
+        Flag.write(
+            query_dir,
+            FLAGS.DB_COVERAGE_RELATED_COUNTRY,
+            flag_value,
+            target=target,
+            target_type=target_type,
+        )
+
+    for target_type, target_data in db_coverage.items():
+        for target_species, coverage_data in target_data.items():
+            if 'related' not in coverage_data:
+                # Indicates a higher level taxon (family or higher)
+                coverage_data['target'] = FLAGS.NA
+                coverage_data['related'] = FLAGS.NA
+                coverage_data['country'] = FLAGS.NA
+
+            set_target_coverage_flag(
+                target_species,
+                target_type,
+                coverage_data['target'],
+            )
+            set_related_coverage_flag(
+                target_species,
+                target_type,
+                coverage_data['related'],
+            )
+            set_country_coverage_flag(
+                target_species,
+                target_type,
+                coverage_data['country'],
+            )

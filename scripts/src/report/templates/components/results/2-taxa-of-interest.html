@@ -1,0 +1,29 @@
+<h2>Taxa of interest</h2>
+
+<p>
+  This sections shows the taxa of interest specified by the submitter. Each of these taxa has been cross-referenced against the candidate species to determine if they might match the taxonomic identity of the sample. A blank row indicates a TOI that did not match any candidate species, meaning that it is unlikely that the sample matches that TOI.
+</p>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      {% for colname in toi_rows[0] %}
+      <th>{{ colname }}</th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in toi_rows %}
+    <tr>
+      {% for value in row.values() %}
+      <td>{{ value or '-' }}</td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+</table>
+
+<p class="alert alert-info">
+  See the
+  <a href="#results-database-coverage">Database coverage</a>
+  section to see database coverage for taxa of interest.
+</p>

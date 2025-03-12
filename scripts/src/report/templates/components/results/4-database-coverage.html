@@ -1,0 +1,44 @@
+{% from "macros/db-coverage-target-btn.html" import render_target_btn %}
+{% from "macros/db-coverage-target-report.html" import render_target_report %}
+
+<script>
+  const DB_COVERAGE = {{ db_coverage | tojson }};
+</script>
+
+<h2>Database coverage of target taxa</h2>
+
+<p>
+  The target taxa include candidate species, the preliminary morphology ID, and any taxa of interest provided by the submitter. Each of these taxa are independently evaluated against the reference database to determine whether sufficient reference data exists to support identification of the target taxon. Insufficient coverage of a taxon can result in that taxon not be correctly identified as the taxonomic identity of the sample. For example, if the sample is <em>Homo sapiens</em>, but <em>Homo sapiens</em> sequences are not included in the reference database, the analysis will be unable to identity <em>Homo sapiens</em> as the correct taxonomic identity, and will most likely assign the closest relative with reference data as the taxonomic identity.
+</p>
+
+<div class="d-flex align-items-start my-5">
+  <div
+    class="nav flex-column nav-pills"
+    id="dbcov-tabs-buttons"
+    role="tablist"
+    aria-orientation="vertical"
+    style="margin-right: -2px; position: relative; z-index: 2;"
+  >
+    <!-- <div class="text-danger" style="position: absolute; left: -100px; top: 170px; width: 80px; border-right: 5px solid red; height: 150px; padding-top: 50px;">
+      Not yet available
+    </div> -->
+    {{ render_target_btn(db_coverage.candidate, 'Candidates', 'candidate', conclusions.flags) }}
+    {{ render_target_btn(db_coverage.pmi, 'Preliminary ID', 'pmi', conclusions.flags) }}
+    {{ render_target_btn(db_coverage.toi, 'Taxa of interest', 'toi', conclusions.flags) }}
+
+    <script>
+      // Select first tab when page loads
+      document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('dbcov-tabs-buttons')
+          .getElementsByClassName('btn')[0]
+          .click();
+      });
+    </script>
+  </div>
+
+  <div class="tab-content" id="dbcov-tabs-content">
+    {{ render_target_report(db_coverage.candidate, 'candidate', conclusions.flags, metadata, show_active=True) }}
+    {{ render_target_report(db_coverage.pmi, 'pmi', conclusions.flags, metadata) }}
+    {{ render_target_report(db_coverage.toi, 'toi', conclusions.flags, metadata) }}
+  </div>
+</div>

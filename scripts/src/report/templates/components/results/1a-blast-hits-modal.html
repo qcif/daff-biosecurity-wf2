@@ -1,5 +1,5 @@
 <div class="modal" id="blastHitsModal" tabindex="-1">
-  <div class="modal-dialog modal-xl">
+  <div class="modal-dialog modal-xxl">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">BLAST search results</h5>
@@ -11,11 +11,11 @@
         ></button>
       </div>
       <div class="modal-body">
-        <div style="max-height: 40vh; overflow-y: auto;">
+        <div class="mb-5" style="max-height: 35vh; overflow-y: auto;">
           <table class="table tight font-small freeze-header">
             <thead>
               <th class="text-center">#</th>
-              <th>Species</th>
+              <th>Accession</th>
               <th>Hit subject</th>
               <th class="text-center">Align length</th>
               <th class="text-center">Query coverage</th>
@@ -26,61 +26,55 @@
             {% for hit in hits %}
             <tr class="interactive" onclick="showBlastHit({{ loop.index0 }});">
               <td class="text-center">{{ loop.index }}</td>
-              <td>
-                TBD
-                <!-- <em>{{ hit.species }}</em> -->
-              </td>
+              <td>{{ hit.accession }}</td>
               <td>{{ hit.hit_subject }}</td>
               <td class="text-center">{{ hit.alignment_length }}</td>
-              <td class="text-center">{{ hit.query_coverage * 100 }}%</td>
+              <td class="text-center">{{ (hit.query_coverage * 100) | round(1) }}%</td>
               <td class="text-center">{{ hit.bitscore }}</td>
-              <td class="text-center">{{ hit.e_value }}</td>
-              <td class="text-center">{{ hit.identity * 100 }}%</td>
+              <td class="text-center">{{ "% .2e" | format(hit.e_value) }}</td>
+              <td class="text-center">{{ (hit.identity * 100) | round(1) }}%</td>
             </tr>
             {% endfor %}
           </table>
         </div>
 
-        <div class="my-5">
-          <div class="row">
-            <div class="col">
-              <p class="lead text-danger">Selected hit alignment (to-do)</p>
-              <pre id="selectedHitAlignment"></pre>
-            </div>
-            <div class="col-auto">
-              <!-- selected taxonomy table -->
-              <p class="lead text-danger">Selected hit taxonomy (to-do)</p>
-              <table class="table tight font-small">
-                <tr>
-                  <th>Kingdom</th>
-                  <td></td>
-                </tr>
-                <tr>
-                  <th>Phylum</th>
-                  <td></td>
-                </tr>
-                <tr>
-                  <th>Class</th>
-                  <td></td>
-                </tr>
-                <tr>
-                  <th>Order</th>
-                  <td></td>
-                </tr>
-                <tr>
-                  <th>Family</th>
-                  <td></td>
-                </tr>
-                <tr>
-                  <th>Genus</th>
-                  <td></td>
-                </tr>
-                <tr>
-                  <th>Species</th>
-                  <td></td>
-                </tr>
-              </table>
-            </div>
+        <div class="row">
+          <div class="col-auto">
+            <p class="lead">Selected alignment</p>
+            <pre id="selectedHitAlignment"></pre>
+          </div>
+          <div class="col">
+            <p class="lead">Selected taxonomy</p>
+            <table id="selectedHitTaxonomy" class="table tight font-small">
+              <tr>
+                <th>Kingdom</th>
+                <td></td>
+              </tr>
+              <tr>
+                <th>Phylum</th>
+                <td></td>
+              </tr>
+              <tr>
+                <th>Class</th>
+                <td></td>
+              </tr>
+              <tr>
+                <th>Order</th>
+                <td></td>
+              </tr>
+              <tr>
+                <th>Family</th>
+                <td></td>
+              </tr>
+              <tr>
+                <th>Genus</th>
+                <td></td>
+              </tr>
+              <tr>
+                <th>Species</th>
+                <td></td>
+              </tr>
+            </table>
           </div>
         </div>
       </div>
@@ -96,12 +90,47 @@
   </div>
 
   <script>
-    const ALIGNMENTS = [
-      // TODO
+    const HITS = {{ hits | tojson }};
+    const TAXONOMY = {{ hits_taxonomy | tojson }};
+    const TAXONOMY_ORDER = [
+      'kingdom',
+      'phylum',
+      'class',
+      'order',
+      'family',
+      'genus',
+      'species',
     ];
 
     function showBlastHit(index) {
-      // TODO
+      const hit = HITS[index];
+      showBlastAlignment(hit);
+      $('#selectedHitTaxonomy td').each((i, el) => {
+        const value = TAXONOMY[hit.accession][TAXONOMY_ORDER[i]] || 'No data';
+        $(el).text(value);
+      });
+      $('tr.interactive').removeClass('active');
+      $('tr.interactive')[index].classList.add('active');
     }
+
+    function showBlastAlignment(hit) {
+      let ix = 1;
+      alignments = hit.hsps.reduce((acc, hsp) => {
+        title = `HSP ${ix}/${hit.hsps.length}`;
+        length = `Alignment length: ${hsp.alignment_length}`;
+        identity = `${100 * Math.round(hsp.identity / hsp.alignment_length)}%`;
+        evalue = `E-value: ${hsp.e_value}`;
+        bitscore = `Bitscore: ${hsp.bitscore}`;
+        alignment = [title, length, identity, evalue, bitscore].join('  ') + '\n';
+        alignment += hsp.alignment + '\n\n';
+        ix ++;
+        return acc + alignment;
+      }, '');
+      $('#selectedHitAlignment').text(alignment);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      showBlastHit(0);
+    });
   </script>
 </div>

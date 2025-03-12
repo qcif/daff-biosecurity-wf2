@@ -7,12 +7,11 @@ This requires access to the NCBI taxdump files (configurable by CLI param).
 import argparse
 import csv
 import logging
-from pathlib import Path
 
 from src.utils import existing_path
 from src.utils.config import Config
 from src.taxonomy import extract
-from src.taxonomy.extract import TAXONKIT_DATA, TAXONOMIC_RANKS
+from src.taxonomy.extract import TAXONOMIC_RANKS
 
 logger = logging.getLogger(__name__)
 config = Config()
@@ -27,7 +26,7 @@ def main():
             for row in csv.reader(taxids_file)
         }
     taxids = sorted(set(accession_taxids.values()))
-    taxonomies = extract.taxonomies(taxids, taxdb=args.taxdb_path)
+    taxonomies = extract.taxonomies(taxids)
     _write_csv(taxonomies, accession_taxids)
 
 
@@ -38,14 +37,6 @@ def _parse_args():
         type=existing_path,
         help='CSV file with columns (accession,taxid) to extract taxonomy'
              ' information for.',
-    )
-    parser.add_argument(
-        '--taxdb',
-        dest='taxdb_path',
-        type=existing_path,
-        help='Path to directory containing NCBI taxdump files for taxonkit.'
-             f' Defaults to {TAXONKIT_DATA}',
-        default=Path(TAXONKIT_DATA),
     )
     parser.add_argument(
         "--output_dir",

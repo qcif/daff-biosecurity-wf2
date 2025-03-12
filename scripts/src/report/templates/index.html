@@ -17,18 +17,34 @@
 
   <body>
     <div class="container">
+
       {% include "components/heading.html" %}
+
       <div>
         {% include "components/walltime.html" %}
       </div>
+
       <section id="overview">
         {% include "components/overview.html" %}
         {{ render_subjective_input(1) }}
       </section>
-      <section id="results-interspecies-diversity">
-        <h2>Results</h2>
-        {% include "components/results/1-interspecies-diversity.html" %}
+
+      <section id="results-candidate-species">
+        {% include "components/results/1-candidate-species.html" %}
       </section>
+
+      <section id="results-taxa-of-interest">
+        {% include "components/results/2-taxa-of-interest.html" %}
+      </section>
+
+      <section id="results-source-diversity">
+        {% include "components/results/3-source-diversity.html" %}
+      </section>
+
+      <section id="results-database-coverage">
+        {% include "components/results/4-database-coverage.html" %}
+      </section>
+
       <section>
         <h2>Taxonomy Check</h2>
         {% include "components/taxonomy-check.html" %}

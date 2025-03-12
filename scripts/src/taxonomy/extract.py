@@ -1,7 +1,6 @@
 import logging
 import subprocess
 import tempfile
-from pathlib import Path
 
 from ..utils.config import Config
 
@@ -21,10 +20,7 @@ TAXONOMIC_RANKS = [
 ]
 
 
-def taxonomies(
-    taxids: list[str],
-    taxdb: Path = Path(config.TAXONKIT_DATA),
-) -> dict[str, dict[str, str]]:
+def taxonomies(taxids: list[str]) -> dict[str, dict[str, str]]:
     """Use taxonkit lineage to extract taxonomic data for given taxids."""
     with tempfile.NamedTemporaryFile(mode='w+') as temp_file:
         temp_file.write("\n".join(taxids))
@@ -37,7 +33,7 @@ def taxonomies(
                     'lineage',
                     '-R',
                     '-c', temp_file_name,
-                    '--data-dir', taxdb,
+                    '--data-dir', config.TAXONKIT_DATA,
                 ],
                 capture_output=True,
                 check=True,

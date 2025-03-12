@@ -5,7 +5,6 @@ import logging
 from .config import Config
 
 logger = logging.getLogger(__name__)
-
 config = Config()
 
 
@@ -32,17 +31,17 @@ class Flag:
         return f"{self.flag_id}{self.value}"
 
     def __repr__(self):
-        return f"{self.flag_id}{self.value}"
+        return f"{self.flagCRITERIA.ALIGNMENT_MIN_id}{self.value}"
 
     def to_json(self):
         data = {
             "flag_id": self.flag_id,
             "value": self.value,
             "target": self.target,
-            "level": self.get_level(),
-            "outcome": self.outcome(),
-            "explanation": self.explanation(),
-            "bs-class": self.get_bs_class(),
+            "level": self.level,
+            "outcome": self.outcome,
+            "explanation": self.explanation,
+            "bs-class": self.bs_class,
         }
 
         return data
@@ -51,19 +50,23 @@ class Flag:
     def name(self):
         return FLAG_DETAILS[self.flag_id]["name"]
 
+    @property
     def explanation(self):
         return FLAG_DETAILS[self.flag_id]["explanation"][self.value]
 
+    @property
     def outcome(self):
         return FLAG_DETAILS[self.flag_id]["outcome"][self.value]
 
-    def get_level(self):
+    @property
+    def level(self):
         """Return the warning level for the given value."""
         return FLAG_DETAILS[self.flag_id]['level'][self.value]
 
-    def get_bs_class(self):
-        """Return the warning level for the given value."""
-        level = self.get_level()
+    @property
+    def bs_class(self):
+        """Return the bootstrap css class for self.level."""
+        level = self.level
         if level == 0:
             return "secondary"
         if level == 1:
@@ -89,24 +92,33 @@ class Flag:
                     value = Flag(flag_id, value=value, target=target)
                 if target:
                     flags[flag_id] = flags.get(flag_id, {})
-                    flags[flag_id][target_type] = flags[flag_id].get(
-                        target_type, {})
-                    flags[flag_id][target_type][target] = value
+                    if target_type:
+                        flags[flag_id][target_type] = flags[flag_id].get(
+                            target_type, {})
+                        flags[flag_id][target_type][target] = value
+                    else:
+                        flags[flag_id][target] = value
                 else:
                     flags[flag_id] = value
+        for flag, data in flags.items():
+            if flag.startswith('5'):
+                for ttype in [TARGETS.CANDIDATE, TARGETS.PMI, TARGETS.TOI]:
+                    if ttype not in data:
+                        data[ttype] = {}
         return flags
 
     def _parse_flag_filename(path):
         """Parse flag filename to extract flag_id, target, target_type."""
-        stem = path.stem.split('flag_', 1)[1]
-        if '[' in stem:
-            flag_id, target = stem.split("[")
-            target_type, target = target.split("-")
-            target = target.replace("]", "").replace("_", " ")
+        stem = path.stem
+        target_type = None
+        if '-' in stem:
+            flag_id, target = stem.split("-", 1)
+            if '-' in target:
+                target_type, target = target.split("-")
+            target = target.replace("_", " ")
         else:
             flag_id = stem
             target = None
-            target_type = None
         return flag_id, target, target_type
 
     @classmethod
@@ -121,19 +133,26 @@ class Flag:
         """Write flags value to JSON file.
 
         target: the target taxon name
-        target_type: one of ['candidate', 'pmi', 'toi']
+        target_type: one of TARGETS.[candidate, pmi, toi]
         """
-        identifier = (
-            f"{flag_id}[{target_type}-{target}]"
-            if target
-            else flag_id
-        ).replace(' ', '_')
+        identifier = flag_id
+        target_str = ''
+        if target:
+            type_str = f"{target_type}-" if target_type else ''
+            target_str = f"-{type_str}{target}".replace(' ', '_')
+            identifier += target_str
+            target_str = ' ' + target_str.strip('-')
         path = query_dir / config.FLAG_FILE_TEMPLATE.format(
             identifier=identifier)
         with path.open('w') as f:
             f.write(value)
-        target_str = f" (target {target_type}:{target})" if target else ""
         logger.info(f"Flag {flag_id}{value}{target_str} written to {path}")
+
+
+class TARGETS:
+    CANDIDATE = "candidate"
+    PMI = "pmi"
+    TOI = "toi"
 
 
 class FLAGS:
@@ -146,6 +165,7 @@ class FLAGS:
     DB_COVERAGE_RELATED_COUNTRY = '5.3'
     INTRASPECIES_DIVERSITY = '6'
     PMI = '7'
+    NA = 'NA'
     A = "A"
     B = "B"
     C = "C"
@@ -153,152 +173,4 @@ class FLAGS:
     E = "E"
 
 
-class TARGETS:
-    CANDIDATE = "candidate"
-    PMI = "pmi"
-    TOI = "toi"
-
-
-FLAG_DETAILS = {
-    FLAGS.POSITIVE_ID: {
-        "name": "Interspecies diversity",
-        "explanation": {
-            FLAGS.A: "1 candidate species matched with high stringency"
-                " (identity >= 98.5%)",
-            FLAGS.B: "2-3 candidate species matched with high stringency"
-                " (identity >= 98.5%)",
-            FLAGS.C: ">3 candidate species matched with high stringency"
-                " (identity >= 98.5%)",
-            FLAGS.D: "At least one candidate species matched with moderate"
-                " stringency (identity >=93.5% and <98.5%)",
-            FLAGS.E: "No candidate species matched",
-        },
-        "level": {
-            FLAGS.A: 1,
-            FLAGS.B: 2,
-            FLAGS.C: 3,
-            FLAGS.D: 2,
-            FLAGS.E: 3,
-        },
-        "outcome": {
-            FLAGS.A: "Positive species identification",
-            FLAGS.B: "The analyst should attempt subjective species"
-                     " identification at the genus level",
-            FLAGS.C: "The analyst should attempt subjective species"
-                     " identification at the genus level",
-            FLAGS.D: "The analyst should attempt subjective species"
-                     " identification at the genus level",
-            FLAGS.E: "Identification not possible (potential unknown species)",
-        }
-    },
-    FLAGS.TOI: {
-        "name": "Taxa of interest",
-        "explanation": {
-            FLAGS.A: "Taxon of interest NOT detected",
-            FLAGS.B: "Taxon of interest detected",
-        },
-        "level": {
-            FLAGS.A: 1,
-            FLAGS.B: 3,
-        },
-        "outcome": {
-            FLAGS.A: "None of the taxa of interest matched the"
-                     " candidates species",
-            FLAGS.B: "At least one of the taxa of interest matched the"
-                     " candidates species",
-        },
-    },
-    FLAGS.SOURCES: {
-        "name": "Reference sequence source diversity",
-        "explanation": {
-            FLAGS.A: "There are diverse results (>5 sources) for this species"
-            " in the results",
-            FLAGS.B: "There are limited results (1-5) for this species in the"
-            " results",
-        },
-        "level": {
-            FLAGS.A: 1,
-            FLAGS.B: 2,
-        },
-    },
-    FLAGS.DB_COVERAGE_TARGET: {
-        "name": "Database representation for target species",
-        "explanation": {
-            FLAGS.A: "This locus for this species is well represented in"
-                " reference database (>5 entries) ",
-            FLAGS.B: "This locus for this species has limited representation"
-                " in reference database (<=5 entries) ",
-            FLAGS.C: "This locus for this species is not present in reference"
-                " database (0 entries) ",
-        },
-        "level": {
-            FLAGS.A: 1,
-            FLAGS.B: 2,
-            FLAGS.C: 3,
-        },
-    },
-    FLAGS.DB_COVERAGE_RELATED: {
-        "name": "Database representation for related species",
-        "explanation": {
-            FLAGS.A: ">90% of species have sequence for this locus",
-            FLAGS.B: "10-90% of species have sequence for this locus",
-            FLAGS.C: "<=10% of species have sequence for this locus",
-        },
-        "level": {
-            FLAGS.A: 1,
-            FLAGS.B: 2,
-            FLAGS.C: 3,
-        },
-    },
-    FLAGS.DB_COVERAGE_RELATED_COUNTRY: {
-        "name": "Database representation for related species in country of"
-                " origin",
-        "explanation": {
-            FLAGS.A: "All species in genus with observations in country of"
-                " origin have sequence for this locus",
-            FLAGS.B: "Not all species in genus with observations in country of"
-                " origin have"
-                " sequence for this locus",
-            FLAGS.C: "No data: No species in genus with observations in"
-                " country of origin",
-        },
-        "level": {
-            FLAGS.A: 1,
-            FLAGS.B: 2,
-            FLAGS.C: 0,
-        },
-    },
-    FLAGS.INTRASPECIES_DIVERSITY: {
-        "name": "Intraspecies diversity",
-        "explanation": {
-            FLAGS.A: "Candidate species grouped within single clade",
-            FLAGS.B: "The query sequence clusters as sister to a"
-                " species-specific clade or as a single branch in a tree",
-            FLAGS.C: "Genotype diversity grouped into multiple diverse groups",
-        },
-        "level": {
-            FLAGS.A: 1,
-            FLAGS.B: 2,
-            FLAGS.C: 3,
-        },
-    },
-    FLAGS.PMI: {
-        "name": "Preliminary identification confirmation",
-        "explanation": {
-            FLAGS.A: "Candidate species is consistent with preliminary"
-                " morphology ID",
-            FLAGS.B: "Candidate species is not consistent with preliminary"
-                " morphology ID",
-        },
-        "level": {
-            FLAGS.A: 1,
-            FLAGS.B: 3,
-        },
-        "outcome": {
-            FLAGS.A: "The preliminary identification is supported by the"
-                     " molecular data",
-            FLAGS.B: "The preliminary identification is inconsistent with the"
-                     " molecular data",
-        },
-    },
-}
+FLAG_DETAILS = config.read_flag_details_csv()

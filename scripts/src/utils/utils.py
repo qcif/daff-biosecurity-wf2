@@ -26,6 +26,8 @@ def serialize(obj):
     """Serialize an object to a JSON string."""
     if hasattr(obj, 'to_json'):
         return obj.to_json()
+    if type(obj).__name__ == 'method':
+        return f'method:{obj.__name__}'
     raise TypeError(f"Object of type {type(obj).__name__} is not JSON"
                     " serializable")
 

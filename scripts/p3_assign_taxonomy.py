@@ -27,8 +27,7 @@ from src.utils.flags import Flag, FLAGS
 
 logger = logging.getLogger(__name__)
 config = Config()
-MAX_CANDIDATES_FOR_ANALYSIS = 3
-IDENTITY_PERCENTAGE = 100
+
 CANDIDATE_CSV_HEADER = [
     "species",
     "taxid",
@@ -70,9 +69,10 @@ def _assign_species_id(hits, query_dir):
     candidate_hits = [
         hit for hit in hits
         if (
-            hit["alignment_length"] >= config.ALIGNMENT.MIN_NT
-            or hit["query_coverage"] >= config.ALIGNMENT.MIN_Q_COVERAGE
-        ) and hit["identity"] >= config.ALIGNMENT.MIN_IDENTITY
+            hit["alignment_length"] >= config.CRITERIA.ALIGNMENT_MIN_NT
+            or hit["query_coverage"]
+            >= config.CRITERIA.ALIGNMENT_MIN_Q_COVERAGE
+        ) and hit["identity"] >= config.CRITERIA.ALIGNMENT_MIN_IDENTITY
     ]
     for hit in candidate_hits:
         tax = taxonomies.get(hit["accession"])
@@ -90,7 +90,7 @@ def _assign_species_id(hits, query_dir):
                 " species list.")
     candidate_hits_strict = [
         hit for hit in candidate_hits
-        if hit["identity"] >= config.ALIGNMENT.MIN_IDENTITY_STRICT
+        if hit["identity"] >= config.CRITERIA.ALIGNMENT_MIN_IDENTITY_STRICT
     ]
     candidate_species = deduplicate([
         hit for hit in candidate_hits
@@ -111,6 +111,9 @@ def _assign_species_id(hits, query_dir):
             if hit["species"] == species["species"]
         )
 
+    selected_species = candidate_species_strict or candidate_species
+    selected_hits = candidate_hits_strict or candidate_hits
+
     _write_candidate_flags(
         query_dir,
         candidate_species_strict,
@@ -118,18 +121,16 @@ def _assign_species_id(hits, query_dir):
     )
     _write_candidates(
         query_dir,
-        candidate_hits_strict or candidate_hits,
-        candidate_species_strict or candidate_species,
+        selected_hits,
+        selected_species,
     )
 
-    if len(
-        candidate_hits_strict or candidate_hits
-    ) > MAX_CANDIDATES_FOR_ANALYSIS:
-        _write_boxplot(query_dir, candidate_hits_strict or candidate_hits)
+    if len(selected_species) > config.CRITERIA.MAX_CANDIDATES_FOR_ANALYSIS:
+        _write_boxplot(query_dir, selected_hits)
 
     taxonomic_id = _write_taxonomic_id(query_dir, candidate_species_strict)
     _write_pmi_match(taxonomic_id, query_ix, query_dir)
-    return candidate_species_strict or candidate_species
+    return selected_species
 
 
 def _write_taxonomic_id(query_dir, candidate_species_strict):
@@ -237,7 +238,7 @@ def _write_pmi_match(taxonomic_identity, query_ix, query_dir):
                 f.write(','.join(('rank', 'taxon')))
                 f.write(','.join(match[0]))
     else:
-        logger.info("No PMI match found - no flag written.")
+        logger.info("No taxonomic ID - no PMI flag (7) written.")
 
 
 def _write_boxplot(query_dir, hits):
@@ -246,20 +247,22 @@ def _write_boxplot(query_dir, hits):
         genus = hit['species'].split(' ')[0]
         if genus not in genera:
             genera[genus] = []
-        genera[genus].append(hit['identity'] * IDENTITY_PERCENTAGE)
-    # Create plot with matplotlib
-    plt.figure(figsize=(10, 6))
-    plt.boxplot(genera.values(), labels=genera.keys(), patch_artist=True)
-
-    plt.xlabel('Genus')
-    plt.ylabel('Identity (%)')
-    plt.title('Boxplot of Identity by Genus')
-
+        genera[genus].append(hit['identity'] * 100)
+    labels = []
+    identities = []
+    for genus, values in genera.items():
+        labels.append(genus)
+        identities.append(values)
+    plt.figure(figsize=(12, 3))
+    plt.boxplot(identities, tick_labels=labels, patch_artist=True)
+    if len(genera) > 5:
+        plt.xticks(rotation=80)
+    plt.xlabel('Genus', fontsize=14)
+    plt.ylabel('Identity to query (%)', fontsize=14)
     boxplot_image_path = query_dir / config.BOXPLOT_IMG
-    plt.savefig(boxplot_image_path)
+    plt.savefig(boxplot_image_path, bbox_inches='tight', dpi=150)
     plt.close()
-
-    logger.info(f"Boxplot saved to {boxplot_image_path}")
+    logger.info(f"Written boxplot PNG to {boxplot_image_path}")
 
 
 def _detect_taxa_of_interest(candidate_species, query_dir):
