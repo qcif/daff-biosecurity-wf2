@@ -15,6 +15,12 @@ h3, h4, h5 {
 .font-small {
   font-size: 0.8rem;
 }
+.font-large {
+  font-size: 1.25rem;
+}
+.font-xl {
+  font-size: 1.5rem;
+}
 .modal-xxl {
   max-width: 1400px;
 }

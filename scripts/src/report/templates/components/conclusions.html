@@ -1,9 +1,8 @@
 <h3>Result overview</h3>
 
 <div class="my-3">
-  <p class="alert alert-{{ conclusions['flags']['1']['bs-class'] }}">
-    <span class="text-large">
-      <strong>Taxonomic identity:</strong>
+  <p class="alert alert-{{ conclusions.flags['1'].bs_class }}">
+    <span class="font-xl">
       {% if conclusions.summary.result.confirmed %}
       <em>
         {{ conclusions.summary.result.species }}
@@ -13,7 +12,10 @@
       {% endif %}
     </span>
     <br>
-    <b>Reasoning:</b> {{ conclusions.summary.result.explanation }}
+    {{ conclusions.flags['1'].outcome }}.
+    <br>
+    <strong>Reasoning - Flag 1{{ conclusions.flags['1'].value }}</strong>:
+    {{ conclusions.flags['1'].explanation }}.
   </p>
 </div>
 

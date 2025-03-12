@@ -139,20 +139,16 @@ def _get_taxonomic_result(query_ix, flags):
     """Determine the taxonomic result from the flags."""
     path = config.get_query_dir(query_ix) / config.TAXONOMY_ID_CSV
     flag_1 = flags[FLAGS.POSITIVE_ID]
-    explanation = (f"Flag {FLAGS.POSITIVE_ID}{flag_1.value}: "
-                   + flag_1.explanation)
     if flag_1.value == FLAGS.A:
         with path.open() as f:
             reader = csv.DictReader(f)
             hit = next(reader)
         return {
             'confirmed': True,
-            'explanation': explanation,
             'species': hit['species'],
         }
     return {
         'confirmed': False,
-        'explanation': explanation,
         'species': None,
     }
 
