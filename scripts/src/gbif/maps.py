@@ -47,10 +47,3 @@ def fetch_gbif_map(taxon_key: str, path: Path):
 
     plt.savefig(path, bbox_inches='tight', dpi=300)
     plt.close()
-
-
-# Example usage
-if __name__ == "__main__":
-    TAXON_KEY = "2440326"
-    OUTPUT_PATH = Path("output/query_001_LC438549/species_map.png")
-    fetch_gbif_map(taxon_key=TAXON_KEY, path=OUTPUT_PATH)
