@@ -1,3 +1,5 @@
+"""Fetch GBIF occurrence data and plot on a world map."""
+
 from pathlib import Path
 from matplotlib import pyplot as plt
 from matplotlib.colors import LogNorm
@@ -6,7 +8,8 @@ import geopandas as gpd
 import pandas as pd
 import fsspec
 
-NATURALEARTH_LOWRES_URL = Path(__file__).parent / 'ne_110m_admin_0_countries.zip'
+NATURALEARTH_LOWRES_URL = (
+    Path(__file__).parent / 'ne_110m_admin_0_countries.zip')
 
 
 def fetch_gbif_map(taxon_key: str, path: Path):
@@ -24,12 +27,17 @@ def fetch_gbif_map(taxon_key: str, path: Path):
         world = gpd.read_file(file)
 
     fig, ax = plt.subplots(figsize=(16, 12))
-    fig.patch.set_facecolor('#d0e8f2')
-    ax.set_facecolor('#d0e8f2')
-    world.plot(ax=ax, color='lightgray')
+    fig.patch.set_facecolor('#0d1017')
+    ax.set_facecolor('#0d1017')
+    world.plot(ax=ax, color='#32363c')
     hb = ax.hexbin(
-        x=df['longitude'], y=df['latitude'], gridsize=50,
-        cmap='Reds', mincnt=1, alpha=0.8, norm=LogNorm()
+        x=df['longitude'],
+        y=df['latitude'],
+        gridsize=(150, 30),
+        cmap='autumn_r',
+        mincnt=1,
+        alpha=0.8,
+        norm=LogNorm(),
     )
 
     # Add a colorbar to show density scale
