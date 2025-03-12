@@ -79,6 +79,7 @@ def _get_img_src(path):
 def _get_report_context(query_ix):
     """Build the context for the report template."""
     query_fasta_str = config.read_query_fasta(query_ix).format('fasta')
+    hits = config.read_blast_hits_json(query_ix)['hits']
     return {
         'url_from_accession': config.url_from_accession,
         'title': config.REPORT.TITLE,
@@ -91,8 +92,9 @@ def _get_report_context(query_ix):
         'config': config,
         'input_fasta': query_fasta_str,
         'conclusions': _draw_conclusions(query_ix),
-        'hits': config.read_blast_hits_json(query_ix)['hits'],
+        'hits': hits,
         'candidates': _get_candidates(query_ix),
+        'hits_taxonomy': _load_taxonomies(hits),
         'candidates_boxplot_src': _get_boxplot_src(query_ix),
         'toi_rows': _read_toi_detected(query_ix),
         'aggregated_sources': _read_source_diversity(query_ix),
@@ -260,6 +262,14 @@ def _get_candidates(query_ix):
         flags[FLAGS.POSITIVE_ID].value
         not in (FLAGS.D, FLAGS.E))
     return candidates
+
+
+def _load_taxonomies(hits):
+    run_taxonomies = config.read_taxonomy_file()
+    return {
+        hit['accession']: run_taxonomies.get(hit['accession'])
+        for hit in hits
+    }
 
 
 def _get_boxplot_src(query_ix) -> Path:

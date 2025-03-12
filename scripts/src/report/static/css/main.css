@@ -15,17 +15,14 @@ h3, h4, h5 {
 .font-small {
   font-size: 0.8rem;
 }
+.modal-xxl {
+  max-width: 1400px;
+}
 table.tight th, table.tight td {
   padding: 0 3rem 0 1rem;
 }
 table.lined tr {
   border-bottom: 1px solid #e0e0e0;
-}
-tr.interactive {
-  cursor: pointer;
-}
-tr.interactive:hover {
-  background-color: var(--bs-hover-bg);
 }
 table.freeze-header {
   text-align: left;
@@ -70,29 +67,27 @@ table.freeze-header th {
   margin: 0 .5rem;
 }
 
+/* BLAST hits */
+#selectedHitAlignment {
+  max-height: 300px;
+  overflow-y: auto;
+  font-size: smaller;
+}
+tr.interactive {
+  cursor: pointer;
+}
+tr.interactive:hover {
+  background-color: var(--bs-hover-bg);
+}
+tr.interactive.active {
+  background: rgb(166, 213, 255);
+}
+
 /* Database coverage */
 #dbcov-tabs-buttons {
   position: relative;
   top: 40px;
 }
-/* .nav-btn-group {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 1rem;
-  padding-left: .5rem;
-  position: relative;
-  background: #dee2e6;
-}
-.nav-btn-group::after {
-  content: "";
-  height: 100%;
-  width: 1rem;
-  background: #d0d0d0;
-  position: absolute;
-  left: 0;
-  top: 0;
-  z-index: 2;
-} */
 #dbcov-tabs-buttons .btn {
   margin-left: 1rem;
 }
