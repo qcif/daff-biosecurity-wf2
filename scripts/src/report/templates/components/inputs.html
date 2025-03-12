@@ -2,16 +2,16 @@
 
 <table class="table table-striped my-3">
   <tbody>
-    {% for item in metadata %}
+    {% for key, value in metadata.items() %}
     <tr>
-      <td class="fw-bold">{{ item.name }}</td>
+      <td class="fw-bold">{{ key }}</td>
       <td>
-        {% if 'interest' in item.name %}
-        {% for value in item.value %}
-        {{ value }}<br>
+        {% if 'interest' in key %}
+        {% for val in value %}
+        {{ val }}<br>
         {% endfor %}
         {% else %}
-        {{ item.value }}
+        {{ value }}
         {% endif %}
       </td>
     </tr>

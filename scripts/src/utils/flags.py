@@ -165,6 +165,7 @@ class FLAGS:
     DB_COVERAGE_RELATED_COUNTRY = '5.3'
     INTRASPECIES_DIVERSITY = '6'
     PMI = '7'
+    NA = 'NA'
     A = "A"
     B = "B"
     C = "C"

@@ -230,7 +230,11 @@ class Config:
             for row in csv.DictReader(f):
                 sample_id = row.pop(header["sample_id"]).split('.')[0]
                 self._metadata[sample_id] = {
-                    key: row[colname].strip()
+                    key: (
+                        row[colname].strip().split('|')
+                        if 'interest' in key.lower()
+                        else row[colname].strip()
+                    )
                     for key, colname in header.items()
                     if key != "sample_id"
                 }
@@ -248,9 +252,11 @@ class Config:
     def get_pmi_for_query(self, query) -> str:
         return self._get_metadata_for_query(query, "preliminary_id")
 
-    def get_country_code_for_query(self, query) -> str:
+    def get_country_for_query(self, query, code=False) -> str:
         country = self._get_metadata_for_query(query, "country")
-        return countries.get_code(country)
+        if code:
+            return countries.get_code(country)
+        return country
 
     def get_toi_list_for_query(self, query) -> list[str]:
         """Read taxa of interest from TOI file."""

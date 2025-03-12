@@ -265,7 +265,7 @@ def assess_coverage(query_dir) -> dict[str, dict[str, dict]]:
             return func, target, locus, country, query_dir
 
     locus = config.get_locus_for_query(query_dir)
-    country = config.get_country_code_for_query(query_dir)
+    country = config.get_country_for_query(query_dir, code=True)
     candidate_list, toi_list, pmi = _get_targets(query_dir)
     targets = candidate_list + toi_list + [pmi]
     if not targets:
@@ -465,9 +465,8 @@ def _set_flags(db_coverage, query_dir):
     """Set flags 5.1 - 5.3 (DB coverage) for each target."""
     def set_target_coverage_flag(target, target_type, count):
         if count is None:
-            # TODO: this would indicate an error which should be reported
-            # elsewhere
-            return
+            # Indicates a higher level taxon (family or higher)
+            flag_value = FLAGS.NA
         if count > config.CRITERIA.DB_COV_TARGET_MIN_A:
             flag_value = FLAGS.A
         elif count > config.CRITERIA.DB_COV_TARGET_MIN_B:
@@ -532,9 +531,12 @@ def _set_flags(db_coverage, query_dir):
 
     for target_type, target_data in db_coverage.items():
         for target_species, coverage_data in target_data.items():
-            if not coverage_data.get('related'):
-                # No related coverage - target rank is family or higher
-                continue
+            if 'related' not in coverage_data:
+                # Indicates a higher level taxon (family or higher)
+                coverage_data['target'] = FLAGS.NA
+                coverage_data['related'] = FLAGS.NA
+                coverage_data['country'] = FLAGS.NA
+
             set_target_coverage_flag(
                 target_species,
                 target_type,

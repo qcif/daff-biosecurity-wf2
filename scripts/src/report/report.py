@@ -96,6 +96,7 @@ def _get_report_context(query_ix):
         'candidates_boxplot_src': _get_boxplot_src(query_ix),
         'toi_rows': _read_toi_detected(query_ix),
         'aggregated_sources': _read_source_diversity(query_ix),
+        'db_coverage': _read_db_coverage(query_ix),
     }
 
 
@@ -115,38 +116,8 @@ def _get_walltime():
 
 def _get_metadata(query_ix):
     """Return mock metadata for the report."""
-    return [  # TODO: parse from metadata.csv
-        {
-            'name': 'Sample ID',
-            'value': 'LC438549.1',
-        },
-        {
-            'name': 'Locus',
-            'value': 'COI',
-        },
-        {
-            'name': 'Preliminary morphology ID',
-            'value': 'Aphididae',
-        },
-        {
-            'name': 'Taxa of interest',
-            'value': [
-                'Myzus persicae',
-            ],
-        },
-        {
-            'name': 'Country of origin',
-            'value': 'Ecuador',
-        },
-        {
-            'name': 'Host/commodity of origin',
-            'value': 'Cut flower Rosa',
-        },
-        {
-            'name': 'Comments',
-            'value': 'Lorem ipsum dolor sit amet',
-        },
-    ]
+    sample_id = config.get_sample_id(query_ix)
+    return config.metadata[sample_id]
 
 
 def _draw_conclusions(query_ix):
@@ -310,6 +281,13 @@ def _read_toi_detected(query_ix):
 def _read_source_diversity(query_ix):
     """Read the source diversity table from the CSV file."""
     path = config.get_query_dir(query_ix) / config.INDEPENDENT_SOURCES_JSON
+    with path.open() as f:
+        return json.load(f)
+
+
+def _read_db_coverage(query_ix):
+    """Read the database coverage table from the CSV file."""
+    path = config.get_query_dir(query_ix) / config.DB_COVERAGE_JSON
     with path.open() as f:
         return json.load(f)
 
