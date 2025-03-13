@@ -96,6 +96,11 @@ def _get_printed_alignment(hsp, length=80):
     return alignment_str
 
 
+def parse_hit_def(hit_def: str) -> str:
+    """Parse hit definition and remove synonym identifiers."""
+    return hit_def.split('>')[0].strip()
+
+
 def parse_blast_xml(blast_xml_path: str) -> tuple[
     list[dict],
     list[list[SeqRecord]],
@@ -130,7 +135,7 @@ def parse_blast_xml(blast_xml_path: str) -> tuple[
                 )
                 hit_record = {
                     "hit_id": alignment.hit_id,
-                    "hit_subject": alignment.hit_def,
+                    "hit_subject": parse_hit_def(alignment.hit_def),
                     "accession": alignment.accession,
                     "alignment_length": alignment_length,
                     "subject_length": alignment.length,  # poor naming Bio?
