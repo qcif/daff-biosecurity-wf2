@@ -99,6 +99,10 @@ def _get_report_context(query_ix):
         'toi_rows': _read_toi_detected(query_ix),
         'aggregated_sources': _read_source_diversity(query_ix),
         'db_coverage': _read_db_coverage(query_ix),
+        'tree_img_src': _get_img_src(
+            config.get_query_dir(query_ix)
+            / config.TREE_IMG_FILENAME
+        ),
     }
 
 
@@ -270,7 +274,7 @@ def _load_taxonomies(hits):
 
 def _get_boxplot_src(query_ix) -> Path:
     """Return the path to the boxplot image if it exists."""
-    path = config.get_query_dir(query_ix) / config.BOXPLOT_IMG
+    path = config.get_query_dir(query_ix) / config.BOXPLOT_IMG_FILENAME
     if path.exists():
         return _get_img_src(path)
     return None

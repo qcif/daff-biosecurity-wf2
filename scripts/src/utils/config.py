@@ -54,8 +54,10 @@ class Config:
                                  'taxa_of_concern_detected.csv')
     PMI_MATCH_CSV = os.getenv("PMI_MATCH_CSV_FILENAME",
                               'preliminary_id_match.csv')
-    BOXPLOT_IMG = os.getenv("BOXPLOT_IMG_FILENAME",
-                            'identity-boxplot.png')
+    BOXPLOT_IMG_FILENAME = os.getenv("BOXPLOT_IMG_FILENAME",
+                                     'identity-boxplot.png')
+    TREE_IMG_FILENAME = os.getenv("TREE_IMG_FILENAME",
+                                  'phylogeny.png')
     DB_COVERAGE_JSON = os.getenv("DB_COVERAGE_JSON_FILENAME",
                                  'db_coverage.json')
     DB_COVERAGE_TOI_LIMIT = int(os.getenv("DB_COVERAGE_TOI_LIMIT", 10))

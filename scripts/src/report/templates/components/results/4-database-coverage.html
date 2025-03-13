@@ -1,5 +1,6 @@
 {% from "macros/db-coverage-target-btn.html" import render_target_btn %}
 {% from "macros/db-coverage-target-report.html" import render_target_report %}
+{% from "macros/subjective.html" import render_subjective_input %}
 
 <script>
   const DB_COVERAGE = {{ db_coverage | tojson }};
@@ -10,6 +11,8 @@
 <p>
   The target taxa include candidate species, the preliminary morphology ID, and any taxa of interest provided by the submitter. Each of these taxa are independently evaluated against the reference database to determine whether sufficient reference data exists to support identification of the target taxon. Insufficient coverage of a taxon can result in that taxon not be correctly identified as the taxonomic identity of the sample. For example, if the sample is <em>Homo sapiens</em>, but <em>Homo sapiens</em> sequences are not included in the reference database, the analysis will be unable to identity <em>Homo sapiens</em> as the correct taxonomic identity, and will most likely assign the closest relative with reference data as the taxonomic identity.
 </p>
+
+{{ render_subjective_input(4) }}
 
 <div class="d-flex align-items-start my-5">
   <div

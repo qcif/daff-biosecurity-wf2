@@ -2,9 +2,9 @@
   --bs-hover-bg: aliceblue;
 }
 section {
-  padding: 2rem 0;
+  padding: 2rem 0 5rem 0;
   border-bottom: 1px solid gray;
-  margin-bottom: 3rem;
+  margin-bottom: 5rem;
 }
 h3, h4, h5 {
   color: var(--bs-gray)
@@ -141,4 +141,14 @@ tr.interactive.active {
 .verticalScrollChart {
   max-height: 500px;
   overflow-y: auto;
+}
+.phylogeny {
+  max-height: 500px;
+  overflow-y: auto;
+  background-color: #dee2e6;
+}
+.phylogeny img {
+  margin: 0 auto;
+  display: block;
+  mix-blend-mode: multiply;
 }

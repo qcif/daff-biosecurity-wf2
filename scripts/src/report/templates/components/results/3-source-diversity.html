@@ -1,10 +1,13 @@
 {% from "macros/alert-level-icon.html" import render_level_icon %}
+{% from "macros/subjective.html" import render_subjective_input %}
 
 <h2>Reference sequence source diversity</h2>
 
 <p>
   This analysis evaluates how many independent sources have contributed to reference sequences for each candidate species. This provides a measure of confidence in the taxonomic annotation of references sequences. A sequence that has been annotated by multiple independent sources is more likely to have a correct taxonomic annotation.
 </p>
+
+{{ render_subjective_input(3) }}
 
 <div class="d-flex align-items-start my-5">
   <div

@@ -259,7 +259,7 @@ def _write_boxplot(query_dir, hits):
         plt.xticks(rotation=80)
     plt.xlabel('Genus', fontsize=14)
     plt.ylabel('Identity to query (%)', fontsize=14)
-    boxplot_image_path = query_dir / config.BOXPLOT_IMG
+    boxplot_image_path = query_dir / config.BOXPLOT_IMG_FILENAME
     plt.savefig(boxplot_image_path, bbox_inches='tight', dpi=150)
     plt.close()
     logger.info(f"Written boxplot PNG to {boxplot_image_path}")
