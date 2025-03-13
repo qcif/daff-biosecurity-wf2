@@ -77,7 +77,8 @@ table.freeze-header th {
 #selectedHitAlignment {
   max-height: 300px;
   overflow-y: auto;
-  font-size: smaller;
+  font-size: x-small;
+  padding: .5rem;
 }
 tr.interactive {
   cursor: pointer;
