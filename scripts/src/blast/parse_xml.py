@@ -161,11 +161,11 @@ def parse_blast_xml(blast_xml_path: str) -> tuple[
                         "alignment": _get_printed_alignment(hsp),
                     }
                     hit_record["hsps"].append(hsp_record)
-                    fastas.append(SeqRecord(
-                        Seq(hsp.sbjct),
-                        id=alignment.accession,
-                        description=alignment.hit_def))
 
+                fastas.append(SeqRecord(
+                    Seq(hsp.sbjct),
+                    id=alignment.accession,
+                    description=alignment.hit_def))
                 query_record["hits"].append(hit_record)
 
             if not query_record["hits"]:
