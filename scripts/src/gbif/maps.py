@@ -51,7 +51,7 @@ def draw_occurrence_map(taxon_key: str, path: Path):
     )
 
     # Add a colorbar to show density scale
-    cb = fig.colorbar(hb, ax=ax, orientation='vertical', shrink=0.7)
+    cb = fig.colorbar(hb, ax=ax, orientation='vertical', shrink=0.7, aspect=60)
     cb.set_label("Density of Occurrences")
     ax.set_axis_off()
 
