@@ -16,7 +16,8 @@
           {
             "bitscore": 602.0,
             "e_value": 0.0,
-            "identity": 602,
+            "identities": 602,
+            "identity": 1.0,
             "strand_query": "Plus",
             "strand_subject": "Plus",
             "gaps": 0,

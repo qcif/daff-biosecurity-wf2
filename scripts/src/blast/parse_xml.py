@@ -145,7 +145,11 @@ def parse_blast_xml(blast_xml_path: str) -> tuple[
                     hsp_record = {
                         "bitscore": hsp.score,
                         "e_value": hsp.expect,
-                        "identity": hsp.identities,
+                        "identity": round(
+                            hsp.align_length / hsp.align_length,
+                            3,
+                        ),
+                        "identities": hsp.identities,
                         "strand_query": hsp.strand[0],
                         "strand_subject": hsp.strand[1],
                         "gaps": hsp.gaps,
@@ -169,6 +173,12 @@ def parse_blast_xml(blast_xml_path: str) -> tuple[
                     "No BLAST hits found for query"
                     f" [{query_record['query_title']}]"
                 )
+
+            # Re-order hits by identity
+            query_record["hits"].sort(
+                key=lambda x: x["identity"],
+                reverse=True,
+            )
 
             logger.info(f"Query [{i}] - collected {len(query_record["hits"])}"
                         f" BLAST hits")

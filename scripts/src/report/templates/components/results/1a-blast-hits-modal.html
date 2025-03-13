@@ -118,7 +118,7 @@
       alignments = hit.hsps.reduce((acc, hsp) => {
         title = `HSP ${ix}/${hit.hsps.length}`;
         length = `Alignment length: ${hsp.alignment_length}`;
-        identity = `${100 * Math.round(hsp.identity / hsp.alignment_length)}%`;
+        identity = `Identity: ${100 * hsp.identity}%`;
         evalue = `E-value: ${hsp.e_value}`;
         bitscore = `Bitscore: ${hsp.bitscore}`;
         alignment = [title, length, identity, evalue, bitscore].join('  ') + '\n';
