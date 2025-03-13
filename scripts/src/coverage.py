@@ -12,6 +12,7 @@ from pprint import pformat
 from src.entrez import genbank
 from src.utils.flags import Flag, FLAGS, TARGETS
 from src.gbif.relatives import GBIFRecordNotFound, RANK, RelatedTaxaGBIF
+from src.gbif.maps import draw_occurrence_map
 from src.taxonomy import extract
 from src.utils import errors
 from src.utils.config import Config
@@ -116,6 +117,32 @@ def _fetch_target_taxa(targets, query_dir):
     )
 
     return target_gbif_taxa, higher_taxon_targets
+
+
+def _draw_occurrence_maps(
+    target_gbif_taxa,
+    higher_taxon_targets,
+    query_dir,
+):
+    """Fetch occurrence data and draw world maps showing taxon distribution."""
+    taxa = {
+        **target_gbif_taxa,
+        **higher_taxon_targets,
+    }
+    for target, gbif_target in taxa.items():
+        if not gbif_target.key:
+            logger.warning(
+                f"[{MODULE_NAME}]: No GBIF taxon key found for target"
+                f" '{target}'. Occurrence map will not be generated for this"
+                " target.")
+            continue
+        path = query_dir / config.get_map_filename_for_target(target)
+        logger.info(
+            f"[{MODULE_NAME}]: Writing occurrence map for"
+            f" '{target}' (taxon key: {gbif_target.key}) to file"
+            f" '{path}'..."
+        )
+        draw_occurrence_map(gbif_target.key, path)
 
 
 def _parallel_process_tasks(
@@ -296,6 +323,12 @@ def assess_coverage(query_dir) -> dict[str, dict[str, dict]]:
     target_gbif_taxa, higher_taxon_targets = _fetch_target_taxa(
         targets, query_dir)
 
+    _draw_occurrence_maps(
+        target_gbif_taxa,
+        higher_taxon_targets,
+        query_dir,
+    )
+
     tasks = [
         get_args(
             func,
@@ -464,7 +497,7 @@ def fetch_gb_records_for_species(species_names, locus):
 def _set_flags(db_coverage, query_dir):
     """Set flags 5.1 - 5.3 (DB coverage) for each target."""
     def set_target_coverage_flag(target, target_type, count):
-        if count is None:
+        if count is None or count == 'NA':
             # Indicates a higher level taxon (family or higher)
             flag_value = FLAGS.NA
         if count > config.CRITERIA.DB_COV_TARGET_MIN_A:

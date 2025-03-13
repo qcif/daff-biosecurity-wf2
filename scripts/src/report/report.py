@@ -295,7 +295,19 @@ def _read_db_coverage(query_ix):
     """Read the database coverage table from the CSV file."""
     path = config.get_query_dir(query_ix) / config.DB_COVERAGE_JSON
     with path.open() as f:
-        return json.load(f)
+        data = json.load(f)
+    for target_type, targets in data.items():
+        for target in targets:
+            path = (
+                config.get_query_dir(query_ix)
+                / config.get_map_filename_for_target(target)
+            )
+            data[target_type][target]['map_src_base64'] = (
+                _get_img_src(path)
+                if path.exists()
+                else None
+            )
+    return data
 
 
 if __name__ == '__main__':

@@ -1,6 +1,6 @@
-{% macro render_target_report(data, target_type, flags, metadata, show_active=False) %}
+{% macro render_target_report(target_data, target_type, flags, metadata, show_active=False) %}
 
-{% for species, data in data.items() %}
+{% for species, data in target_data.items() %}
 {% set species_id = 'p5-' + target_type + '-' + species.replace(' ', '-') %}
 {% set flag_5_1 = flags['5.1'][target_type][species] %}
 {% set flag_5_2 = flags['5.2'][target_type][species] %}
@@ -27,6 +27,8 @@
       <strong>Reasoning:</strong> {{ flag.explanation }}
     </p>
 
+    <hr>
+
     <div class="my-5">
       <h3>Database coverage of <em>{{ species }}</em></h3>
 
@@ -38,18 +40,38 @@
       </p>
 
       <div class="row my-5">
-        <p>
-          <span class="big-number alert-{{ flag_5_1.bs_class }}">
-            {{ data['target'] }} records
-          </span>
-          There are {{ data['target'] }} sequences in the reference database for
-          <em>{{ species }}</em>
-          at the given locus <strong>{{ metadata.locus }}</strong>.
-        </p>
+        <div class="col">
+          <div class="big-number alert-{{ flag_5_1.bs_class }}">
+            {{ data.target }} records
+          </div>
+          <p class="my-3">
+            There are {{ data.target }} sequences in the reference database for
+            <em>{{ species }}</em>
+            at the given locus <strong>{{ metadata.locus }}</strong>.
+          </p>
+        </div>
+
+        {% if data.map_src_base64 %}
+        <div class="col" style="position: relative;">
+          <div
+            class="occurrence-map"
+            onclick="this.classList.toggle('expanded')"
+          >
+            <img
+              src="{{ data.map_src_base64 }}"
+              alt="Map of database coverage"
+              class="img-fluid"
+            >
+          </div>
+        </div>
+        {% endif%}
       </div>
     </div>
 
     {% if flag.value != 'NA' %}
+
+    <hr>
+
     <div class="my-5">
       <h3>Database coverage of species in genus <em>{{ species.split(' ')[0] }}</em></h3>
 
@@ -149,6 +171,8 @@
         </div>
       </div>
     </div>
+
+    <hr>
 
     <div class="my-5">
       <h3>

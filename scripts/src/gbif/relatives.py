@@ -106,6 +106,7 @@ class RelatedTaxaGBIF:
     def __init__(self, taxon):
         self.taxon = taxon
         self.record = self._get_taxon_record(taxon)
+        self.key = self.record.get('key')
         self.genus_key = self.record.get('genusKey')
         self.rank = RANK.from_string(self.record.get('rank'))
 

@@ -65,7 +65,9 @@ table.freeze-header th {
  padding: 1rem;
  border-radius: .25rem;
  font-size: large;
- margin: 0 1rem;
+}
+.big-number {
+  text-align: center;
 }
 .small-number {
   font-size: medium;
@@ -107,7 +109,34 @@ tr.interactive.active {
 .button-group-label:not(:first-child) {
   margin-top: 1rem;
 }
-
+.occurrence-map {
+  display: inline-block;
+  position: relative;
+  cursor: pointer;
+}
+.occurrence-map img {
+  max-width: 100%;
+  height: auto;
+}
+.occurrence-map.expanded {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 75vw;
+  z-index: 10;
+}
+.occurrence-map.expanded::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 200vw;
+  height: 200vh;
+  background: rgba(0, 0, 0, 0.75);
+  transform: translate(-50%, -50%);
+  z-index: -1;
+}
 /* Figures */
 .verticalScrollChart {
   max-height: 500px;

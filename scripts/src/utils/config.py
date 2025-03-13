@@ -19,6 +19,7 @@ from . import countries
 
 logger = logging.getLogger(__name__)
 
+MAP_FILENAME_TEMPLATE = "map_{taxon_str}.png"
 REPORT_FILENAME = "report_{sample_id}_{timestamp}.html"
 QUERY_DIR_PREFIX = 'query_'
 
@@ -340,6 +341,9 @@ class Config:
 
     def url_from_accession(self, accession):
         return f"https://www.ncbi.nlm.nih.gov/nuccore/{accession}"
+
+    def get_map_filename_for_target(self, taxon):
+        return MAP_FILENAME_TEMPLATE.format(taxon_str=path_safe_str(taxon))
 
     def cleanup(self):
         """Remove temporary files."""

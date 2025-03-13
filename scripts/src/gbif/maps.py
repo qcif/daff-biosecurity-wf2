@@ -1,26 +1,36 @@
 """Fetch GBIF occurrence data and plot on a world map."""
 
+import fsspec
+import logging
+import pandas as pd
+import geopandas as gpd
 from pathlib import Path
 from matplotlib import pyplot as plt
 from matplotlib.colors import LogNorm
 from pygbif import occurrences
-import geopandas as gpd
-import pandas as pd
-import fsspec
+
+logger = logging.getLogger(__name__)
+MODULE_NAME = 'GBIF MAPS'
 
 NATURALEARTH_LOWRES_URL = (
-    Path(__file__).parent / 'ne_110m_admin_0_countries.zip')
+    Path(__file__).parent / 'base_maps/ne_110m_admin_0_countries.zip')
 
 
-def fetch_gbif_map(taxon_key: str, path: Path):
+def draw_occurrence_map(taxon_key: str, path: Path):
     '''Fetch GBIF API to get species world map by using taxonomy ID. '''
-    res = occurrences.search(taxonKey=taxon_key, limit=1000)
+    res = occurrences.search(taxonKey=taxon_key, limit=5000)
     lats = [record['decimalLatitude']
             for record in res['results']
             if 'decimalLatitude' in record]
     lons = [record['decimalLongitude']
             for record in res['results']
             if 'decimalLongitude' in record]
+
+    if not lats:
+        logger.info(f"[{MODULE_NAME}] No occurrence data found for taxon"
+                    f" '{taxon_key}' - no map can be drawn.")
+        return
+
     df = pd.DataFrame({'latitude': lats, 'longitude': lons})
 
     with fsspec.open(f"simplecache::{NATURALEARTH_LOWRES_URL}") as file:
