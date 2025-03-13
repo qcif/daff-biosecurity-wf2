@@ -231,7 +231,11 @@ class Config:
                 sample_id = row.pop(header["sample_id"]).split('.')[0]
                 self._metadata[sample_id] = {
                     key: (
-                        row[colname].strip().split('|')
+                        [
+                            x.strip()
+                            for x in row[colname].strip().split('|')
+                            if x.strip()
+                        ]
                         if 'interest' in key.lower()
                         else row[colname].strip()
                     )
@@ -260,8 +264,7 @@ class Config:
 
     def get_toi_list_for_query(self, query) -> list[str]:
         """Read taxa of interest from TOI file."""
-        toi_field = self._get_metadata_for_query(query, "taxa_of_interest")
-        return toi_field.split('|')
+        return self._get_metadata_for_query(query, "taxa_of_interest")
 
     def get_report_path(self, query):
         query_ix = self.get_query_ix(query)

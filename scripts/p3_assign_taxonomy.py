@@ -168,8 +168,8 @@ def _write_candidates(
 ):
     """Write candidates hits and species to file."""
     _write_candidates_json(query_dir, candidate_hits, candidate_species)
-    _write_candidates_csv(query_dir, candidate_species)
-    _write_candidates_fasta(query_dir, candidate_species)
+    _write_candidates_csv(query_dir, candidate_hits)
+    _write_candidates_fasta(query_dir, candidate_hits)
     _write_candidates_count(query_dir, candidate_species)
 
 
@@ -196,14 +196,14 @@ def _write_candidates_csv(query_dir, species):
     logger.info(f"Written candidate species to {path}")
 
 
-def _write_candidates_fasta(query_dir, species):
+def _write_candidates_fasta(query_dir, candidate_hits):
     """Write FASTA sequences for each candidate species to file."""
     path = query_dir / config.CANDIDATES_FASTA
     fastas = config.read_blast_hits_fasta(query_dir)
-    species_accessions = [hit["accession"] for hit in species]
+    accessions = [hit["accession"] for hit in candidate_hits]
     candidate_fastas = [
         fasta for fasta in fastas
-        if fasta.id in species_accessions
+        if fasta.id in accessions
     ]
     with open(path, "w") as f:
         SeqIO.write(candidate_fastas, f, "fasta")
