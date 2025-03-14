@@ -133,9 +133,10 @@ def parse_blast_xml(blast_xml_path: str) -> tuple[
                     alignment_length,
                     blast_record.query_length,
                 )
+                hit_def_stripped = parse_hit_def(alignment.hit_def)
                 hit_record = {
                     "hit_id": alignment.hit_id,
-                    "hit_subject": parse_hit_def(alignment.hit_def),
+                    "hit_subject": hit_def_stripped,
                     "accession": alignment.accession,
                     "alignment_length": alignment_length,
                     "subject_length": alignment.length,  # poor naming Bio?
@@ -170,7 +171,7 @@ def parse_blast_xml(blast_xml_path: str) -> tuple[
                 fastas.append(SeqRecord(
                     Seq(hsp.sbjct),
                     id=alignment.accession,
-                    description=alignment.hit_def))
+                    description=hit_def_stripped))
                 query_record["hits"].append(hit_record)
 
             if not query_record["hits"]:

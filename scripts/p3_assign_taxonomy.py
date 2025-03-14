@@ -183,12 +183,12 @@ def _write_candidates_json(query_dir, hits, species):
     logger.info(f"Written candidate hits/species to {path}")
 
 
-def _write_candidates_csv(query_dir, species):
+def _write_candidates_csv(query_dir, candidate_hits):
     path = query_dir / config.CANDIDATES_CSV
     with path.open("w") as f:
         writer = csv.writer(f)
         writer.writerow(CANDIDATE_CSV_HEADER)
-        for hit in species:
+        for hit in candidate_hits:
             writer.writerow([
                 hit.get(key, "")
                 for key in CANDIDATE_CSV_HEADER

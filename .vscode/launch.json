@@ -46,8 +46,8 @@
             "name": "P3 Assign taxonomy",
             "program": "${workspaceFolder}/scripts/p3_assign_taxonomy.py",
             "args": [
-                // "output/query_001_LC438549"
-                "output/query_002_ON075825"
+                "output/query_001_LC438549"
+                // "output/query_002_ON075825"
                 // "output/query_003_PP466915"
                 // "output/query_004_JQ585746"
                 // "output/query_005_LC547004"
