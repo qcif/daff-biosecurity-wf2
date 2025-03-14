@@ -187,6 +187,9 @@ def _get_toi_result(query_ix, flags):
     """Determine the taxa of interest detection from the flags."""
     query_dir = config.get_query_dir(query_ix)
     path = query_dir / config.TOI_DETECTED_CSV
+    if not path.exists():
+        logger.info(f"No taxa of interest file available at {path}")
+        return
     with path.open() as f:
         reader = csv.DictReader(f)
         detected_tois = [
@@ -197,9 +200,6 @@ def _get_toi_result(query_ix, flags):
             for row in reader
             if row.get(config.OUTPUTS.TOI_DETECTED_HEADER[1])
         ]
-    if not len(detected_tois):
-        logger.info("No taxa of interest to report on.")
-        return
     flag_2 = flags[FLAGS.TOI]
     criteria_2 = f"<strong>Flag {flag_2}</strong>: {flag_2.explanation}"
     ruled_out = flag_2.value == FLAGS.A
@@ -283,6 +283,8 @@ def _get_boxplot_src(query_ix) -> Path:
 def _read_toi_detected(query_ix):
     """Read the taxa of interest detected from the CSV file."""
     path = config.get_query_dir(query_ix) / config.TOI_DETECTED_CSV
+    if not path.exists():
+        return []
     with path.open() as f:
         reader = csv.DictReader(f)
         return [row for row in reader]
