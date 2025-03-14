@@ -47,7 +47,6 @@ def main():
             location_min=errors.LOCATIONS.DATABASE_COVERAGE,
             location_max=errors.LOCATIONS.DB_COVERAGE_RELATED_COUNTRY,
         )
-        sys.exit(1)
 
 
 def parse_args():

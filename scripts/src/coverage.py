@@ -6,6 +6,7 @@ file is used to limit the number of concurrent requests.
 """
 
 import logging
+import urllib.error
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pprint import pformat
 
@@ -196,7 +197,7 @@ def _parallel_process_tasks(
                     msg,
                     exc,
                     query_dir=query_dir)
-                if 'failure in name resolution' in str(exc):
+                if isinstance(exc, urllib.error.URLError):
                     raise errors.APIError(
                         f"Fatal error fetching data from Entrez API: '{exc}'"
                         " This error occurred multiple times and indicates a"
