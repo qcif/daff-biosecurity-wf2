@@ -142,13 +142,24 @@ tr.interactive.active {
   max-height: 500px;
   overflow-y: auto;
 }
-.phylogeny {
-  max-height: 500px;
-  overflow-y: auto;
-  background-color: #dee2e6;
+#phylotree {
+  height: 500px;
+  background: #f5f6f7;
+  border-radius: .5rem;
 }
-.phylogeny img {
-  margin: 0 auto;
-  display: block;
-  mix-blend-mode: multiply;
+.phylotree {
+  position: relative;
+}
+.phylotree .controls {
+  position: absolute;
+  top: .5rem;
+  left: .5rem;
+  padding: .5rem;
+  background: rgba(0,0,0,0.1);
+  border-radius: .5rem;
+  opacity: 0;
+  transition-duration: .25s;
+}
+.phylotree:hover .controls {
+  opacity: 1;
 }

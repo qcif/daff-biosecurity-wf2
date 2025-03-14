@@ -8,13 +8,78 @@
 
 {{ render_subjective_input(5) }}
 
-<div class="my-5">
-  <div class="phylogeny">
-    <img src="{{ tree_img_src }}" alt="Phylogenetic tree of candidate reference sequences" class="img-fluid">
+<div class="my-5 phylotree">
+  <div id="phylotree"></div>
+  <div class="controls">
+    <small>
+      <code>Click + drag</code> to pan
+      <br>
+      <code>Scroll</code> to zoom in/out
+    </small>
   </div>
   <p class="my-3 px-5">
     <small>
-      The phylogetic tree was constructed with FastME using the Neighbor-Joining method. Multiple-sequence alignment of the candidate reference sequences was performed using MAFFT.
+      The phylogetic tree was constructed with
+      <a href="http://www.atgc-montpellier.fr/fastme/" target="_blank">
+        FastME
+      </a>
+      using the Neighbor-Joining method. Multiple-sequence alignment of the candidate reference sequences was performed using
+      <a href="https://mafft.cbrc.jp/alignment/server/index.html" target="_blank">MAFFT</a>.
+      The visualization is rendered with
+      <a href="https://cdcgov.github.io/TidyTree/" target="_blank">TidyTree</a>.
     </small>
   </p>
+  <script>
+    const sampleId = "{{ metadata.sample_id }}";
+    const newickString = "{{ tree_nwk_str }}";
+    let tree;
+
+    const leafNames = {
+      {% for hit in candidates.hits %}
+        "{{ hit.accession }}": {
+          species: "{{ hit.species }}",
+          definition: "{{ hit.hit_subject }}",
+        },
+      {% endfor %}
+    };
+
+    function addHighlighToTextNode(node) {
+      const textElement = $(node);
+      let bbox = textElement[0].getBBox();
+      let rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      $(rect).attr({
+          x: bbox.x - 20,
+          y: bbox.y - 10,
+          width: bbox.width + 40,
+          height: bbox.height + 20,
+          fill: "#f35fc8",
+      });
+      textElement.parent().prepend(rect);
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+      tree = new TidyTree(newickString, {
+        parent: "#phylotree" ,
+        layout: 'horizontal',
+        mode: 'square',
+        vStretch: 6,
+        hStretch: 2,
+      });
+      tree.setLeafLabels(true);
+      $('#phylotree .tidytree-ruler rect')[0].style.fill = 'none';
+
+      // Highlight query sequence
+      tree.eachLeafNode((elem, data) => {
+        const label = $(elem).parent().find('text');
+        const text = label.text();
+        if (text === sampleId) {
+          addHighlighToTextNode(label);
+        }
+        leafName = leafNames[text];
+        if (leafName && leafName.species) {
+          label.text(leafName.species);
+        }
+      });
+    });
+  </script>
 </div>
