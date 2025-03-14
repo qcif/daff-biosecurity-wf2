@@ -167,6 +167,7 @@ def fetch_entrez(
                 logger.warning(
                     "Entrez rate limit exceeded. Waiting 10 minutes before"
                     " next retry.")
+                retries = config.ENTREZ_MAX_RETRIES
             time.sleep(sleep_seconds)
             logger.info(f"Retrying {retries} more times.")
             retries -= 1
