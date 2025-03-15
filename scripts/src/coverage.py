@@ -526,6 +526,10 @@ def _set_flags(db_coverage, query_dir):
             return  # TODO: no species to check? Flag D??
         if species_counts == FLAGS.NA:
             flag_value = FLAGS.NA
+        elif isinstance(species_counts, str):
+            raise ValueError(
+                f"[{MODULE_NAME}]: Unexpected str count value for related"
+                f" species ({target_type}) '{target}': {species_counts}.")
         else:
             total_species = len(species_counts)
             represented_species = len([
