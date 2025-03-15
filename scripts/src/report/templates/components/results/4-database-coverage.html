@@ -14,6 +14,7 @@
 
 {{ render_subjective_input(4) }}
 
+{% if db_coverage %}
 <div class="d-flex align-items-start my-5">
   <div
     class="nav flex-column nav-pills"
@@ -45,3 +46,6 @@
     {{ render_target_report(db_coverage.toi, 'toi', conclusions.flags, metadata) }}
   </div>
 </div>
+{% else %}
+<p class="alert alert-secondary">No target taxa to report on.</p>
+{% endif %}

@@ -294,6 +294,9 @@ def _read_toi_detected(query_ix):
 def _read_source_diversity(query_ix):
     """Read the source diversity table from the CSV file."""
     path = config.get_query_dir(query_ix) / config.INDEPENDENT_SOURCES_JSON
+    if not path.exists():
+        logger.warning(f'No source diversity file found at {path}')
+        return {}
     with path.open() as f:
         return json.load(f)
 
@@ -301,6 +304,9 @@ def _read_source_diversity(query_ix):
 def _read_db_coverage(query_ix):
     """Read the database coverage table from the CSV file."""
     path = config.get_query_dir(query_ix) / config.DB_COVERAGE_JSON
+    if not path.exists():
+        logger.warning(f'No database coverage file found at {path}')
+        return {}
     with path.open() as f:
         data = json.load(f)
     for target_type, targets in data.items():

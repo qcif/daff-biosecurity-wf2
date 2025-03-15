@@ -9,6 +9,7 @@
 
 {{ render_subjective_input(3) }}
 
+{% if aggregated_sources %}
 <div class="d-flex align-items-start my-5">
   <div
     class="nav flex-column nav-pills"
@@ -131,3 +132,6 @@
     {% endfor %}
   </div>
 </div>
+{% else %}
+<p class="alert alert-secondary">No candidate species to report on.</p>
+{% endif %}
