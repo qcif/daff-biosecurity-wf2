@@ -501,7 +501,11 @@ def _set_flags(db_coverage, query_dir):
         if count is None or count == 'NA':
             # Indicates a higher level taxon (family or higher)
             flag_value = FLAGS.NA
-        if count > config.CRITERIA.DB_COV_TARGET_MIN_A:
+        elif not isinstance(count, int):
+            raise ValueError(
+                f"[{MODULE_NAME}]: Unexpected count value for target"
+                f" ({target_type}) '{target}': {count}.")
+        elif count > config.CRITERIA.DB_COV_TARGET_MIN_A:
             flag_value = FLAGS.A
         elif count > config.CRITERIA.DB_COV_TARGET_MIN_B:
             flag_value = FLAGS.B
