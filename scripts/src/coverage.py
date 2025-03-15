@@ -520,10 +520,8 @@ def _set_flags(db_coverage, query_dir):
         )
 
     def set_related_coverage_flag(target, target_type, species_counts):
-        if species_counts is None:
-            return  # TODO: Indicates a fatal error
         if not species_counts:
-            return  # TODO: no species to check? Flag D??
+            return  # TODO: Indicates a fatal error
         if species_counts == FLAGS.NA:
             flag_value = FLAGS.NA
         elif isinstance(species_counts, str):
@@ -554,18 +552,27 @@ def _set_flags(db_coverage, query_dir):
     def set_country_coverage_flag(target, target_type, species_counts):
         if species_counts is None:
             return  # TODO: Indicates a fatal error
-        total_species = len(species_counts)
-        represented_species = len([
-            count for count in species_counts.values()
-            if count > 0
-        ])
-        unrepresented_species = total_species - represented_species
-        if not species_counts:
-            flag_value = FLAGS.C
-        elif unrepresented_species <= config.CRITERIA.DB_COV_COUNTRY_MISSING_A:
-            flag_value = FLAGS.A
-        elif unrepresented_species <= config.CRITERIA.DB_COV_COUNTRY_MISSING_B:
-            flag_value = FLAGS.B
+        if species_counts == FLAGS.NA:
+            flag_value = FLAGS.NA
+        else:
+            total_species = len(species_counts)
+            represented_species = len([
+                count for count in species_counts.values()
+                if count > 0
+            ])
+            unrepresented_species = total_species - represented_species
+            if not species_counts:
+                flag_value = FLAGS.C
+            elif (
+                unrepresented_species
+                <= config.CRITERIA.DB_COV_COUNTRY_MISSING_A
+            ):
+                flag_value = FLAGS.A
+            elif (
+                unrepresented_species
+                <= config.CRITERIA.DB_COV_COUNTRY_MISSING_B
+            ):
+                flag_value = FLAGS.B
         Flag.write(
             query_dir,
             FLAGS.DB_COVERAGE_RELATED_COUNTRY,
