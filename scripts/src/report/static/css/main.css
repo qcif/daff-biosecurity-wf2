@@ -155,11 +155,21 @@ tr.interactive.active {
   top: .5rem;
   left: .5rem;
   padding: .5rem;
-  background: rgba(0,0,0,0.1);
+  background: rgba(220,220,220,0.8);
   border-radius: .5rem;
   opacity: 0;
   transition-duration: .25s;
 }
 .phylotree:hover .controls {
+  opacity: 1;
+}
+.btn-icon {
+  padding: 0;
+  color: gray;
+  opacity: .75;
+  transition-duration: .25s;
+  line-height: 0;
+}
+.btn-icon:hover {
   opacity: 1;
 }

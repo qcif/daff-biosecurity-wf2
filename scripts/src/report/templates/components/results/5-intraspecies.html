@@ -15,6 +15,71 @@
       <code>Click + drag</code> to pan
       <br>
       <code>Scroll</code> to zoom in/out
+      <br>
+      <table>
+        <tr>
+          <td>
+            <div class="d-flex flex-column" style="margin-right: .5rem;">
+              <button class="btn btn-icon" onClick="treeIncreaseVStretch(1);">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  fill="currentColor"
+                  class="bi bi-caret-up-fill"
+                  viewBox="0 0 16 16"
+                >
+                  <path d="m7.247 4.86-4.796 5.481c-.566.647-.106 1.659.753 1.659h9.592a1 1 0 0 0 .753-1.659l-4.796-5.48a1 1 0 0 0-1.506 0z"/>
+                </svg>
+              </button>
+              <button class="btn btn-icon" onClick="treeIncreaseVStretch(-1);">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  fill="currentColor"
+                  class="bi bi-caret-down-fill"
+                  viewBox="0 0 16 16"
+                >
+                  <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
+                </svg>
+              </button>
+            </div>
+          </td>
+          <td>Vertical space</td>
+        </tr>
+        <tr>
+          <td>
+            <div class="d-flex flex-column mr-2" style="margin-right: .5rem;">
+              <button class="btn btn-icon" onClick="treeIncreaseHStretch(1);">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  fill="currentColor"
+                  class="bi bi-caret-up-fill"
+                  viewBox="0 0 16 16"
+                >
+                  <path d="m7.247 4.86-4.796 5.481c-.566.647-.106 1.659.753 1.659h9.592a1 1 0 0 0 .753-1.659l-4.796-5.48a1 1 0 0 0-1.506 0z"/>
+                </svg>
+              </button>
+              <button class="btn btn-icon" onClick="treeIncreaseHStretch(-1);">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  fill="currentColor"
+                  class="bi bi-caret-down-fill"
+                  viewBox="0 0 16 16"
+                >
+                  <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
+                </svg>
+              </button>
+            </div>
+          </td>
+          <td>Horizontal space</td>
+        </tr>
+      </table>
     </small>
   </div>
   <p class="my-3 px-5">
@@ -32,8 +97,6 @@
   <script>
     const sampleId = "{{ metadata.sample_id }}";
     const newickString = "{{ tree_nwk_str }}";
-    let tree;
-
     const leafNames = {
       {% for hit in candidates.hits %}
         "{{ hit.accession }}": {
@@ -42,44 +105,5 @@
         },
       {% endfor %}
     };
-
-    function addHighlighToTextNode(node) {
-      const textElement = $(node);
-      let bbox = textElement[0].getBBox();
-      let rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-      $(rect).attr({
-          x: bbox.x - 20,
-          y: bbox.y - 10,
-          width: bbox.width + 40,
-          height: bbox.height + 20,
-          fill: "#f35fc8",
-      });
-      textElement.parent().prepend(rect);
-    }
-
-    document.addEventListener("DOMContentLoaded", function() {
-      tree = new TidyTree(newickString, {
-        parent: "#phylotree" ,
-        layout: 'horizontal',
-        mode: 'square',
-        vStretch: 6,
-        hStretch: 2,
-      });
-      tree.setLeafLabels(true);
-      $('#phylotree .tidytree-ruler rect')[0].style.fill = 'none';
-
-      // Highlight query sequence
-      tree.eachLeafNode((elem, data) => {
-        const label = $(elem).parent().find('text');
-        const text = label.text();
-        if (text === sampleId) {
-          addHighlighToTextNode(label);
-        }
-        leafName = leafNames[text];
-        if (leafName && leafName.species) {
-          label.text(leafName.species);
-        }
-      });
-    });
   </script>
 </div>
