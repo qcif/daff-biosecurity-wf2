@@ -524,18 +524,21 @@ def _set_flags(db_coverage, query_dir):
             return  # TODO: Indicates a fatal error
         if not species_counts:
             return  # TODO: no species to check? Flag D??
-        total_species = len(species_counts)
-        represented_species = len([
-            count for count in species_counts.values()
-            if count > 0
-        ])
-        percent_coverage = 100 * represented_species / total_species
-        if percent_coverage > config.CRITERIA.DB_COV_RELATED_MIN_A:
-            flag_value = FLAGS.A
-        elif percent_coverage > config.CRITERIA.DB_COV_RELATED_MIN_B:
-            flag_value = FLAGS.B
+        if species_counts == FLAGS.NA:
+            flag_value = FLAGS.NA
         else:
-            flag_value = FLAGS.C
+            total_species = len(species_counts)
+            represented_species = len([
+                count for count in species_counts.values()
+                if count > 0
+            ])
+            percent_coverage = 100 * represented_species / total_species
+            if percent_coverage > config.CRITERIA.DB_COV_RELATED_MIN_A:
+                flag_value = FLAGS.A
+            elif percent_coverage > config.CRITERIA.DB_COV_RELATED_MIN_B:
+                flag_value = FLAGS.B
+            else:
+                flag_value = FLAGS.C
         Flag.write(
             query_dir,
             FLAGS.DB_COVERAGE_RELATED,
