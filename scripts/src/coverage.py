@@ -578,18 +578,24 @@ def _set_flags(db_coverage, query_dir):
                 coverage_data['related'] = FLAGS.NA
                 coverage_data['country'] = FLAGS.NA
 
-            set_target_coverage_flag(
-                target_species,
-                target_type,
-                coverage_data['target'],
-            )
-            set_related_coverage_flag(
-                target_species,
-                target_type,
-                coverage_data['related'],
-            )
-            set_country_coverage_flag(
-                target_species,
-                target_type,
-                coverage_data['country'],
-            )
+            try:
+                set_target_coverage_flag(
+                    target_species,
+                    target_type,
+                    coverage_data['target'],
+                )
+                set_related_coverage_flag(
+                    target_species,
+                    target_type,
+                    coverage_data['related'],
+                )
+                set_country_coverage_flag(
+                    target_species,
+                    target_type,
+                    coverage_data['country'],
+                )
+            except Exception as exc:
+                raise RuntimeError(
+                    f"Error setting flags for target ({target_type})"
+                    f" '{target_species}'. Exception: {exc}"
+                ) from exc
