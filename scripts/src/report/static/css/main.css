@@ -118,6 +118,18 @@ tr.interactive.active {
   max-width: 100%;
   height: auto;
 }
+.occurrence-map p {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  color: white;
+  text-align: center;
+  margin: .5rem 1rem;
+}
+.occurrence-map .hide-small {
+  display: none;
+}
 .occurrence-map.expanded {
   position: fixed;
   top: 50%;
@@ -137,6 +149,10 @@ tr.interactive.active {
   transform: translate(-50%, -50%);
   z-index: -1;
 }
+.occurrence-map.expanded .hide-small {
+  display: inline;
+}
+
 /* Figures */
 .verticalScrollChart {
   max-height: 500px;
