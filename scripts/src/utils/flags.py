@@ -111,15 +111,20 @@ class Flag:
         """Parse flag filename to extract flag_id, target, target_type."""
         stem = path.stem
         target_type = None
-        if '-' in stem:
-            flag_id, target = stem.split("-", 1)
-            if '-' in target:
-                target_type, target = target.split("-")
-            target = target.replace("_", " ")
-        else:
-            flag_id = stem
-            target = None
-        return flag_id, target, target_type
+        try:
+            if '-' in stem:
+                flag_id, target = stem.split("-", 1)
+                if '-' in target:
+                    target_type, target = target.split("-", 1)
+                target = target.replace("_", " ")
+            else:
+                flag_id = stem
+                target = None
+            return flag_id, target, target_type
+        except Exception as exc:
+            raise ValueError(
+                f"Error parsing flag filename {path}"
+            ) from exc
 
     @classmethod
     def write(
