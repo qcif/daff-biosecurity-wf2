@@ -501,7 +501,11 @@ def _set_flags(db_coverage, query_dir):
         if count is None or count == 'NA':
             # Indicates a higher level taxon (family or higher)
             flag_value = FLAGS.NA
-        if count > config.CRITERIA.DB_COV_TARGET_MIN_A:
+        elif not isinstance(count, int):
+            raise ValueError(
+                f"[{MODULE_NAME}]: Unexpected count value for target"
+                f" ({target_type}) '{target}': {count}.")
+        elif count > config.CRITERIA.DB_COV_TARGET_MIN_A:
             flag_value = FLAGS.A
         elif count > config.CRITERIA.DB_COV_TARGET_MIN_B:
             flag_value = FLAGS.B
@@ -516,22 +520,27 @@ def _set_flags(db_coverage, query_dir):
         )
 
     def set_related_coverage_flag(target, target_type, species_counts):
-        if species_counts is None:
-            return  # TODO: Indicates a fatal error
         if not species_counts:
-            return  # TODO: no species to check? Flag D??
-        total_species = len(species_counts)
-        represented_species = len([
-            count for count in species_counts.values()
-            if count > 0
-        ])
-        percent_coverage = 100 * represented_species / total_species
-        if percent_coverage > config.CRITERIA.DB_COV_RELATED_MIN_A:
-            flag_value = FLAGS.A
-        elif percent_coverage > config.CRITERIA.DB_COV_RELATED_MIN_B:
-            flag_value = FLAGS.B
+            return  # TODO: Indicates a fatal error
+        if species_counts == FLAGS.NA:
+            flag_value = FLAGS.NA
+        elif isinstance(species_counts, str):
+            raise ValueError(
+                f"[{MODULE_NAME}]: Unexpected str count value for related"
+                f" species ({target_type}) '{target}': {species_counts}.")
         else:
-            flag_value = FLAGS.C
+            total_species = len(species_counts)
+            represented_species = len([
+                count for count in species_counts.values()
+                if count > 0
+            ])
+            percent_coverage = 100 * represented_species / total_species
+            if percent_coverage > config.CRITERIA.DB_COV_RELATED_MIN_A:
+                flag_value = FLAGS.A
+            elif percent_coverage > config.CRITERIA.DB_COV_RELATED_MIN_B:
+                flag_value = FLAGS.B
+            else:
+                flag_value = FLAGS.C
         Flag.write(
             query_dir,
             FLAGS.DB_COVERAGE_RELATED,
@@ -543,18 +552,27 @@ def _set_flags(db_coverage, query_dir):
     def set_country_coverage_flag(target, target_type, species_counts):
         if species_counts is None:
             return  # TODO: Indicates a fatal error
-        total_species = len(species_counts)
-        represented_species = len([
-            count for count in species_counts.values()
-            if count > 0
-        ])
-        unrepresented_species = total_species - represented_species
-        if not species_counts:
-            flag_value = FLAGS.C
-        elif unrepresented_species <= config.CRITERIA.DB_COV_COUNTRY_MISSING_A:
-            flag_value = FLAGS.A
-        elif unrepresented_species <= config.CRITERIA.DB_COV_COUNTRY_MISSING_B:
-            flag_value = FLAGS.B
+        if species_counts == FLAGS.NA:
+            flag_value = FLAGS.NA
+        else:
+            total_species = len(species_counts)
+            represented_species = len([
+                count for count in species_counts.values()
+                if count > 0
+            ])
+            unrepresented_species = total_species - represented_species
+            if not species_counts:
+                flag_value = FLAGS.C
+            elif (
+                unrepresented_species
+                <= config.CRITERIA.DB_COV_COUNTRY_MISSING_A
+            ):
+                flag_value = FLAGS.A
+            elif (
+                unrepresented_species
+                <= config.CRITERIA.DB_COV_COUNTRY_MISSING_B
+            ):
+                flag_value = FLAGS.B
         Flag.write(
             query_dir,
             FLAGS.DB_COVERAGE_RELATED_COUNTRY,
@@ -571,18 +589,24 @@ def _set_flags(db_coverage, query_dir):
                 coverage_data['related'] = FLAGS.NA
                 coverage_data['country'] = FLAGS.NA
 
-            set_target_coverage_flag(
-                target_species,
-                target_type,
-                coverage_data['target'],
-            )
-            set_related_coverage_flag(
-                target_species,
-                target_type,
-                coverage_data['related'],
-            )
-            set_country_coverage_flag(
-                target_species,
-                target_type,
-                coverage_data['country'],
-            )
+            try:
+                set_target_coverage_flag(
+                    target_species,
+                    target_type,
+                    coverage_data['target'],
+                )
+                set_related_coverage_flag(
+                    target_species,
+                    target_type,
+                    coverage_data['related'],
+                )
+                set_country_coverage_flag(
+                    target_species,
+                    target_type,
+                    coverage_data['country'],
+                )
+            except Exception as exc:
+                raise RuntimeError(
+                    f"Error setting flags for target ({target_type})"
+                    f" '{target_species}'. Exception: {exc}"
+                ) from exc

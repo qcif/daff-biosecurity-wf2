@@ -56,12 +56,22 @@
           <div
             class="occurrence-map"
             onclick="this.classList.toggle('expanded')"
+            title="Click to expand/close"
+            data-bs-toggle="tooltip"
+            data-bs-placement="bottom"
           >
             <img
               src="{{ data.map_src_base64 }}"
               alt="Map of database coverage"
               class="img-fluid"
             >
+            <p style="color: white; text-align: center;">
+              Global occurrence records for <em>{{ species }}</em>.
+              <br>
+              <small class="hide-small">
+                Note that the occurrence data are not exhaustive, and it is possible for this species to occur in regions not shown on the map.
+              </small>
+            </p>
           </div>
         </div>
         {% endif%}

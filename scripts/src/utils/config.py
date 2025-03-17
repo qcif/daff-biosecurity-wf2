@@ -56,8 +56,8 @@ class Config:
                               'preliminary_id_match.csv')
     BOXPLOT_IMG_FILENAME = os.getenv("BOXPLOT_IMG_FILENAME",
                                      'identity-boxplot.png')
-    TREE_IMG_FILENAME = os.getenv("TREE_IMG_FILENAME",
-                                  'phylogeny.png')
+    TREE_NWK_FILENAME = os.getenv("TREE_NWK_FILENAME",
+                                  'candidates.msa.nwk')
     DB_COVERAGE_JSON = os.getenv("DB_COVERAGE_JSON_FILENAME",
                                  'db_coverage.json')
     DB_COVERAGE_TOI_LIMIT = int(os.getenv("DB_COVERAGE_TOI_LIMIT", 10))

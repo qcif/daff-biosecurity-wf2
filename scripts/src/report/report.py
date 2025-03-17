@@ -55,10 +55,10 @@ def _get_static_file_contents():
                 for f in files
             ]
         elif root.name == 'js':
-            static_files['js'] = [
+            static_files['js'] = sorted([
                 f'/* {f} */\n' + (root / f).read_text()
                 for f in files
-            ]
+            ])
         elif root.name == 'img':
             static_files['img'] = {
                 f: _get_img_src(root / f)
@@ -99,10 +99,8 @@ def _get_report_context(query_ix):
         'toi_rows': _read_toi_detected(query_ix),
         'aggregated_sources': _read_source_diversity(query_ix),
         'db_coverage': _read_db_coverage(query_ix),
-        'tree_img_src': _get_img_src(
-            config.get_query_dir(query_ix)
-            / config.TREE_IMG_FILENAME
-        ),
+        'tree_nwk_str': (config.get_query_dir(query_ix)
+                         / config.TREE_NWK_FILENAME).read_text().strip(),
     }
 
 
@@ -123,7 +121,10 @@ def _get_walltime():
 def _get_metadata(query_ix):
     """Return mock metadata for the report."""
     sample_id = config.get_sample_id(query_ix)
-    return config.metadata[sample_id]
+    return {
+        **config.metadata[sample_id],
+        'sample_id': sample_id,
+    }
 
 
 def _draw_conclusions(query_ix):
@@ -293,6 +294,9 @@ def _read_toi_detected(query_ix):
 def _read_source_diversity(query_ix):
     """Read the source diversity table from the CSV file."""
     path = config.get_query_dir(query_ix) / config.INDEPENDENT_SOURCES_JSON
+    if not path.exists():
+        logger.warning(f'No source diversity file found at {path}')
+        return {}
     with path.open() as f:
         return json.load(f)
 
@@ -300,6 +304,9 @@ def _read_source_diversity(query_ix):
 def _read_db_coverage(query_ix):
     """Read the database coverage table from the CSV file."""
     path = config.get_query_dir(query_ix) / config.DB_COVERAGE_JSON
+    if not path.exists():
+        logger.warning(f'No database coverage file found at {path}')
+        return {}
     with path.open() as f:
         data = json.load(f)
     for target_type, targets in data.items():
