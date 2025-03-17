@@ -2,12 +2,11 @@
 from NCBI/Genbank."""
 
 import logging
-import time
 from Bio import Entrez
-from filelock import FileLock
 from xml.etree import ElementTree as ET
 
 from ..utils.config import Config
+from ..utils.throttle import Throttle
 
 config = Config()
 logger = logging.getLogger(__name__)
@@ -133,8 +132,7 @@ def fetch_entrez(
     **kwargs,
 ) -> str:
     """Fetch data from NCBI Entrez database.
-    Queue requests to avoid rate limits.
-    Retry-on-failure.
+    Throttle requests to avoid rate limits and retry on failure.
     """
     def read(handle):
         if endpoint == Entrez.efetch:
@@ -143,37 +141,16 @@ def fetch_entrez(
 
     Entrez.local_cache = config.entrez_cache_dir
     handle = None
-    retries = config.ENTREZ_MAX_RETRIES
     kwargs.update({
         "db": db,
     })
-    while True:
-        with FileLock(config.entrez_lock_file):
-            # Ensure that requests do not reach rate limits
-            time.sleep(REQUEST_INTERVAL_SECONDS)
-        try:
-            logger.debug("Sending request to Entrez API...")
-            handle = endpoint(**kwargs)
-            data = read(handle)
-            break
-        except Exception as exc:
-            logger.warning(f"Error fetching data from Entrez API: {exc}")
-            if not retries:
-                logger.error("Max retries reached. Exiting.")
-                raise exc
-            sleep_seconds = 1
-            if '429' in str(exc):
-                sleep_seconds = 600
-                logger.warning(
-                    "Entrez rate limit exceeded. Waiting 10 minutes before"
-                    " next retry.")
-                retries = config.ENTREZ_MAX_RETRIES
-            time.sleep(sleep_seconds)
-            logger.info(f"Retrying {retries} more times.")
-            retries -= 1
-        finally:
-            if handle:
-                handle.close()
+    throttle = Throttle(
+        interval_sec=config.ENTREZ_INTERVAL_SEC,
+        lock_file=config.entrez_lock_file,
+    )
+    handle = throttle.with_retry(endpoint, kwargs=kwargs)
+    data = read(handle)
+    handle.close()
     return data
 
 

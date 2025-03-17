@@ -73,12 +73,14 @@ class Config:
         Path(__file__).parent.parent.parent.parent / 'flags.csv')
     LOG_FILENAME = 'run.log'
     QUERY_LOG_FILENAME = 'query.log'
-    ENTREZ_LOCK_FILE = 'entrez.lock'
-    ENTREZ_MAX_RETRIES = 3
     ENTREZ_CACHE_DIRNAME = 'entrez_cache'
+    ENTREZ_LOCK_FILE = 'entrez.lock'
+    ENTREZ_INTERVAL_SEC = 0.2
+    GBIF_FAST_INTERVAL_SEC = 0.2
+    GBIF_SLOW_INTERVAL_SEC = 0.8
     GBIF_FAST_LOCK_FILE = 'gbif-fast.lock'
     GBIF_SLOW_LOCK_FILE = 'gbif-slow.lock'
-    GBIF_MAX_RETRIES = 3
+    MAX_API_RETRIES = 3
     ERRORS_DIR = 'errors'
 
     TEMP_FILES = [
