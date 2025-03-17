@@ -79,8 +79,9 @@ class BOLDIdEngineToAccessions:
                 ids.append(row["ID"])
         return ids
 
-    def fetch_accessions(self, ids, assessions_file_path: Path):
-        """Fetch accessions by calling BOLD public API and save accessions to a .tsv file."""
+    def fetch_ids_accessions(self, ids, ids_accessions_file_path: Path):
+        """Fetch accessions by calling BOLD public API with IDs and
+        save accessions to a .tsv file."""
         ids_param = "|".join(ids)
         params = {
             "ids": ids_param,
@@ -88,10 +89,38 @@ class BOLDIdEngineToAccessions:
         }
         response = requests.get(self.BOLD_API_URL, params=params)
         if response.status_code == self.WORK_CODE:
-            with open(assessions_file_path, "w") as file:
+            with open(ids_accessions_file_path, "w") as file:
                 file.write(response.text)
-                print(f"Accessions metadata saved to {assessions_file_path}")
-                print("Accessions response:", response.text)
+                print(f"ID Accessions metadata saved to "
+                      f"{ids_accessions_file_path}")
+        else:
+            print(f"Error status code: {response.status_code}")
+
+    def extract_taxons(self, hits_file_path: Path):
+        taxons = []
+        with open(hits_file_path, "r") as file:
+            reader = csv.DictReader(file, delimiter="\t")
+            for row in reader:
+                taxons.append(row["TaxonomicIdentification"])
+        return taxons
+
+    def fetch_taxons_accessions(self,
+                                taxons,
+                                taxons_accessions_file_path: Path):
+        """Fetch accessions by calling BOLD public API with Taxons and
+        save accessions to a .tsv file."""
+        taxons_param = "|".join(taxons)
+        params = {
+            "taxon": taxons_param,
+            "format": "tsv"
+        }
+        response = requests.get(self.BOLD_API_URL, params=params)
+        if response.status_code == self.WORK_CODE:
+            with open(taxons_accessions_file_path, "w") as file:
+                file.write(response.text)
+                print(f"Taxon Accessions metadata saved to"
+                      f"{taxons_accessions_file_path}")
+                # print("Accessions response:", response.text)
         else:
             print(f"Error status code: {response.status_code}")
 
@@ -112,8 +141,11 @@ if __name__ == "__main__":
     idEngine.write_hits_tsv(id_engine_xml_path, hits_file_path)
 
     # extract ids to BOLD api for extracting metadata
-    accessions_file_path = Path(__file__).parent / "accessions.tsv"
+    ids_accessions_file_path = Path(__file__).parent / "ids_accessions.tsv"
+    taxons_accessions_path = Path(__file__).parent / "taxons_accessions.tsv"
     ids = idEngine.extract_ids(hits_file_path)
-    print("ids: ", ids)
+    taxons = idEngine.extract_taxons(hits_file_path)
+    # print("ids: ", ids)
 
-    idEngine.fetch_accessions(ids, accessions_file_path)
+    idEngine.fetch_ids_accessions(ids, ids_accessions_file_path)
+    idEngine.fetch_taxons_accessions(taxons, taxons_accessions_path)
