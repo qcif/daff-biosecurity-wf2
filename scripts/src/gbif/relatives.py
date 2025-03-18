@@ -5,7 +5,7 @@ import pygbif
 from functools import cached_property
 
 from ..utils import config
-from ..utils.throttle import Throttle
+from ..utils.throttle import ENDPOINTS, Throttle
 
 logger = logging.getLogger(__name__)
 config = config.Config()
@@ -55,10 +55,7 @@ class RelatedTaxaGBIF:
             'q': taxon,
             'limit': 20,
         }
-        throttle = Throttle(
-            interval_sec=config.GBIF_FAST_INTERVAL_SEC,
-            lock_file=config.gbif_fast_lock_file,
-        )
+        throttle = Throttle(ENDPOINTS.GBIF_FAST)
         res = throttle.with_retry(
             pygbif.species.name_suggest,
             kwargs=kwargs,
@@ -102,10 +99,7 @@ class RelatedTaxaGBIF:
 
         while not end_of_records:
             kwargs['offset'] = i * config.GBIF_LIMIT_RECORDS
-            throttle = Throttle(
-                interval_sec=config.GBIF_SLOW_INTERVAL_SEC,
-                lock_file=config.gbif_slow_lock_file,
-            )
+            throttle = Throttle(ENDPOINTS.GBIF_SLOW)
             res = throttle.with_retry(
                 pygbif.species.name_lookup,
                 kwargs=kwargs,
@@ -149,10 +143,7 @@ class RelatedTaxaGBIF:
                 'offset': i * config.GBIF_LIMIT_RECORDS,
                 'limit': 1,  # don't need every occurence for each species
             }
-            throttle = Throttle(
-                interval_sec=config.GBIF_FAST_INTERVAL_SEC,
-                lock_file=config.gbif_fast_lock_file,
-            )
+            throttle = Throttle(ENDPOINTS.GBIF_FAST)
             res = throttle.with_retry(
                 pygbif.occurrences.search,
                 kwargs=kwargs,

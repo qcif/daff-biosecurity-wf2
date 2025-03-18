@@ -74,20 +74,13 @@ class Config:
     LOG_FILENAME = 'run.log'
     QUERY_LOG_FILENAME = 'query.log'
     ENTREZ_CACHE_DIRNAME = 'entrez_cache'
-    ENTREZ_LOCK_FILE = 'entrez.lock'
-    ENTREZ_INTERVAL_SEC = 0.2
-    GBIF_FAST_INTERVAL_SEC = 0.2
-    GBIF_SLOW_INTERVAL_SEC = 0.8
-    GBIF_FAST_LOCK_FILE = 'gbif-fast.lock'
-    GBIF_SLOW_LOCK_FILE = 'gbif-slow.lock'
+    THROTTLE_SQLITE_FILE = 'throttle.sqlite'
     MAX_API_RETRIES = 3
     ERRORS_DIR = 'errors'
 
     TEMP_FILES = [
-        ENTREZ_LOCK_FILE,
         ENTREZ_CACHE_DIRNAME,
-        GBIF_FAST_LOCK_FILE,
-        GBIF_SLOW_LOCK_FILE,
+        THROTTLE_SQLITE_FILE,
     ]
 
     class INPUTS:
@@ -198,20 +191,12 @@ class Config:
         return self.output_dir / self.TAXONOMY_FILE
 
     @property
-    def entrez_lock_file(self):
-        return self.output_dir / self.ENTREZ_LOCK_FILE
-
-    @property
     def entrez_cache_dir(self):
         return self.output_dir / self.ENTREZ_CACHE_DIRNAME
 
     @property
-    def gbif_slow_lock_file(self):
-        return self.output_dir / self.GBIF_SLOW_LOCK_FILE
-
-    @property
-    def gbif_fast_lock_file(self):
-        return self.output_dir / self.GBIF_FAST_LOCK_FILE
+    def throttle_sqlite_path(self):
+        return self.output_dir / self.THROTTLE_SQLITE_FILE
 
     @property
     def start_time(self) -> datetime:

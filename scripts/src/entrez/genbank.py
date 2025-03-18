@@ -6,7 +6,7 @@ from Bio import Entrez
 from xml.etree import ElementTree as ET
 
 from ..utils.config import Config
-from ..utils.throttle import Throttle
+from ..utils.throttle import ENDPOINTS, Throttle
 
 config = Config()
 logger = logging.getLogger(__name__)
@@ -144,10 +144,7 @@ def fetch_entrez(
     kwargs.update({
         "db": db,
     })
-    throttle = Throttle(
-        interval_sec=config.ENTREZ_INTERVAL_SEC,
-        lock_file=config.entrez_lock_file,
-    )
+    throttle = Throttle(ENDPOINTS.ENTREZ)
     handle = throttle.with_retry(endpoint, kwargs=kwargs)
     data = read(handle)
     handle.close()
