@@ -98,8 +98,6 @@ def fetch_ids_accessions(ids, ids_accessions_file_path: Path):
     if response.status_code == WORK_CODE:
         with open(ids_accessions_file_path, "w") as file:
             file.write(response.text)
-            print(f"ID Accessions metadata saved to "
-                  f"{ids_accessions_file_path}")
         records = response.text.splitlines()
 
         # Count the number of times each taxon appears in the response
@@ -107,10 +105,6 @@ def fetch_ids_accessions(ids, ids_accessions_file_path: Path):
             for id in ids:
                 if id in line:
                     ids_counts[id] += 1
-
-        print("Record count for each taxon:", records)
-        for id, count in ids_counts.items():
-            print(f"{id}: {count} records")
     else:
         print(f"Error status code: {response.status_code}")
 
@@ -140,19 +134,13 @@ def fetch_taxons_accessions(taxons, taxons_accessions_file_path: Path):
     if response.status_code == WORK_CODE:
         with open(taxons_accessions_file_path, "w") as file:
             file.write(response.text)
-            print(f"Taxon Accessions metadata saved to"
-                  f"{taxons_accessions_file_path}")
         records = response.text.splitlines()
 
         # Count the number of times each taxon appears in the response
-        for line in records[1:]:  
+        for line in records[1:]:
             for taxon in taxons:
-                if taxon in line: 
+                if taxon in line:
                     taxons_counts[taxon] += 1
-
-        print("Record count for each taxon:", records)
-        for taxon, count in taxons_counts.items():
-            print(f"{taxon}: {count} records")
 
     else:
         print(f"Error status code: {response.status_code}")
@@ -164,8 +152,6 @@ if __name__ == "__main__":
 
     # Read sequence from FASTA file
     sequences = read_sequence_from_fasta(fasta_file)
-    print("Read Sequence:", sequences)
-    print("count of sequence: ", len(sequences))
 
     hits_file_path = Path(__file__).parent / "hits.tsv"
     save_sequences_to_tsv(sequences, hits_file_path)
