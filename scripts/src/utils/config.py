@@ -32,7 +32,7 @@ class Config:
                               Path('~/.taxonkit').expanduser())
     TIMESTAMP_FILENAME = os.getenv("TIMESTAMP_FILENAME", 'timestamp.txt')
     INPUT_FASTA_FILEPATH = Path(os.getenv("INPUT_FASTA_FILEPATH",
-                                          "tests/test-data/query.fasta"))
+                                          "tests/test-data/queries.fasta"))
     ACCESSIONS_FILENAME = os.getenv("ACCESSIONS_FILENAME", "accessions.txt")
     TAXONOMY_FILE = os.getenv("TAXONOMY_FILENAME", 'taxonomy.csv')
     QUERY_TITLE_FILE = os.getenv("QUERY_TITLE_FILENAME", 'query_title.txt')
@@ -97,6 +97,13 @@ class Config:
             "country": "country",
             "host": "host",
         }
+        METADATA_CSV_REQUIRED_FIELDS = (
+            "sample_id",
+            "locus",
+            "preliminary_id",
+            "country",
+            "host",
+        )
         FASTA_FILEPATH = Path(
             os.getenv(
                 "INPUT_FASTA_PATH",
@@ -109,6 +116,9 @@ class Config:
                 Path(__file__).parent.parent.parent.parent
                 / 'tests/test-data/metadata.csv')
         )
+        FASTA_MAX_LENGTH_NT = 3000
+        FASTA_MIN_LENGTH_NT = 20
+        FASTA_MAX_SEQUENCES = 10
 
     class CRITERIA:
         ALIGNMENT_MIN_NT = int(os.getenv('MIN_NT', 400))
@@ -190,6 +200,19 @@ class Config:
         """Resolve query index/dir to sample ID."""
         query_ix = self.get_query_ix(query)
         return self.read_query_fasta(query_ix).id.split('.')[0]
+
+    @property
+    def allowed_loci(self):
+        path = (
+            Path(os.getenv('ALLOWED_LOCI_PATH'))
+            if os.getenv('ALLOWED_LOCI_PATH') else None)
+        if not path:
+            return []
+        return [
+            x.strip()
+            for x in Path(path).read_text().split('\n')
+            if x.strip()
+        ]
 
     @property
     def taxonomy_path(self):
