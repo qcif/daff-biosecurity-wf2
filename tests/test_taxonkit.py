@@ -1,7 +1,6 @@
 import unittest
 from pathlib import Path
-from types import SimpleNamespace
-from unittest.mock import call, mock_open, patch
+from unittest.mock import call, mock_open, patch, MagicMock
 import p2_extract_taxonomy
 from src.taxonomy import extract
 
@@ -68,10 +67,10 @@ EXPECTED_WRITE_CALLS = [
 
 def mock_subprocess_run(args, **kwargs):
     if args[0] == "taxonkit":
-        return SimpleNamespace(
-            stdout=TAXONKIT_STDOUT.read_text(),
-            returncode=0,
-        )
+        retval = MagicMock()
+        retval.stdout = TAXONKIT_STDOUT.read_text()
+        retval.returncode = 0
+        return retval
     raise NotImplementedError(
         f"Command not implemented for mock: {args[0]}")
 
