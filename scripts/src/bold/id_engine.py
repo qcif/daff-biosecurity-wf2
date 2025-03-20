@@ -3,6 +3,8 @@ import requests
 from xml.etree import ElementTree
 import csv
 
+# TODO: throttle requests
+
 ID_ENGINE_URL = "http://v4.boldsystems.org/index.php/Ids_xml"
 BOLD_API_URL = "http://v4.boldsystems.org/index.php/API_Public/combined?"
 SUCCESS_CODE = 200
