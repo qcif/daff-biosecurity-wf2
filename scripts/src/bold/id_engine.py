@@ -148,17 +148,20 @@ def fetch_taxons_accessions(taxons, taxons_accessions_file_path: Path):
 
 # Example usage
 if __name__ == "__main__":
-    fasta_file = Path(__file__).resolve().parents[3] / 'tests' / 'test-data' / 'query.fasta'
+    ROOT = Path(__file__).resolve().parents[3]
+    OUTPUT = ROOT / 'output/bold'
+    OUTPUT.mkdir(parents=True, exist_ok=True)
+    fasta_file = ROOT / 'tests' / 'test-data' / 'query.fasta'
 
     # Read sequence from FASTA file
     sequences = read_sequence_from_fasta(fasta_file)
 
-    hits_file_path = Path(__file__).parent / "hits.tsv"
+    hits_file_path = OUTPUT / "hits.tsv"
     save_sequences_to_tsv(sequences, hits_file_path)
 
     # extract ids to BOLD api for extracting metadata
-    ids_accessions_file_path = Path(__file__).parent / "ids_accessions.tsv"
-    taxons_accessions_path = Path(__file__).parent / "taxons_accessions.tsv"
+    ids_accessions_file_path = OUTPUT / "ids_accessions.tsv"
+    taxons_accessions_path = OUTPUT / "taxons_accessions.tsv"
     ids = extract_ids(hits_file_path)
     taxons = extract_taxons(hits_file_path)
 
