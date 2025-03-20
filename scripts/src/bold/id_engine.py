@@ -5,7 +5,7 @@ import csv
 
 ID_ENGINE_URL = "http://v4.boldsystems.org/index.php/Ids_xml"
 BOLD_API_URL = "http://v4.boldsystems.org/index.php/API_Public/combined?"
-WORK_CODE = 200
+SUCCESS_CODE = 200
 
 
 def read_sequence_from_fasta(filename):
@@ -43,7 +43,7 @@ def save_sequences_to_tsv(sequences,
                 "db": db
             }
             response = requests.get(ID_ENGINE_URL, params=params)
-            if response.status_code != 200:
+            if response.status_code != SUCCESS_CODE:
                 print(f"Error for sequence {i + 1}: HTTP {response.status_code}")
                 continue
 
@@ -95,7 +95,7 @@ def fetch_ids_accessions(ids, ids_accessions_file_path: Path):
         "format": "tsv"
     }
     response = requests.get(BOLD_API_URL, params=params)
-    if response.status_code == WORK_CODE:
+    if response.status_code == SUCCESS_CODE:
         with open(ids_accessions_file_path, "w") as file:
             file.write(response.text)
         records = response.text.splitlines()
@@ -131,7 +131,7 @@ def fetch_taxons_accessions(taxons, taxons_accessions_file_path: Path):
     }
 
     response = requests.get(BOLD_API_URL, params=params)
-    if response.status_code == WORK_CODE:
+    if response.status_code == SUCCESS_CODE:
         with open(taxons_accessions_file_path, "w") as file:
             file.write(response.text)
         records = response.text.splitlines()
