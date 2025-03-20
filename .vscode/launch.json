@@ -96,6 +96,12 @@
             "env": {
                 "INPUT_FASTA_FILEPATH": "tests/test-data/query.fasta",
             },
+        },
+        {
+            "type": "debugpy",
+            "request": "launch",
+            "name": "BOLD module",
+            "program": "${workspaceFolder}/scripts/src/bold/id_engine.py",
         }
     ]
 }
