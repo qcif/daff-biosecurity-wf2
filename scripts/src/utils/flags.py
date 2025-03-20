@@ -31,7 +31,7 @@ class Flag:
         return f"{self.flag_id}{self.value}"
 
     def __repr__(self):
-        return f"{self.flagCRITERIA.ALIGNMENT_MIN_id}{self.value}"
+        return f"{self.flag_id}{self.value}"
 
     def to_json(self):
         data = {
@@ -116,7 +116,7 @@ class Flag:
                 flag_id, target = stem.split("-", 1)
                 if '-' in target:
                     target_type, target = target.split("-", 1)
-                target = target.replace("_", " ")
+                target = target.replace("_", " ").replace('~', '-')
             else:
                 flag_id = stem
                 target = None
@@ -143,6 +143,9 @@ class Flag:
         identifier = flag_id
         target_str = ''
         if target:
+            if '-' in target:
+                # Assume it's a BOLD unclassified species ID
+                target = target.replace('-', '~')
             type_str = f"{target_type}-" if target_type else ''
             target_str = f"-{type_str}{target}".replace(' ', '_')
             identifier += target_str
