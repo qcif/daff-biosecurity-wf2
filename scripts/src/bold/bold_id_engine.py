@@ -43,7 +43,43 @@ class BoldTaxa:
     def __init__(self, taxa: list[str]):
         self.taxa = taxa
         self.records = self._fetch_records(taxa)
-        # self.records = []
+
+    def taxon_count(self) -> dict[str, int]:
+        """Return a count of each taxon occurences."""
+        taxa_counts = {}
+        for record in self.records:
+            taxon = record.get("species_name", "")
+            taxa_counts[taxon] = taxa_counts.get(taxon, 0) + 1
+        return taxa_counts
+
+    def taxon_collectors(self) -> dict[str, list[str]]:
+        """Return a dictionary of taxa and related collectors."""
+        taxa_collectors = {}
+        for record in self.records:
+            taxon = record.get("species_name", "")
+            collector = record.get("collectors", "")
+            if taxon:
+                if taxon not in taxa_collectors:
+                    taxa_collectors[taxon] = set()
+                if collector:
+                    taxa_collectors[taxon].update(collector.split(","))
+        return taxa_collectors
+
+    def taxon_taxonomy(self) -> dict[str, dict[str, str]]:
+        """Build a taxonomy dictionary."""
+        taxonomy_dict = {}
+        for record in self.records:
+            species_name = record.get("species_name", "")
+            if species_name:
+                taxonomy_dict[species_name] = {
+                    "phylum": record.get("phylum_name", ""),
+                    "class": record.get("class_name", ""),
+                    "order": record.get("order_name", ""),
+                    "family": record.get("family_name", ""),
+                    "genus": record.get("genus_name", ""),
+                    "species": species_name,
+                }
+        return taxonomy_dict
 
     def read_sequence_from_fasta(fasta_file: Path):
         """Read sequence from fasta file."""
@@ -107,43 +143,6 @@ class BoldTaxa:
                 }
                 hits_result.append(result)
         return hits_result
-
-    def taxon_count(self) -> dict[str, int]:
-        """Return a count of each taxon occurences."""
-        taxa_counts = {}
-        for record in self.records:
-            taxon = record.get("species_name", "")
-            taxa_counts[taxon] = taxa_counts.get(taxon, 0) + 1
-        return taxa_counts
-
-    def taxon_collectors(self) -> dict[str, list[str]]:
-        """Return a dictionary of taxa and related collectors."""
-        taxa_collectors = {}
-        for record in self.records:
-            taxon = record.get("species_name", "")
-            collector = record.get("collectors", "")
-            if taxon:
-                if taxon not in taxa_collectors:
-                    taxa_collectors[taxon] = set()
-                if collector:
-                    taxa_collectors[taxon].update(collector.split(","))
-        return taxa_collectors
-
-    def taxon_taxonomy(self) -> dict[str, dict[str, str]]:
-        """Build a taxonomy dictionary."""
-        taxonomy_dict = {}
-        for record in self.records:
-            species_name = record.get("species_name", "")
-            if species_name:
-                taxonomy_dict[species_name] = {
-                    "phylum": record.get("phylum_name", ""),
-                    "class": record.get("class_name", ""),
-                    "order": record.get("order_name", ""),
-                    "family": record.get("family_name", ""),
-                    "genus": record.get("genus_name", ""),
-                    "species": species_name,
-                }
-        return taxonomy_dict
 
     def extract_taxa(hits_result: list[dict]) -> list[str]:
         """Extract taxa (taxonomic_identification)."""
