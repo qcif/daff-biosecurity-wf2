@@ -15,7 +15,7 @@ def main():
         Path(__file__).resolve().parents[3]
         / 'tests'
         / 'test-data'
-        / 'query.fasta'
+        / 'queries.fasta'
     )
     sequences = BoldTaxa.read_sequence_from_fasta(fasta_file)
     # print(f"Sequences extracted: {sequences}")
