@@ -15,6 +15,20 @@ ERROR_CSV_HEADER = [
 ]
 
 
+class FASTAFormatError(Exception):
+    """User provided a FASTA file that does not meet specifications."""
+
+    def __init__(self, msg):
+        super().__init__(f"FASTA format error: {msg}")
+
+
+class MetadataFormatError(Exception):
+    """User provided a metadata CSV file that does not meet specifications."""
+
+    def __init__(self, msg):
+        super().__init__(f"Metadata CSV format error: {msg}")
+
+
 class APIError(Exception):
     """Raise this exception when an API request fails."""
     pass

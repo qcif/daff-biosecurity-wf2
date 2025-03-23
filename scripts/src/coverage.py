@@ -438,7 +438,7 @@ def get_related_country_coverage(
                 f"Error fetching related/country species records from Entrez"
                 f" API (species: '{species}').")
             errors.write(
-                errors.DB_COVERAGE_RELATED_COUNTRY,
+                errors.LOCATIONS.DB_COVERAGE_RELATED_COUNTRY,
                 msg,
                 exc,
                 query_dir=query_dir)
