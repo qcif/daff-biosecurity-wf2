@@ -1,15 +1,11 @@
 """Fetch species under the given taxon from GBIF API."""
 
 import logging
-import filelock
 import pygbif
-import time
-from pprint import pformat
-from types import SimpleNamespace
 from functools import cached_property
 
 from ..utils import config
-from ..utils.errors import APIError
+from ..utils.throttle import ENDPOINTS, Throttle
 
 logger = logging.getLogger(__name__)
 config = config.Config()
@@ -20,68 +16,6 @@ GBIF_SPECIES_BASE_URL = 'https://www.gbif.org/species/'
 
 class GBIFRecordNotFound(Exception):
     pass
-
-
-class ENDPOINTS:
-    """Define configuration for throttling different GBIF endpoints."""
-
-    def __init__(self):
-        self.FAST = SimpleNamespace(  # occurence and name_suggest - 12 req/sec
-            interval_sec=0.1,
-            lock_file=config.gbif_fast_lock_file,
-        )
-        self.SLOW = SimpleNamespace(  # name_lookup - 1.25 req/sec
-            interval_sec=0.8,
-            lock_file=config.gbif_slow_lock_file,
-        )
-
-
-class Throttle:
-    """Use filelock to throttle requests to the GBIF API.
-
-    This is necessary to avoid hitting the rate limit of the GBIF API, or
-    overwhelming the server.
-
-    A custom interval and lock file can be set to allow for different
-    throttling intervals for each endpoint.
-    """
-
-    def __init__(
-        self,
-        endpoint: SimpleNamespace,  # one of ENDPOINTS
-    ):
-        self.interval_sec = endpoint.interval_sec
-        self.lock = filelock.FileLock(endpoint.lock_file)
-
-    def __enter__(self):
-        self.lock.acquire()
-        time.sleep(self.interval_sec)
-        self.lock.release()
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        pass
-
-    def with_retry(self, func, args):
-        retries = config.GBIF_MAX_RETRIES
-        while True:
-            try:
-                with self:
-                    return func(**args)
-            except Exception as exc:
-                retries -= 1
-                if retries <= 0:
-                    raise APIError(
-                        'Failed to fetch data from GBIF API after'
-                        f' {config.GBIF_MAX_RETRIES} retries. Please try'
-                        f' resuming this job at a later time.'
-                        f'\nException: {exc}'
-                    )
-                logger.warning(
-                    "Exception encountered in call to GBIF endpoint"
-                    f" {func.__name__} Retrying {retries} more times."
-                    f" Exception: {exc}\n"
-                    f" Args:\n{pformat(args)}")
-                time.sleep(1)
 
 
 class RANK:
@@ -117,15 +51,14 @@ class RelatedTaxaGBIF:
         return self.__str__()
 
     def _get_taxon_record(self, taxon):
-        args = {
+        kwargs = {
             'q': taxon,
             'limit': 20,
         }
-        endpoints = ENDPOINTS()
-        throttle = Throttle(endpoints.FAST)
+        throttle = Throttle(ENDPOINTS.GBIF_FAST)
         res = throttle.with_retry(
             pygbif.species.name_suggest,
-            args,
+            kwargs=kwargs,
         )
         for record in res:
             if self._is_accepted(record):
@@ -158,19 +91,18 @@ class RelatedTaxaGBIF:
         i = 0
         end_of_records = False
         records = []
-        args = {
+        kwargs = {
             'rank': 'species',
             'higherTaxonKey': self.genus_key,
             'limit': config.GBIF_LIMIT_RECORDS,
         }
 
         while not end_of_records:
-            args['offset'] = i * config.GBIF_LIMIT_RECORDS
-            endpoints = ENDPOINTS()
-            throttle = Throttle(endpoints.SLOW)
+            kwargs['offset'] = i * config.GBIF_LIMIT_RECORDS
+            throttle = Throttle(ENDPOINTS.GBIF_SLOW)
             res = throttle.with_retry(
                 pygbif.species.name_lookup,
-                args,
+                kwargs=kwargs,
             )
             if i > 5:
                 first_name = self._filter_records(
@@ -203,7 +135,7 @@ class RelatedTaxaGBIF:
         end_of_records = False
         records = []
         while not end_of_records:
-            args = {
+            kwargs = {
                 'genusKey': self.genus_key,
                 'country': country_code,
                 'facet': "speciesKey",
@@ -211,11 +143,10 @@ class RelatedTaxaGBIF:
                 'offset': i * config.GBIF_LIMIT_RECORDS,
                 'limit': 1,  # don't need every occurence for each species
             }
-            endpoints = ENDPOINTS()
-            throttle = Throttle(endpoints.FAST)
+            throttle = Throttle(ENDPOINTS.GBIF_FAST)
             res = throttle.with_retry(
                 pygbif.occurrences.search,
-                args,
+                kwargs=kwargs,
             )
             records += res['results']
             try:
