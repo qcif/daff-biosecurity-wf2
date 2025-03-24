@@ -1,171 +1,185 @@
 from pathlib import Path
 import requests
+import logging
 from xml.etree import ElementTree
-import csv
+from Bio import SeqIO
 
-# TODO: throttle requests
-
+logger = logging.getLogger(__name__)
 ID_ENGINE_URL = "http://v4.boldsystems.org/index.php/Ids_xml"
 BOLD_API_URL = "http://v4.boldsystems.org/index.php/API_Public/combined?"
-SUCCESS_CODE = 200
+WORK_CODE = 200
 
 
-def read_sequence_from_fasta(filename):
-    """Read sequence from fasta file."""
-    sequences = []
-    current_sequence = []
-    with open(filename, "r") as file:
-        for line in file:
-            if line.startswith(">"):
-                if current_sequence:
-                    sequences.append("".join(current_sequence))
-                    current_sequence = []
-            else:
-                current_sequence.append(line.strip())
-        if current_sequence:
-            sequences.append("".join(current_sequence))
-    return sequences
+def main():
+    fasta_file = (
+        Path(__file__).resolve().parents[3]
+        / 'tests'
+        / 'test-data'
+        / 'queries.fasta'
+    )
+    bold_taxa_engine = BoldTaxa(fasta_file)
+    # print(f"Sequences extracted: {bold_taxa_engine.sequences}")
+
+    # print(f"Hits Result: {bold_taxa_engine.hits_result}")
+
+    # print(f"Extracted Taxa: {bold_taxa_engine.taxa}")
+
+    # bold_taxa_engine = BoldTaxa(taxa)
+    # print(f"Fetched Records: {bold_taxa_engine.records}")
+
+    taxon_counts = bold_taxa_engine.taxon_count()
+    taxon_collectors = bold_taxa_engine.taxon_collectors()
+    taxon_taxonomy = bold_taxa_engine.taxon_taxonomy()
+    print("Taxon Counts:", taxon_counts)
+    print("Taxon Collectors:", taxon_collectors)
+    print("Taxon Taxonomy:", taxon_taxonomy)
 
 
-def save_sequences_to_tsv(sequences,
-                          hits_file_path: Path,
-                          db="COX1_SPECIES_PUBLIC"):
-    """Submit a sequence search request to BOLD API and save reponse to tsv file."""
-    with open(hits_file_path, "w") as tsv_file:
-        tsv_file.write(
-            "ID\tSequenceDescription\tDatabase\tCitation\t"
-            "TaxonomicIdentification\tSimilarity\tCountry\tLatitude\t"
-            "Longitude\tURL\n"
-        )
+class BoldTaxa:
+    """Fetch metadata for given taxa from the BOLD API."""
+    def __init__(self, fasta_file: Path):
+        self.fasta_file = fasta_file
+        self.sequences = self._read_sequence_from_fasta(fasta_file)
+        self.hits_result = self._bold_sequence_search(self.sequences)
+        self.taxa = self._extract_taxa(self.hits_result)
+        self.records = self._fetch_records(self.taxa)
 
+    def taxon_count(self) -> dict[str, int]:
+        """Return a count of each taxon occurences."""
+        taxa_counts = {}
+        for record in self.records:
+            taxon = record.get("species_name", "")
+            taxa_counts[taxon] = taxa_counts.get(taxon, 0) + 1
+        return taxa_counts
+
+    def taxon_collectors(self) -> dict[str, list[str]]:
+        """Return a dictionary of taxa and related collectors."""
+        taxa_collectors = {}
+        for record in self.records:
+            taxon = record.get("species_name", "")
+            collector = record.get("collectors", "")
+            if taxon:
+                if taxon not in taxa_collectors:
+                    taxa_collectors[taxon] = set()
+                if collector:
+                    taxa_collectors[taxon].update(collector.split(","))
+        return taxa_collectors
+
+    def taxon_taxonomy(self) -> dict[str, dict[str, str]]:
+        """Build a taxonomy dictionary."""
+        taxonomy_dict = {}
+        for record in self.records:
+            species_name = record.get("species_name", "")
+            if species_name:
+                taxonomy_dict[species_name] = {
+                    "phylum": record.get("phylum_name", ""),
+                    "class": record.get("class_name", ""),
+                    "order": record.get("order_name", ""),
+                    "family": record.get("family_name", ""),
+                    "genus": record.get("genus_name", ""),
+                    "species": species_name,
+                }
+        return taxonomy_dict
+
+    def _read_sequence_from_fasta(self, fasta_file: Path):
+        """Read sequence from fasta file."""
+        sequences = []
+        for record in SeqIO.parse(fasta_file, "fasta"):
+            sequences.append(str(record.seq))
+        return sequences
+
+    def _bold_sequence_search(self, sequences: list[str],
+                              db: str = "COX1_SPECIES_PUBLIC"
+                              ) -> list[dict[str, any]]:
+        """Submit a sequence search request to BOLD API."""
+        hits_result = []
         for i, sequence in enumerate(sequences):
-            # Submit sequence to BOLD API
             params = {
                 "sequence": sequence,
                 "db": db
             }
             response = requests.get(ID_ENGINE_URL, params=params)
-            if response.status_code != SUCCESS_CODE:
-                print(f"Error for sequence {i + 1}: HTTP {response.status_code}")
+            if response.status_code != 200:
+                logger.error(
+                    f"Error for sequence {i + 1}: HTTP {response.status_code}"
+                )
                 continue
 
             root = ElementTree.fromstring(response.text)
             for match in root.findall("match"):
-                hit_id = match.find("ID").text
-                sequence_description = match.find("sequencedescription").text
-                database = match.find("database").text
-                citation = match.find("citation").text
-                taxonomic_identification = match.find("taxonomicidentification").text
-                similarity = match.find("similarity").text
-                specimen = match.find("specimen")
-                url = specimen.find("url").text
-                collection_location = specimen.find("collectionlocation")
-                country = collection_location.find("country").text
-                coord = collection_location.find("coord")
-                latitude = coord.find("lat").text if coord is not None else ""
-                longitude = coord.find("lon").text if coord is not None else ""
+                result = {
+                    "hit_id": match.find("ID").text,
+                    "sequence_description": (
+                        match.find("sequencedescription").text
+                    ),
+                    "database": match.find("database").text,
+                    "citation": match.find("citation").text,
+                    "taxonomic_identification": (
+                        match.find("taxonomicidentification").text
+                    ),
+                    "similarity": match.find("similarity").text,
+                    "specimen": match.find("specimen").text,
+                    "url": match.find("specimen/url").text,
+                    "country": (
+                        match.find("specimen/collectionlocation/country").text
+                    ),
+                    "latitude": (
+                        match.find(
+                            "specimen/collectionlocation/coord/lat"
+                        ).text
+                        if match.find(
+                            "specimen/collectionlocation/coord/lat"
+                        ) is not None else ""
+                    ),
+                    "longitude": (
+                        match.find(
+                            "specimen/collectionlocation/coord/lon"
+                        ).text
+                        if match.find(
+                            "specimen/collectionlocation/coord/lon"
+                        ) is not None else ""
+                    ),
+                }
+                hits_result.append(result)
+        return hits_result
 
-                # Write the match to the TSV file
-                tsv_file.write(
-                    f"{hit_id}\t{sequence_description}\t{database}\t"
-                    f"{citation}\t{taxonomic_identification}\t"
-                    f"{similarity}\t{country}\t{latitude}\t"
-                    f"{longitude}\t{url}\n"
-                )
-    print(f"Results successfully written to {hits_file_path}")
+    def _extract_taxa(self, hits_result: list[dict]) -> list[str]:
+        """Extract taxa (taxonomic_identification)."""
+        taxa = []
+        for hit in hits_result:
+            taxonomic_identification = hit.get("taxonomic_identification")
+            if (
+                taxonomic_identification
+                and taxonomic_identification not in taxa
+            ):
+                taxa.append(taxonomic_identification)
+        return taxa
 
+    def _fetch_records(self, taxa: list[str]) -> list[dict]:
+        """Fetch accessions by calling BOLD public API with Taxa and
+        save accessions to a .tsv file."""
+        records = []
+        taxa_param = "|".join(taxa)
+        params = {
+            "taxon": taxa_param,
+            "format": "tsv"
+        }
 
-def extract_ids(hits_file_path: Path):
-    """Extract IDs from hits.tsv."""
-    ids = []
-    with open(hits_file_path, "r") as file:
-        reader = csv.DictReader(file, delimiter="\t")
-        for row in reader:
-            ids.append(row["ID"])
-    return ids
-
-
-def fetch_ids_accessions(ids, ids_accessions_file_path: Path):
-    """Fetch accessions by calling BOLD public API with IDs and
-    save accessions to a .tsv file."""
-    ids_counts = {}
-    for id in ids:
-        ids_counts[id] = 0
-    ids_param = "|".join(ids)
-    params = {
-        "ids": ids_param,
-        "format": "tsv"
-    }
-    response = requests.get(BOLD_API_URL, params=params)
-    if response.status_code == SUCCESS_CODE:
-        with open(ids_accessions_file_path, "w") as file:
-            file.write(response.text)
-        records = response.text.splitlines()
-
-        # Count the number of times each taxon appears in the response
-        for line in records[1:]:
-            for id in ids:
-                if id in line:
-                    ids_counts[id] += 1
-    else:
-        print(f"Error status code: {response.status_code}")
-
-
-def extract_taxons(hits_file_path: Path):
-    taxons = []
-    with open(hits_file_path, "r") as file:
-        reader = csv.DictReader(file, delimiter="\t")
-        for row in reader:
-            taxons.append(row["TaxonomicIdentification"])
-    return taxons
-
-
-def fetch_taxons_accessions(taxons, taxons_accessions_file_path: Path):
-    """Fetch accessions by calling BOLD public API with Taxons and
-    save accessions to a .tsv file."""
-    taxons_counts = {}
-    for taxon in taxons:
-        taxons_counts[taxon] = 0
-    taxons_param = "|".join(taxons)
-    params = {
-        "taxon": taxons_param,
-        "format": "tsv"
-    }
-
-    response = requests.get(BOLD_API_URL, params=params)
-    if response.status_code == SUCCESS_CODE:
-        with open(taxons_accessions_file_path, "w") as file:
-            file.write(response.text)
-        records = response.text.splitlines()
-
-        # Count the number of times each taxon appears in the response
-        for line in records[1:]:
-            for taxon in taxons:
-                if taxon in line:
-                    taxons_counts[taxon] += 1
-
-    else:
-        print(f"Error status code: {response.status_code}")
+        response = requests.get(BOLD_API_URL, params=params)
+        if response.status_code == WORK_CODE:
+            lines = response.text.splitlines()
+            headers = lines[0].split("\t")
+            for line in lines[1:]:
+                row = dict(zip(headers, line.split("\t")))
+                records.append(row)
+            logger.info(
+                f"Records fetched successfully: {len(records)} records."
+            )
+        else:
+            logger.error(f"Error status code: {response.status_code}")
+        return records
 
 
 # Example usage
 if __name__ == "__main__":
-    ROOT = Path(__file__).resolve().parents[3]
-    OUTPUT = ROOT / 'output/bold'
-    OUTPUT.mkdir(parents=True, exist_ok=True)
-    fasta_file = ROOT / 'tests' / 'test-data' / 'query.fasta'
-
-    # Read sequence from FASTA file
-    sequences = read_sequence_from_fasta(fasta_file)
-
-    hits_file_path = OUTPUT / "hits.tsv"
-    save_sequences_to_tsv(sequences, hits_file_path)
-
-    # extract ids to BOLD api for extracting metadata
-    ids_accessions_file_path = OUTPUT / "ids_accessions.tsv"
-    taxons_accessions_path = OUTPUT / "taxons_accessions.tsv"
-    ids = extract_ids(hits_file_path)
-    taxons = extract_taxons(hits_file_path)
-
-    fetch_ids_accessions(ids, ids_accessions_file_path)
-    fetch_taxons_accessions(taxons, taxons_accessions_path)
+    main()
