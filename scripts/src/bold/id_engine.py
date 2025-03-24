@@ -9,7 +9,6 @@ logger = logging.getLogger(__name__)
 ID_ENGINE_URL = "http://v4.boldsystems.org/index.php/Ids_xml"
 BOLD_API_URL = "http://v4.boldsystems.org/index.php/API_Public/combined?"
 WORK_CODE = 200
-# query_dir = Path(__file__).resolve().parents[3] / 'output' / 'errors' / 'errors.json'
 
 
 def main():
@@ -115,7 +114,6 @@ class BoldTaxa:
                         "query_ix": i,
                         "response": response.text,
                     },
-                    # query_dir=query_dir
                 )
                 continue
 
@@ -182,6 +180,17 @@ class BoldTaxa:
         response = requests.get(BOLD_API_URL, params=params)
         if response.status_code == WORK_CODE:
             lines = response.text.splitlines()
+            if not lines:  # Check if 'lines' is empty
+                msg = "Empty response received from BOLD API"
+                logger.error(msg)
+                errors.write(
+                    errors.LOCATIONS.BOLD_TAXA,
+                    msg,
+                    None,
+                    data={"taxa": taxa},
+                )
+                return records
+
             headers = lines[0].split("\t")
             for line in lines[1:]:
                 row = dict(zip(headers, line.split("\t")))
@@ -202,7 +211,6 @@ class BoldTaxa:
                     "taxa": taxa,
                     "response": response.text,
                 },
-                # query_dir=query_dir
             )
 
         return records
