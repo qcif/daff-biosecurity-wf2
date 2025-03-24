@@ -100,10 +100,19 @@ class BoldTaxa:
                 "db": db
             }
             response = requests.get(ID_ENGINE_URL, params=params)
-            if response.status_code != 200:
+            if response.status_code >= 400:
                 logger.error(
                     f"Error for sequence {i + 1}: HTTP {response.status_code}"
                 )
+                # errors.write(
+                #     LOCATION...,
+                #     msg,
+                #     None,
+                #     data={
+                #         "query_ix": i,
+                #         "response": response.text,
+                #     },
+                # )
                 continue
 
             root = ElementTree.fromstring(response.text)

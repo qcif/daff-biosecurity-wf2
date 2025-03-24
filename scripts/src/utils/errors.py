@@ -38,6 +38,9 @@ class LOCATIONS:
     """These locations define where a reportable exception occurred and
     can be used to display it in the appropriate location in the report.
     """
+    BLAST = 1.0
+    BOLD_ID_ENGINE = 1.10
+    BOLD_TAXA = 1.11
     DATABASE_COVERAGE = 5.0
     DATABASE_COVERAGE_NO_GBIF_RECORD = 5.01
     DATABASE_COVERAGE_NO_TAXID = 5.02
@@ -49,7 +52,7 @@ class LOCATIONS:
 def write(location, msg, exc, query_dir=None, data=None):
     """Write a non-fatal error to file for later recall.
 
-    The location
+    location:
     """
     parent = query_dir or config.output_dir
     next_path = parent / config.ERRORS_DIR / 'next.txt'
