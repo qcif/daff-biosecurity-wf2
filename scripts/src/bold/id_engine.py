@@ -3,11 +3,13 @@ import requests
 import logging
 from xml.etree import ElementTree
 from Bio import SeqIO
+from src.utils import errors
 
 logger = logging.getLogger(__name__)
 ID_ENGINE_URL = "http://v4.boldsystems.org/index.php/Ids_xml"
 BOLD_API_URL = "http://v4.boldsystems.org/index.php/API_Public/combined?"
 WORK_CODE = 200
+# query_dir = Path(__file__).resolve().parents[3] / 'output' / 'errors' / 'errors.json'
 
 
 def main():
@@ -24,15 +26,14 @@ def main():
 
     # print(f"Extracted Taxa: {bold_taxa_engine.taxa}")
 
-    # bold_taxa_engine = BoldTaxa(taxa)
-    # print(f"Fetched Records: {bold_taxa_engine.records}")
+    print(f"Fetched Records: {bold_taxa_engine.records}")
 
-    taxon_counts = bold_taxa_engine.taxon_count()
-    taxon_collectors = bold_taxa_engine.taxon_collectors()
-    taxon_taxonomy = bold_taxa_engine.taxon_taxonomy()
-    print("Taxon Counts:", taxon_counts)
-    print("Taxon Collectors:", taxon_collectors)
-    print("Taxon Taxonomy:", taxon_taxonomy)
+    # taxon_counts = bold_taxa_engine.taxon_count()
+    # taxon_collectors = bold_taxa_engine.taxon_collectors()
+    # taxon_taxonomy = bold_taxa_engine.taxon_taxonomy()
+    # print("Taxon Counts:", taxon_counts)
+    # print("Taxon Collectors:", taxon_collectors)
+    # print("Taxon Taxonomy:", taxon_taxonomy)
 
 
 class BoldTaxa:
@@ -100,18 +101,22 @@ class BoldTaxa:
             }
             response = requests.get(ID_ENGINE_URL, params=params)
             if response.status_code >= 400:
+                msg = (
+                    f"Error for sequence {i + 1}: HTTP {response.status_code}"
+                )
                 logger.error(
                     f"Error for sequence {i + 1}: HTTP {response.status_code}"
                 )
-                # errors.write(
-                #     LOCATION...,
-                #     msg,
-                #     None,
-                #     data={
-                #         "query_ix": i,
-                #         "response": response.text,
-                #     },
-                # )
+                errors.write(
+                    errors.LOCATIONS.BOLD_ID_ENGINE,
+                    msg,
+                    None,
+                    data={
+                        "query_ix": i,
+                        "response": response.text,
+                    },
+                    # query_dir=query_dir
+                )
                 continue
 
             root = ElementTree.fromstring(response.text)
@@ -185,7 +190,21 @@ class BoldTaxa:
                 f"Records fetched successfully: {len(records)} records."
             )
         else:
+            msg = (
+                f"Error status code: {response.status_code}"
+            )
             logger.error(f"Error status code: {response.status_code}")
+            errors.write(
+                errors.LOCATIONS.BOLD_TAXA,
+                msg,
+                None,
+                data={
+                    "taxa": taxa,
+                    "response": response.text,
+                },
+                # query_dir=query_dir
+            )
+
         return records
 
 

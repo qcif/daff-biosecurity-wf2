@@ -104,7 +104,13 @@
             "type": "debugpy",
             "request": "launch",
             "name": "BOLD module",
-            "program": "${workspaceFolder}/scripts/src/bold/id_engine.py",
+            "module": "scripts.src.bold.id_engine",
+            "args": [],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/scripts",
+            },
+            "console": "integratedTerminal",
+            "justMyCode": true
         }
     ]
 }
