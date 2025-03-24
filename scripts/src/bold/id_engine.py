@@ -103,9 +103,7 @@ class BoldTaxa:
                 msg = (
                     f"Error for sequence {i + 1}: HTTP {response.status_code}"
                 )
-                logger.error(
-                    f"Error for sequence {i + 1}: HTTP {response.status_code}"
-                )
+                logger.error(msg)
                 errors.write(
                     errors.LOCATIONS.BOLD_ID_ENGINE,
                     msg,
@@ -202,7 +200,7 @@ class BoldTaxa:
             msg = (
                 f"Error status code: {response.status_code}"
             )
-            logger.error(f"Error status code: {response.status_code}")
+            logger.error(msg)
             errors.write(
                 errors.LOCATIONS.BOLD_TAXA,
                 msg,
