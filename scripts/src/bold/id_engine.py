@@ -68,9 +68,10 @@ class BoldSearch:
             sequences.append(str(record.seq))
         return sequences
 
-    def _bold_sequence_search(self, sequences: list[str],
-                              db: str = "COX1_SPECIES_PUBLIC"
-                              ) -> list[dict[str, any]]:
+    def _bold_sequence_search(
+        self, sequences: list[str],
+        db: str = "COX1_SPECIES_PUBLIC",
+    ) -> list[dict[str, any]]:
         """Submit a sequence search request to BOLD API with throttling."""
         hits_result = []
         throttle = Throttle(ENDPOINTS.BOLD)
