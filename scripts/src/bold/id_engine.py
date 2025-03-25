@@ -4,6 +4,7 @@ import logging
 from xml.etree import ElementTree
 from Bio import SeqIO
 from src.utils import errors
+from ..utils.throttle import ENDPOINTS, Throttle
 
 logger = logging.getLogger(__name__)
 ID_ENGINE_URL = "http://v4.boldsystems.org/index.php/Ids_xml"
@@ -19,7 +20,7 @@ def main():
         / 'queries.fasta'
     )
     bold_taxa_engine = BoldTaxa(fasta_file)
-    # print(f"Sequences extracted: {bold_taxa_engine.sequences}")
+    print(f"Sequences extracted: {bold_taxa_engine.sequences}")
 
     # print(f"Hits Result: {bold_taxa_engine.hits_result}")
 
@@ -91,14 +92,18 @@ class BoldTaxa:
     def _bold_sequence_search(self, sequences: list[str],
                               db: str = "COX1_SPECIES_PUBLIC"
                               ) -> list[dict[str, any]]:
-        """Submit a sequence search request to BOLD API."""
+        """Submit a sequence search request to BOLD API with throllting."""
         hits_result = []
+        throttle = Throttle(ENDPOINTS.BOLD)
         for i, sequence in enumerate(sequences):
             params = {
                 "sequence": sequence,
                 "db": db
             }
-            response = requests.get(ID_ENGINE_URL, params=params)
+            response = throttle.with_retry(
+                requests.get,
+                args=[ID_ENGINE_URL],
+                kwargs={"params": params})
             if response.status_code >= 400:
                 msg = (
                     f"Error for sequence {i + 1}: HTTP {response.status_code}"
@@ -166,16 +171,19 @@ class BoldTaxa:
         return taxa
 
     def _fetch_records(self, taxa: list[str]) -> list[dict]:
-        """Fetch accessions by calling BOLD public API with Taxa and
-        save accessions to a .tsv file."""
+        """Fetch accessions by calling BOLD public API with Taxa
+        and throttling, and save accessions to a .tsv file."""
         records = []
         taxa_param = "|".join(taxa)
         params = {
             "taxon": taxa_param,
             "format": "tsv"
         }
-
-        response = requests.get(BOLD_API_URL, params=params)
+        throttle = Throttle(ENDPOINTS.BOLD)
+        response = throttle.with_retry(
+                requests.get,
+                args=[BOLD_API_URL],
+                kwargs={"params": params})
         if response.status_code == WORK_CODE:
             lines = response.text.splitlines()
             if not lines:  # Check if 'lines' is empty
