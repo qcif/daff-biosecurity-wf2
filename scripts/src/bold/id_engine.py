@@ -1,10 +1,11 @@
-from pathlib import Path
-import requests
 import logging
-from xml.etree import ElementTree
+import requests
 from Bio import SeqIO
+from pathlib import Path
+from xml.etree import ElementTree
+
 from src.utils import errors
-from ..utils.throttle import ENDPOINTS, Throttle
+from src.utils.throttle import ENDPOINTS, Throttle
 
 logger = logging.getLogger(__name__)
 ID_ENGINE_URL = "http://v4.boldsystems.org/index.php/Ids_xml"
