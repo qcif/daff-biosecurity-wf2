@@ -52,11 +52,13 @@ class LOCATIONS:
 def write(location, msg, exc, query_dir=None, data=None):
     """Write a non-fatal error to file for later recall.
 
-    location: display the error message in an appropriate location in the report.
+    location: display the error message in an appropriate
+              location in the report.
     msg: provide the detailed information about the errors.
     exception: optional, can be None.
-    query_dir: the location of error output file if the error happens in any specific query.
-    data: optional, the context data of the error. 
+    query_dir: the location of error output file
+               if the error happens in any specific query.
+    data: optional, the context data of the error.
     """
     parent = query_dir or config.output_dir
     next_path = parent / config.ERRORS_DIR / 'next.txt'

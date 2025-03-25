@@ -11,29 +11,6 @@ ID_ENGINE_URL = "http://v4.boldsystems.org/index.php/Ids_xml"
 BOLD_API_URL = "http://v4.boldsystems.org/index.php/API_Public/combined?"
 MIN_HTTP_CODE_ERROR = 400
 
-def main():
-    fasta_file = (
-        Path(__file__).resolve().parents[3]
-        / 'tests'
-        / 'test-data'
-        / 'queries.fasta'
-    )
-    bold_taxa_engine = BoldSearch(fasta_file)
-    # print(f"Sequences extracted: {bold_taxa_engine.sequences}")
-
-    # print(f"Hits Result: {bold_taxa_engine.hits_result}")
-
-    # print(f"Extracted Taxa: {bold_taxa_engine.taxa}")
-
-    # print(f"Fetched Records: {bold_taxa_engine.records}")
-
-    taxon_counts = bold_taxa_engine.taxon_count
-    taxon_collectors = bold_taxa_engine.taxon_collectors
-    taxon_taxonomy = bold_taxa_engine.taxon_taxonomy
-    print("Taxon Counts:", taxon_counts)
-    print("Taxon Collectors:", taxon_collectors)
-    print("Taxon Taxonomy:", taxon_taxonomy)
-
 
 class BoldSearch:
     """Fetch metadata for given taxa from the BOLD API."""
@@ -186,7 +163,7 @@ class BoldSearch:
                 requests.get,
                 args=[BOLD_API_URL],
                 kwargs={"params": params})
-        if response.status_code == MIN_HTTP_CODE_ERROR:
+        if response.status_code >= MIN_HTTP_CODE_ERROR:
             lines = response.text.splitlines()
             if not lines:  # Check if 'lines' is empty
                 msg = "Empty response received from BOLD API"
@@ -222,8 +199,3 @@ class BoldSearch:
             )
 
         return records
-
-
-# Example usage
-if __name__ == "__main__":
-    main()
