@@ -9,8 +9,7 @@ from ..utils.throttle import ENDPOINTS, Throttle
 logger = logging.getLogger(__name__)
 ID_ENGINE_URL = "http://v4.boldsystems.org/index.php/Ids_xml"
 BOLD_API_URL = "http://v4.boldsystems.org/index.php/API_Public/combined?"
-WORK_CODE = 200
-
+MIN_HTTP_CODE_ERROR = 400
 
 def main():
     fasta_file = (
@@ -19,24 +18,24 @@ def main():
         / 'test-data'
         / 'queries.fasta'
     )
-    bold_taxa_engine = BoldTaxa(fasta_file)
-    print(f"Sequences extracted: {bold_taxa_engine.sequences}")
+    bold_taxa_engine = BoldSearch(fasta_file)
+    # print(f"Sequences extracted: {bold_taxa_engine.sequences}")
 
     # print(f"Hits Result: {bold_taxa_engine.hits_result}")
 
     # print(f"Extracted Taxa: {bold_taxa_engine.taxa}")
 
-    print(f"Fetched Records: {bold_taxa_engine.records}")
+    # print(f"Fetched Records: {bold_taxa_engine.records}")
 
-    # taxon_counts = bold_taxa_engine.taxon_count()
-    # taxon_collectors = bold_taxa_engine.taxon_collectors()
-    # taxon_taxonomy = bold_taxa_engine.taxon_taxonomy()
-    # print("Taxon Counts:", taxon_counts)
-    # print("Taxon Collectors:", taxon_collectors)
-    # print("Taxon Taxonomy:", taxon_taxonomy)
+    taxon_counts = bold_taxa_engine.taxon_count
+    taxon_collectors = bold_taxa_engine.taxon_collectors
+    taxon_taxonomy = bold_taxa_engine.taxon_taxonomy
+    print("Taxon Counts:", taxon_counts)
+    print("Taxon Collectors:", taxon_collectors)
+    print("Taxon Taxonomy:", taxon_taxonomy)
 
 
-class BoldTaxa:
+class BoldSearch:
     """Fetch metadata for given taxa from the BOLD API."""
     def __init__(self, fasta_file: Path):
         self.fasta_file = fasta_file
@@ -45,14 +44,16 @@ class BoldTaxa:
         self.taxa = self._extract_taxa(self.hits_result)
         self.records = self._fetch_records(self.taxa)
 
+    @property
     def taxon_count(self) -> dict[str, int]:
-        """Return a count of each taxon occurences."""
+        """Return a count of records for each taxon."""
         taxa_counts = {}
         for record in self.records:
             taxon = record.get("species_name", "")
             taxa_counts[taxon] = taxa_counts.get(taxon, 0) + 1
         return taxa_counts
 
+    @property
     def taxon_collectors(self) -> dict[str, list[str]]:
         """Return a dictionary of taxa and related collectors."""
         taxa_collectors = {}
@@ -66,6 +67,7 @@ class BoldTaxa:
                     taxa_collectors[taxon].update(collector.split(","))
         return taxa_collectors
 
+    @property
     def taxon_taxonomy(self) -> dict[str, dict[str, str]]:
         """Build a taxonomy dictionary."""
         taxonomy_dict = {}
@@ -92,7 +94,7 @@ class BoldTaxa:
     def _bold_sequence_search(self, sequences: list[str],
                               db: str = "COX1_SPECIES_PUBLIC"
                               ) -> list[dict[str, any]]:
-        """Submit a sequence search request to BOLD API with throllting."""
+        """Submit a sequence search request to BOLD API with throttling."""
         hits_result = []
         throttle = Throttle(ENDPOINTS.BOLD)
         for i, sequence in enumerate(sequences):
@@ -104,7 +106,7 @@ class BoldTaxa:
                 requests.get,
                 args=[ID_ENGINE_URL],
                 kwargs={"params": params})
-            if response.status_code >= 400:
+            if response.status_code >= MIN_HTTP_CODE_ERROR:
                 msg = (
                     f"Error for sequence {i + 1}: HTTP {response.status_code}"
                 )
@@ -184,7 +186,7 @@ class BoldTaxa:
                 requests.get,
                 args=[BOLD_API_URL],
                 kwargs={"params": params})
-        if response.status_code == WORK_CODE:
+        if response.status_code == MIN_HTTP_CODE_ERROR:
             lines = response.text.splitlines()
             if not lines:  # Check if 'lines' is empty
                 msg = "Empty response received from BOLD API"
