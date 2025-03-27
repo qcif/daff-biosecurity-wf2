@@ -72,9 +72,9 @@ class BoldSearch:
     def _bold_sequence_search(
         self, sequences: list[str],
         db: str = "COX1_SPECIES_PUBLIC",
-    ) -> list[dict[str, any]]:
+    ) -> dict[str, list[dict[str, any]]]:
         """Submit a sequence search request to BOLD API with throttling."""
-        hits_result = []
+        hits_result = {}
         throttle = Throttle(ENDPOINTS.BOLD)
         for i, sequence in enumerate(sequences):
             params = {
@@ -99,10 +99,12 @@ class BoldSearch:
                         "response": response.text,
                     },
                 )
+                hits_result[sequence] = []
                 continue
 
             root = ElementTree.fromstring(response.text)
             for match in root.findall("match"):
+                sequence_hits = []
                 result = {
                     "hit_id": match.find("ID").text,
                     "sequence_description": (
@@ -136,19 +138,22 @@ class BoldSearch:
                         ) is not None else ""
                     ),
                 }
-                hits_result.append(result)
+                sequence_hits.append(result)
+            hits_result[sequence] = sequence_hits
         return hits_result
 
-    def _extract_taxa(self, hits_result: list[dict]) -> list[str]:
+    def _extract_taxa(self, hits_result: dict[str, list[dict]]) -> list[str]:
         """Extract taxa (taxonomic_identification)."""
         taxa = []
-        for hit in hits_result:
-            taxonomic_identification = hit.get("taxonomic_identification")
-            if (
-                taxonomic_identification
-                and taxonomic_identification not in taxa
-            ):
-                taxa.append(taxonomic_identification)
+        # print(f"Hits Result in _extract_taxa: {hits_result}")
+        for matches in hits_result.values():
+            for hit in matches:
+                taxonomic_identification = hit.get("taxonomic_identification")
+                if (
+                    taxonomic_identification
+                    and taxonomic_identification not in taxa
+                ):
+                    taxa.append(taxonomic_identification)
         return taxa
 
     def _fetch_records(self, taxa: list[str]) -> list[dict]:
