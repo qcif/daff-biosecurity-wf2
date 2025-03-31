@@ -24,6 +24,10 @@ class ENDPOINTS:
         'requests_per_second': 10,
         'name': 'entrez',
     }
+    BOLD = {
+        'requests_per_second': 10,
+        'name': 'bold',
+    }
 
 
 class Throttle:

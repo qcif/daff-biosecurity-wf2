@@ -32,6 +32,16 @@
         {
             "type": "debugpy",
             "request": "launch",
+            "name": "P1 BOLD search",
+            "program": "${workspaceFolder}/scripts/p1_bold_search.py",
+            "args": [
+                "tests/test-data/queries.fasta",
+            ],
+            "preLaunchTask": "clear-log-files"
+        },
+        {
+            "type": "debugpy",
+            "request": "launch",
             "name": "P2 Extract taxonomy",
             "program": "${workspaceFolder}/scripts/p2_extract_taxonomy.py",
             "args": [
