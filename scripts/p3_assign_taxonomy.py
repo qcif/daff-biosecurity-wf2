@@ -244,7 +244,7 @@ def _write_pmi_match(taxonomic_identity, query_ix, query_dir):
 def _write_boxplot(query_dir, hits):
     genera = {}
     for hit in hits:
-        genus = hit['species'].split(' ')[0]
+        genus = hit['species'].split(' ')[0] if hit['species'] else 'No genus'
         if genus not in genera:
             genera[genus] = []
         genera[genus].append(hit['identity'] * 100)
