@@ -133,18 +133,18 @@ class Throttle:
                 if '429' in str(exc):
                     sleep_seconds = 600
                     logger.warning(
-                        "Entrez rate limit exceeded. Waiting 10 minutes before"
+                        "API rate limit exceeded. Waiting 10 minutes before"
                         " next retry.")
                     retries = config.MAX_API_RETRIES
                 elif retries <= 0:
                     raise APIError(
-                        'Failed to fetch data from GBIF API after'
+                        'Failed to fetch data from API after'
                         f' {config.MAX_API_RETRIES} retries. Please try'
                         f' resuming this job at a later time.'
                         f'\nException: {exc}'
                     )
                 logger.warning(
-                    "Exception encountered in call to GBIF endpoint"
+                    "Exception encountered in call to endpoint"
                     f" {func.__name__} Retrying {retries} more times."
                     f" Exception: {exc}\n"
                     f" Args:\n{pformat(args)}")

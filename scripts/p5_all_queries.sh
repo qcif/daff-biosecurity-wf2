@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/bash
 
 python scripts/p5_db_coverage.py output/query_001_LC438549 &
 python scripts/p5_db_coverage.py output/query_002_ON075825 &

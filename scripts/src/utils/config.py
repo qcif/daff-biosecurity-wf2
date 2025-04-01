@@ -8,8 +8,9 @@ import csv
 import json
 import logging
 import shutil
+import tempfile
 from Bio import SeqIO
-from datetime import datetime
+from datetime import datetime, timedelta
 from logging.config import dictConfig
 from pathlib import Path
 
@@ -77,10 +78,11 @@ class Config:
     THROTTLE_SQLITE_FILE = 'throttle.sqlite'
     MAX_API_RETRIES = 3
     ERRORS_DIR = 'errors'
+    TEMP_DIR_NAME = 'biosecurity'
+    TEMP_CLEAN_AFTER_DAYS = 7
 
     TEMP_FILES = [
         ENTREZ_CACHE_DIRNAME,
-        THROTTLE_SQLITE_FILE,
     ]
 
     class INPUTS:
@@ -218,8 +220,20 @@ class Config:
         return self.output_dir / self.ENTREZ_CACHE_DIRNAME
 
     @property
+    def tempdir(self):
+        tempdir = Path(tempfile.gettempdir()) / self.TEMP_DIR_NAME
+        tempdir.mkdir(exist_ok=True, parents=True)
+        return tempdir
+
+    @property
+    def user_tempdir(self):
+        user_dir = self.tempdir / (self.USER_EMAIL or 'ANONYMOUS')
+        user_dir.mkdir(exist_ok=True, parents=True)
+        return user_dir
+
+    @property
     def throttle_sqlite_path(self):
-        return self.output_dir / self.THROTTLE_SQLITE_FILE
+        return self.user_tempdir / self.THROTTLE_SQLITE_FILE
 
     @property
     def start_time(self) -> datetime:
@@ -367,3 +381,29 @@ class Config:
                     shutil.rmtree(path)
                 else:
                     path.unlink()
+        for path in self.tempdir.glob('*'):
+            if path.is_dir():
+                mtime = get_latest_mtime(path)
+                if (
+                    mtime
+                    < datetime.now()
+                    - timedelta(days=self.TEMP_CLEAN_AFTER_DAYS)
+                ):
+                    shutil.rmtree(path)
+
+
+def get_latest_mtime(path: str) -> datetime:
+    """Return the latest modification time of files/dirs within given dir."""
+    latest_mtime = os.path.getmtime(path)
+    for root, dirs, files in os.walk(path):
+        for name in dirs + files:
+            full_path = os.path.join(root, name)
+            try:
+                mtime = os.path.getmtime(full_path)
+                if mtime > latest_mtime:
+                    latest_mtime = mtime
+            except FileNotFoundError:
+                # Skip files that may have been deleted during walk
+                continue
+
+    return datetime.fromtimestamp(latest_mtime)
