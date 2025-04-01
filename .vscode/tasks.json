@@ -4,7 +4,7 @@
         {
             "label": "clear-log-files",
             "type": "shell",
-            "command": "find output -type f -name '*.log' -delete && find output -type d -name 'errors' -exec rm -rf {} \\;",
+            "command": "bash ${workspaceFolder}/.vscode/tasks/clear_log_files.sh",
             "isBackground": false,
             "presentation": {
                 "reveal": "always",
