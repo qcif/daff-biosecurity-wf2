@@ -4,7 +4,10 @@
         {
             "label": "clear-log-files",
             "type": "shell",
-            "command": "bash ${workspaceFolder}/.vscode/tasks/clear_log_files.sh",
+            "command": "bash",
+            "args": [
+                "${workspaceFolder}/.vscode/tasks/clear_log_files.sh"
+            ],
             "isBackground": false,
             "presentation": {
                 "reveal": "always",
