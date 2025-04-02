@@ -1,6 +1,7 @@
 """Use the BOLD API to search for similar sequences to query."""
 
 import argparse
+import json
 import logging
 
 from pathlib import Path
@@ -15,9 +16,10 @@ config = Config()
 
 def main():
     args = _parse_args()
+    config.configure(args.output_dir)
     logger.info(f"Searching BOLD with query {args.fasta_file}...")
-    result = BoldSearch(args.fasta_file)
-    print('Done')
+    search = BoldSearch(args.fasta_file)
+    _write_hits_json(search)
 
 
 def _parse_args():
@@ -35,6 +37,17 @@ def _parse_args():
         default=config.output_dir,
     )
     return parser.parse_args()
+
+
+def _write_hits_json(search: BoldSearch):
+    """Write the search results to a JSON file."""
+    for i, query_title in enumerate(search.hits):
+        hits = search.hits[query_title]
+        query_dir = config.create_query_dir(i, query_title)
+        path = query_dir / config.HITS_JSON
+        with path.open("w") as f:
+            json.dump(hits, f, indent=2)
+            logger.info(f"BOLD hits for query [{i}] written to {path}")
 
 
 if __name__ == '__main__':

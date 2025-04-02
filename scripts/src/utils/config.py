@@ -7,6 +7,7 @@ import os
 import csv
 import json
 import logging
+
 import shutil
 import tempfile
 from Bio import SeqIO
@@ -162,6 +163,15 @@ class Config:
         output_dir = Path(output_dir)
         output_dir.mkdir(exist_ok=True, parents=True)
         os.environ["OUTPUT_DIR"] = str(output_dir)
+
+    def create_query_dir(self, query_ix, query_title):
+        """Create a directory for this query and write query title file."""
+        query_dir = self.get_query_dir(query_ix)
+        query_title_path = query_dir / self.QUERY_TITLE_FILE
+        with query_title_path.open("w") as f:
+            f.write(query_title)
+            logger.info(f"BLAST query title written to {query_title_path}")
+        return query_dir
 
     def configure_query_logger(self, query_dir):
         conf = get_logging_config(query_dir / self.QUERY_LOG_FILENAME)

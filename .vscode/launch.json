@@ -36,6 +36,7 @@
             "program": "${workspaceFolder}/scripts/p1_bold_search.py",
             "args": [
                 "tests/test-data/queries.fasta",
+                "--output_dir", "output/bold",
             ],
             "preLaunchTask": "clear-log-files"
         },

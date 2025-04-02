@@ -42,20 +42,10 @@ def _parse_args():
     return parser.parse_args()
 
 
-def _create_query_dir(query_ix, query_hits):
-    """Create a directory for this query and write the query title to file."""
-    query_dir = config.get_query_dir(query_ix)
-    query_title_path = query_dir / config.QUERY_TITLE_FILE
-    with query_title_path.open("w") as f:
-        f.write(query_hits['query_title'])
-        logger.info(f"BLAST query title written to {query_title_path}")
-    return query_dir
-
-
 def _write_hits(hits):
     """Write a JSON file of BLAST hits for each query sequence."""
     for i, query_hits in enumerate(hits):
-        query_dir = _create_query_dir(i, query_hits)
+        query_dir = config.create_query_dir(i, query_hits['query_title'])
         path = query_dir / config.HITS_JSON
         with path.open("w") as f:
             json.dump(query_hits, f, indent=2)
