@@ -4,16 +4,25 @@
         {
             "label": "clear-log-files",
             "type": "shell",
-            "command": "bash",
-            "args": [
-                "${workspaceFolder}/.vscode/tasks/clear_log_files.sh"
-            ],
             "isBackground": false,
             "presentation": {
                 "reveal": "always",
                 "panel": "shared"
             },
-            "problemMatcher": []
+            "problemMatcher": [],
+            "windows": {
+                // Need to change if the Git Bash executale app in different location
+                "command": "C:/Program Files/Git/bin/bash.exe",
+                "args": ["${workspaceFolder}/.vscode/tasks/clear_log_files.sh"],
+            },
+            "linux": {
+                "command": "bash",
+                "args": ["${workspaceFolder}/.vscode/tasks/clear_log_files.sh"]
+            },
+            "osx": {
+                "command": "bash",
+                "args": ["${workspaceFolder}/.vscode/tasks/clear_log_files.sh"]
+            }
         }
     ]
 }
