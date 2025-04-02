@@ -73,7 +73,8 @@ class BoldSearch:
         return sequences
 
     def _bold_sequence_search(
-        self, sequences: list[SeqIO.SeqRecord],
+        self,
+        sequences: list[SeqIO.SeqRecord],
         db: str = "COX1_SPECIES_PUBLIC",
     ) -> dict[str, list[dict[str, any]]]:
         """Submit a sequence search request to BOLD API with throttling."""
@@ -81,7 +82,7 @@ class BoldSearch:
         throttle = Throttle(ENDPOINTS.BOLD)
         for i, sequence in enumerate(sequences):
             params = {
-                "sequence": sequence.seq,
+                "sequence": str(sequence.seq),
                 "db": db
             }
             response = throttle.with_retry(
@@ -106,8 +107,8 @@ class BoldSearch:
                 continue
 
             root = ElementTree.fromstring(response.text)
+            sequence_hits = []
             for match in root.findall("match"):
-                sequence_hits = []
                 result = {
                     "hit_id": match.find("ID").text,
                     "sequence_description": (
