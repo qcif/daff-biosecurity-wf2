@@ -18,8 +18,8 @@ class BoldSearch:
     def __init__(self, fasta_file: Path):
         self.fasta_file = fasta_file
         self.sequences = self._read_sequence_from_fasta(fasta_file)
-        self.hits_result = self._bold_sequence_search(self.sequences)
-        self.taxa = self._extract_taxa(self.hits_result)
+        self.hits = self._bold_sequence_search(self.sequences)
+        self.taxa = self._extract_taxa(self.hits)
         self.records = self._fetch_records(self.taxa)
 
     @property
@@ -74,7 +74,7 @@ class BoldSearch:
         db: str = "COX1_SPECIES_PUBLIC",
     ) -> dict[str, list[dict[str, any]]]:
         """Submit a sequence search request to BOLD API with throttling."""
-        hits_result = {}
+        hits = {}
         throttle = Throttle(ENDPOINTS.BOLD)
         for i, sequence in enumerate(sequences):
             params = {
@@ -99,7 +99,7 @@ class BoldSearch:
                         "response": response.text,
                     },
                 )
-                hits_result[sequence] = []
+                hits[sequence] = []
                 continue
 
             root = ElementTree.fromstring(response.text)
@@ -139,14 +139,14 @@ class BoldSearch:
                     ),
                 }
                 sequence_hits.append(result)
-            hits_result[sequence] = sequence_hits
-        return hits_result
+            hits[sequence] = sequence_hits
+        return hits
 
-    def _extract_taxa(self, hits_result: dict[str, list[dict]]) -> list[str]:
+    def _extract_taxa(self, hits: dict[str, list[dict]]) -> list[str]:
         """Extract taxa (taxonomic_identification)."""
         taxa = []
-        # print(f"Hits Result in _extract_taxa: {hits_result}")
-        for matches in hits_result.values():
+        # print(f"Hits Result in _extract_taxa: {hits}")
+        for matches in hits.values():
             for hit in matches:
                 taxonomic_identification = hit.get("taxonomic_identification")
                 if (
@@ -170,7 +170,7 @@ class BoldSearch:
                 requests.get,
                 args=[BOLD_API_URL],
                 kwargs={"params": params})
-        if response.status_code >= MIN_HTTP_CODE_ERROR:
+        if response.status_code <= MIN_HTTP_CODE_ERROR:
             lines = response.text.splitlines()
             if not lines:  # Check if 'lines' is empty
                 msg = "Empty response received from BOLD API"
@@ -192,7 +192,7 @@ class BoldSearch:
             )
         else:
             msg = (
-                f"Error status code: {response.status_code}"
+                f"Error HTTP {response.status_code}: {response.text}"
             )
             logger.error(msg)
             errors.write(
