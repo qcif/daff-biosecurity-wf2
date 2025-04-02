@@ -46,7 +46,12 @@ def main():
     config.set_output_dir(args.output_dir)
     config.configure_query_logger(args.query_dir)
     query = config.read_blast_hits_json(args.query_dir)
-    candidate_species = _assign_species_id(query['hits'], args.query_dir)
+    candidate_hits, candidate_hits_strict = _filter_candidates(query['hits'])
+    candidate_species = _assign_species_id(
+        args.query_dir,
+        candidate_hits,
+        candidate_hits_strict,
+    )
     _detect_taxa_of_interest(candidate_species, args.query_dir)
 
 
@@ -62,9 +67,7 @@ def _parse_args():
     return parser.parse_args()
 
 
-def _assign_species_id(hits, query_dir):
-    """Attempt species ID from BLAST hits.json data."""
-    query_ix = config.get_query_ix(query_dir)
+def _filter_candidates(hits):
     taxonomies = config.read_taxonomy_file()
     candidate_hits = [
         hit for hit in hits
@@ -92,6 +95,12 @@ def _assign_species_id(hits, query_dir):
         hit for hit in candidate_hits
         if hit["identity"] >= config.CRITERIA.ALIGNMENT_MIN_IDENTITY_STRICT
     ]
+    return candidate_hits, candidate_hits_strict
+
+
+def _assign_species_id(query_dir, candidate_hits, candidate_hits_strict):
+    """Attempt species ID from BLAST hits.json data."""
+    query_ix = config.get_query_ix(query_dir)
     candidate_species = deduplicate([
         hit for hit in candidate_hits
     ], key=lambda x: x.get("species"))
@@ -113,7 +122,6 @@ def _assign_species_id(hits, query_dir):
 
     selected_species = candidate_species_strict or candidate_species
     selected_hits = candidate_hits_strict or candidate_hits
-
     _write_candidate_flags(
         query_dir,
         candidate_species_strict,
@@ -124,10 +132,8 @@ def _assign_species_id(hits, query_dir):
         selected_hits,
         selected_species,
     )
-
     if len(selected_species) > config.CRITERIA.MAX_CANDIDATES_FOR_ANALYSIS:
         _write_boxplot(query_dir, selected_hits)
-
     taxonomic_id = _write_taxonomic_id(query_dir, candidate_species_strict)
     _write_pmi_match(taxonomic_id, query_ix, query_dir)
     return selected_species
