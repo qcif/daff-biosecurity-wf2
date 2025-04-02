@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
 IMAGE=neoformit/daff-taxonomic-assignment
-TAG=latest
+
+read -p "Enter the tag for the image (default: latest): " TAG
+TAG=${TAG:-latest}
 
 # Build the Docker image
 docker build -t $IMAGE:$TAG .
