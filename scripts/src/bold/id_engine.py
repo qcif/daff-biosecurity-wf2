@@ -203,11 +203,36 @@ class BoldSearch:
 
         hits_with_metadata = {
             query_title: [
-                {**hit, **metadata.get(hit["hit_id"], {})}
+                {
+                    **hit,
+                    **metadata.get(hit["hit_id"], {}),
+                }
                 for hit in query_hits
             ]
             for query_title, query_hits in hits.items()
         }
+
+        # Expand taxonomy fields
+        for query_title, query_hits in hits_with_metadata.items():
+            for i, hit in enumerate(query_hits):
+                hits_with_metadata[query_title][i]['species'] = hit.get(
+                    "species_name", "")
+                hits_with_metadata[query_title][i]['taxonomy'] = {
+                    "phylum": hit.get("phylum_name", ""),
+                    "class": hit.get("class_name", ""),
+                    "order": hit.get("order_name", ""),
+                    "family": hit.get("family_name", ""),
+                    "genus": hit.get("genus_name", ""),
+                    "species": hit.get("species_name", ""),
+                }
+                # Remove redundant fields
+                hit.pop("phylum_name", None)
+                hit.pop("class_name", None)
+                hit.pop("order_name", None)
+                hit.pop("family_name", None)
+                hit.pop("genus_name", None)
+                hit.pop("species_name", None)
+
         self.raw_hits = None
 
         return hits_with_metadata
