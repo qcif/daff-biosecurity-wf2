@@ -20,6 +20,8 @@ def main():
     logger.info(f"Searching BOLD with query {args.fasta_file}...")
     search = BoldSearch(args.fasta_file)
     _write_hits_json(search)
+    _write_hits_fasta(search)
+    logger.info("BOLD search completed.")
 
 
 def _parse_args():
@@ -47,6 +49,18 @@ def _write_hits_json(search: BoldSearch):
         path = query_dir / config.HITS_JSON
         with path.open("w") as f:
             json.dump(hits, f, indent=2)
+            logger.info(f"BOLD hits for query [{i}] written to {path}")
+
+
+def _write_hits_fasta(search: BoldSearch):
+    """Write the search results to a FASTA file."""
+    for i, query_title in enumerate(search.hits):
+        hits = search.hits[query_title]
+        query_dir = config.get_query_dir(i)
+        path = query_dir / config.HITS_FASTA
+        with path.open("w") as f:
+            for hit in hits:
+                f.write(f">{hit['name']}\n{hit['sequence']}\n")
             logger.info(f"BOLD hits for query [{i}] written to {path}")
 
 
