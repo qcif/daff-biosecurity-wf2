@@ -1,3 +1,6 @@
+"""Provide an interface to the BOLD API for search and metadata retrieval."""
+
+import csv
 import logging
 import requests
 from Bio import SeqIO
@@ -6,10 +9,12 @@ from xml.etree import ElementTree
 
 from src.utils import errors
 from src.utils.throttle import ENDPOINTS, Throttle
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 logger = logging.getLogger(__name__)
 ID_ENGINE_URL = "http://v4.boldsystems.org/index.php/Ids_xml"
-BOLD_API_URL = "http://v4.boldsystems.org/index.php/API_Public/combined?"
+FULL_DATA_URL = "http://v4.boldsystems.org/index.php/API_Public/combined"
+SEQUENCE_DATA_URL = "http://v4.boldsystems.org/index.php/API_Public/sequence"
 MIN_HTTP_CODE_ERROR = 400
 
 
@@ -17,8 +22,10 @@ class BoldSearch:
     """Fetch metadata for given taxa from the BOLD API."""
     def __init__(self, fasta_file: Path):
         self.fasta_file = fasta_file
-        self.sequences = self._read_sequence_from_fasta(fasta_file)
-        self.hits = self._bold_sequence_search(self.sequences)
+        raw_hits = self._bold_sequence_search(fasta_file)
+        if not any(raw_hits.values()):
+            logger.info("No hits from BOLD ID Engine for FASTA query.")
+        self.hits = self._fetch_hit_metadata(raw_hits)
         self.taxa = self._extract_taxa(self.hits)
         self.records = self._fetch_records(self.taxa)
 
@@ -74,13 +81,20 @@ class BoldSearch:
 
     def _bold_sequence_search(
         self,
-        sequences: list[SeqIO.SeqRecord],
+        fasta_file: Path,
         db: str = "COX1_SPECIES_PUBLIC",
     ) -> dict[str, list[dict[str, any]]]:
         """Submit a sequence search request to BOLD API with throttling."""
         hits = {}
         throttle = Throttle(ENDPOINTS.BOLD)
+        sequences = self._read_sequence_from_fasta(fasta_file)
+        logger.debug(
+            f"Submitting {len(sequences)} sequences to BOLD ID Engine..."
+        )
         for i, sequence in enumerate(sequences):
+            logger.debug(
+                f"Submitting sequence {i + 1}/{len(sequences)}: {sequence.id}"
+            )
             params = {
                 "sequence": str(sequence.seq),
                 "db": db
@@ -146,6 +160,58 @@ class BoldSearch:
             hits[sequence.id] = sequence_hits
         return hits
 
+    def _fetch_hit_metadata(self, hits) -> dict[str, list]:
+        """Fetch metadata by calling BOLD public API with accessions."""
+        def _fetch_batch(batch_ids):
+            params = {
+                "ids": "|".join(batch_ids),
+                "format": "tsv",
+            }
+            throttle = Throttle(ENDPOINTS.BOLD)
+            response = throttle.with_retry(
+                requests.get,
+                args=[FULL_DATA_URL],
+                kwargs={"params": params},
+            )
+            if response.status_code >= MIN_HTTP_CODE_ERROR:
+                response.raise_for_status()
+            lines = response.text.splitlines()
+            reader = csv.DictReader(lines, delimiter="\t")
+            return {
+                row.pop("processid"): row
+                for row in reader
+            }
+
+        hit_record_ids = [
+            hit["hit_id"]
+            for query_hits in hits.values()
+            for hit in query_hits
+        ]
+        logger.info(
+            f"Fetching sequences for {len(hit_record_ids)} hit records..."
+        )
+        metadata = {}
+        batch_size = 25
+
+        with ThreadPoolExecutor(max_workers=50) as executor:
+            futures = []
+            for i in range(0, len(hit_record_ids), batch_size):
+                batch = hit_record_ids[i:i + batch_size]
+                futures.append(executor.submit(_fetch_batch, batch))
+            for future in as_completed(futures):
+                metadata.update(future.result())
+
+        hits_with_metadata = {
+            query_title: [
+                {**hit, **metadata.get(hit["hit_id"], {})}
+                for hit in query_hits
+            ]
+            for query_title, query_hits in hits.items()
+        }
+        self.raw_hits = None
+
+        return hits_with_metadata
+
     def _extract_taxa(self, hits: dict[str, list[dict]]) -> list[str]:
         """Extract taxa (taxonomic_identification)."""
         taxa = []
@@ -164,6 +230,9 @@ class BoldSearch:
         """Fetch accessions by calling BOLD public API with Taxa
         and throttling, and save accessions to a .tsv file."""
         records = []
+        if not taxa:
+            logger.info("No taxa to fetch BOLD metadata.")
+            return records
         taxa_param = "|".join(taxa)
         params = {
             "taxon": taxa_param,
@@ -172,7 +241,7 @@ class BoldSearch:
         throttle = Throttle(ENDPOINTS.BOLD)
         response = throttle.with_retry(
                 requests.get,
-                args=[BOLD_API_URL],
+                args=[FULL_DATA_URL],
                 kwargs={"params": params})
         if response.status_code <= MIN_HTTP_CODE_ERROR:
             lines = response.text.splitlines()

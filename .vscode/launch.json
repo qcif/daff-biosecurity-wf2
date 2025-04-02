@@ -38,7 +38,10 @@
                 "tests/test-data/queries.fasta",
                 "--output_dir", "output/bold",
             ],
-            "preLaunchTask": "clear-log-files"
+            "preLaunchTask": "clear-log-files",
+            "env": {
+                "LOGGING_DEBUG": "1",
+            }
         },
         {
             "type": "debugpy",
