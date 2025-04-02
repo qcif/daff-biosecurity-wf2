@@ -62,15 +62,18 @@ class BoldSearch:
                 }
         return taxonomy_dict
 
-    def _read_sequence_from_fasta(self, fasta_file: Path):
+    def _read_sequence_from_fasta(
+        self,
+        fasta_file: Path,
+    ) -> list[SeqIO.SeqRecord]:
         """Read sequence from fasta file."""
         sequences = []
         for record in SeqIO.parse(fasta_file, "fasta"):
-            sequences.append(str(record.seq))
+            sequences.append(record)
         return sequences
 
     def _bold_sequence_search(
-        self, sequences: list[str],
+        self, sequences: list[SeqIO.SeqRecord],
         db: str = "COX1_SPECIES_PUBLIC",
     ) -> dict[str, list[dict[str, any]]]:
         """Submit a sequence search request to BOLD API with throttling."""
@@ -78,7 +81,7 @@ class BoldSearch:
         throttle = Throttle(ENDPOINTS.BOLD)
         for i, sequence in enumerate(sequences):
             params = {
-                "sequence": sequence,
+                "sequence": sequence.seq,
                 "db": db
             }
             response = throttle.with_retry(
@@ -99,7 +102,7 @@ class BoldSearch:
                         "response": response.text,
                     },
                 )
-                hits[sequence] = []
+                hits[sequence.id] = []
                 continue
 
             root = ElementTree.fromstring(response.text)
@@ -139,7 +142,7 @@ class BoldSearch:
                     ),
                 }
                 sequence_hits.append(result)
-            hits[sequence] = sequence_hits
+            hits[sequence.id] = sequence_hits
         return hits
 
     def _extract_taxa(self, hits: dict[str, list[dict]]) -> list[str]:
