@@ -16,7 +16,7 @@ config = Config()
 
 def main():
     args = _parse_args()
-    config.configure(args.output_dir)
+    config.configure(args.output_dir, bold=True)
     logger.info(f"Searching BOLD with query {args.fasta_file}...")
     search = BoldSearch(args.fasta_file)
     _write_hits_json(search)

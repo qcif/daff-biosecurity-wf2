@@ -64,6 +64,7 @@ class Config:
                                  'db_coverage.json')
     DB_COVERAGE_TOI_LIMIT = int(os.getenv("DB_COVERAGE_TOI_LIMIT", 10))
 
+    BOLD_FLAG = 'BOLD'
     DB_COVERAGE_MAX_CANDIDATES = 3
     FLAG_FILE_TEMPLATE = '{identifier}.flag'
     GBIF_LIMIT_RECORDS = int(os.getenv("GBIF_LIMIT_RECORDS", 500))
@@ -149,11 +150,23 @@ class Config:
     class REPORT:
         TITLE = "Taxonomic assignment report"
 
-    def configure(self, output_dir=None):
+    def configure(self, output_dir=None, bold=False):
         if output_dir:
             self.set_output_dir(output_dir)
         conf = get_logging_config(self.output_dir / self.LOG_FILENAME)
         dictConfig(conf)
+        if bold:
+            self.bold_flag_file.write_text('1')
+
+    @property
+    def bold_flag_file(self):
+        """Path to the BOLD flag file."""
+        return self.output_dir / self.BOLD_FLAG
+
+    @property
+    def is_bold(self):
+        """Check if this is a BOLD run."""
+        return self.bold_flag_file.exists()
 
     @property
     def output_dir(self):
