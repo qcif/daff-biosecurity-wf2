@@ -125,7 +125,7 @@ class Throttle:
             try:
                 with self:
                     logger.debug("Throttle released. Sending request to"
-                                 f" {func.__name__}...")
+                                 f" {self.name}...")
                     return func(*args, **kwargs)
             except Exception as exc:
                 sleep_seconds = 1
@@ -145,7 +145,7 @@ class Throttle:
                     )
                 logger.warning(
                     "Exception encountered in call to endpoint"
-                    f" {func.__name__} Retrying {retries} more times."
+                    f" {self.name} Retrying {retries} more times."
                     f" Exception: {exc}\n"
                     f" Args:\n{pformat(args)}")
                 time.sleep(sleep_seconds)
