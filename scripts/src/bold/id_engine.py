@@ -3,13 +3,15 @@
 import csv
 import logging
 import requests
-from Bio import SeqIO
 from pathlib import Path
 from xml.etree import ElementTree
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+from Bio import SeqIO
+from Bio.Seq import Seq
 
 from src.utils import errors
 from src.utils.throttle import ENDPOINTS, Throttle
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 logger = logging.getLogger(__name__)
 ID_ENGINE_URL = "http://v4.boldsystems.org/index.php/Ids_xml"
@@ -26,6 +28,7 @@ class BoldSearch:
         if not any(raw_hits.values()):
             logger.info("No hits from BOLD ID Engine for FASTA query.")
         self.hits = self._fetch_hit_metadata(raw_hits)
+        self.hit_sequences = self._parse_sequences(self.hits)
         self.taxa = self._extract_taxa(self.hits)
         self.records = self._fetch_records(self.taxa)
 
@@ -157,7 +160,11 @@ class BoldSearch:
                     ),
                 }
                 sequence_hits.append(result)
-            hits[sequence.id] = sequence_hits
+            hits[sequence.id] = {
+                'query_title': sequence.id + ' ' + sequence.description,
+                'query_length': len(sequence.seq),
+                'hits': sequence_hits,
+            }
         return hits
 
     def _fetch_hit_metadata(self, hits) -> dict[str, list]:
@@ -185,7 +192,7 @@ class BoldSearch:
         hit_record_ids = [
             hit["hit_id"]
             for query_hits in hits.values()
-            for hit in query_hits
+            for hit in query_hits['hits']
         ]
         logger.info(
             f"Fetching sequences for {len(hit_record_ids)} hit records..."
@@ -202,22 +209,24 @@ class BoldSearch:
                 metadata.update(future.result())
 
         hits_with_metadata = {
-            query_title: [
-                {
-                    **hit,
-                    **metadata.get(hit["hit_id"], {}),
-                }
-                for hit in query_hits
-            ]
+            query_title: {
+                **query_hits,
+                'hits': [
+                    {
+                        **hit,
+                        **metadata.get(hit["hit_id"], {}),
+                    }
+                    for hit in query_hits['hits']
+                ],
+            }
             for query_title, query_hits in hits.items()
         }
 
         # Expand taxonomy fields
         for query_title, query_hits in hits_with_metadata.items():
-            for i, hit in enumerate(query_hits):
-                hits_with_metadata[query_title][i]['species'] = hit.get(
-                    "species_name", "")
-                hits_with_metadata[query_title][i]['taxonomy'] = {
+            for i, hit in enumerate(query_hits['hits']):
+                hit['species'] = hit.get("species_name", "")
+                hit['taxonomy'] = {
                     "phylum": hit.get("phylum_name", ""),
                     "class": hit.get("class_name", ""),
                     "order": hit.get("order_name", ""),
@@ -232,17 +241,38 @@ class BoldSearch:
                 hit.pop("family_name", None)
                 hit.pop("genus_name", None)
                 hit.pop("species_name", None)
+                hits_with_metadata[query_title]['hits'][i] = hit
 
         self.raw_hits = None
 
         return hits_with_metadata
 
-    def _extract_taxa(self, hits: dict[str, list[dict]]) -> list[str]:
+    def _parse_sequences(
+        self,
+        hits: dict[str, list[dict]],
+    ) -> dict[str, list[SeqIO.SeqRecord]]:
+        """Parse sequences from hits into SeqRecord objects."""
+        query_hits_sequences = {}
+        for query_title, query_hits in hits.items():
+            query_hits_sequences[query_title] = [
+                SeqIO.SeqRecord(
+                    Seq(hit.get("nucleotides", "").replace('-', '')),
+                    id=hit['hit_id'],
+                    description=hit['taxonomic_identification'],
+                )
+                for hit in query_hits['hits']
+            ]
+        return query_hits_sequences
+
+    def _extract_taxa(
+        self,
+        query_results: dict[str, dict[str, list[dict]]],
+    ) -> list[str]:
         """Extract taxa (taxonomic_identification)."""
         taxa = []
         # print(f"Hits Result in _extract_taxa: {hits}")
-        for matches in hits.values():
-            for hit in matches:
+        for result in query_results.values():
+            for hit in result['hits']:
                 taxonomic_identification = hit.get("taxonomic_identification")
                 if (
                     taxonomic_identification
