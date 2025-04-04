@@ -45,8 +45,13 @@ def main():
     args = _parse_args()
     config.set_output_dir(args.output_dir)
     config.configure_query_logger(args.query_dir)
-    query = config.read_blast_hits_json(args.query_dir)
-    candidate_hits, candidate_hits_strict = _filter_candidates(query['hits'])
+    result = config.read_hits_json(args.query_dir)
+    if args.bold:
+        candidate_hits, candidate_hits_strict = _filter_candidates_bold(
+            result['hits'])
+    else:
+        candidate_hits, candidate_hits_strict = _filter_candidates(
+            result['hits'])
     candidate_species = _assign_species_id(
         args.query_dir,
         candidate_hits,
@@ -64,6 +69,10 @@ def _parse_args():
         type=existing_path,
         default=config.output_dir,
         help=f"Path to output directory. Defaults to {config.output_dir}.")
+    parser.add_argument(
+        "--bold",
+        action="store_true",
+        help="Process outputs from BOLD API search.")
     return parser.parse_args()
 
 
@@ -94,6 +103,18 @@ def _filter_candidates(hits):
     candidate_hits_strict = [
         hit for hit in candidate_hits
         if hit["identity"] >= config.CRITERIA.ALIGNMENT_MIN_IDENTITY_STRICT
+    ]
+    return candidate_hits, candidate_hits_strict
+
+
+def _filter_candidates_bold(hits):
+    candidate_hits = [
+        hit for hit in hits
+        if hit["similarity"] >= config.CRITERIA.ALIGNMENT_MIN_IDENTITY
+    ]
+    candidate_hits_strict = [
+        hit for hit in candidate_hits
+        if hit["similarity"] >= config.CRITERIA.ALIGNMENT_MIN_IDENTITY_STRICT
     ]
     return candidate_hits, candidate_hits_strict
 
@@ -205,7 +226,7 @@ def _write_candidates_csv(query_dir, candidate_hits):
 def _write_candidates_fasta(query_dir, candidate_hits):
     """Write FASTA sequences for each candidate species to file."""
     path = query_dir / config.CANDIDATES_FASTA
-    fastas = config.read_blast_hits_fasta(query_dir)
+    fastas = config.read_hits_fasta(query_dir)
     accessions = [hit["accession"] for hit in candidate_hits]
     candidate_fastas = [
         fasta for fasta in fastas

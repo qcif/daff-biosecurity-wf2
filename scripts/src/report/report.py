@@ -38,6 +38,8 @@ def render(query):
     static_files = _get_static_file_contents()
     rendered_html = template.render(**context, **static_files)
 
+    # TODO: If BOLD, replace 'identity' with 'similarity'
+
     report_path = config.get_report_path(query_ix)
     with open(report_path, 'w') as f:
         f.write(rendered_html)
@@ -79,7 +81,7 @@ def _get_img_src(path):
 def _get_report_context(query_ix):
     """Build the context for the report template."""
     query_fasta_str = config.read_query_fasta(query_ix).format('fasta')
-    hits = config.read_blast_hits_json(query_ix)['hits']
+    hits = config.read_hits_json(query_ix)['hits']
     return {
         'url_from_accession': config.url_from_accession,
         'title': config.REPORT.TITLE,

@@ -357,13 +357,13 @@ class Config:
             return self.query_sequences[int(index)]
         return self.query_sequences
 
-    def read_blast_hits_json(self, query):
+    def read_hits_json(self, query):
         """Read BLAST hits from JSON file."""
         query_dir = self.get_query_dir(query)
         path = query_dir / self.HITS_JSON
         return self.read_json(path)
 
-    def read_blast_hits_fasta(self, query) -> list[SeqIO.SeqRecord]:
+    def read_hits_fasta(self, query) -> list[SeqIO.SeqRecord]:
         """Read BLAST hits from JSON file."""
         query_dir = self.get_query_dir(query)
         path = query_dir / self.HITS_FASTA
