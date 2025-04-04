@@ -10,6 +10,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from Bio import SeqIO
 from Bio.Seq import Seq
 
+from src.gbif.taxonomy import fetch_kingdom
 from src.utils import errors
 from src.utils.throttle import ENDPOINTS, Throttle
 
@@ -53,7 +54,10 @@ class BoldSearch:
                     taxa_collectors[taxon] = set()
                 if collector:
                     taxa_collectors[taxon].update(collector.split(","))
-        return taxa_collectors
+        return {
+            k: list(v)
+            for k, v in taxa_collectors.items()
+        }
 
     @property
     def taxon_taxonomy(self) -> dict[str, dict[str, str]]:
@@ -70,7 +74,7 @@ class BoldSearch:
                     "genus": record.get("genus_name", ""),
                     "species": species_name,
                 }
-        return taxonomy_dict
+        return self._fetch_kingdoms(taxonomy_dict)
 
     def _read_sequence_from_fasta(
         self,
@@ -126,6 +130,11 @@ class BoldSearch:
             root = ElementTree.fromstring(response.text)
             sequence_hits = []
             for match in root.findall("match"):
+                similarity_str = match.find("similarity").text
+                latitude_str = match.find(
+                    "specimen/collectionlocation/coord/lat").text
+                longitude_str = match.find(
+                    "specimen/collectionlocation/coord/lon").text
                 result = {
                     "hit_id": match.find("ID").text,
                     "sequence_description": (
@@ -136,28 +145,16 @@ class BoldSearch:
                     "taxonomic_identification": (
                         match.find("taxonomicidentification").text
                     ),
-                    "similarity": match.find("similarity").text,
+                    "similarity": (
+                        float(similarity_str) if similarity_str else None),
                     "specimen": match.find("specimen").text,
                     "url": match.find("specimen/url").text,
                     "country": (
                         match.find("specimen/collectionlocation/country").text
                     ),
-                    "latitude": (
-                        match.find(
-                            "specimen/collectionlocation/coord/lat"
-                        ).text
-                        if match.find(
-                            "specimen/collectionlocation/coord/lat"
-                        ) is not None else ""
-                    ),
+                    "latitude": float(latitude_str) if latitude_str else None,
                     "longitude": (
-                        match.find(
-                            "specimen/collectionlocation/coord/lon"
-                        ).text
-                        if match.find(
-                            "specimen/collectionlocation/coord/lon"
-                        ) is not None else ""
-                    ),
+                        float(longitude_str) if longitude_str else None),
                 }
                 sequence_hits.append(result)
             hits[sequence.id] = {
@@ -234,6 +231,8 @@ class BoldSearch:
                     "genus": hit.get("genus_name", ""),
                     "species": hit.get("species_name", ""),
                 }
+                hit['accession'] = hit.pop("genbank_accession", "")
+                hit['identity'] = hit['similarity']
                 # Remove redundant fields
                 hit.pop("phylum_name", None)
                 hit.pop("class_name", None)
@@ -241,6 +240,7 @@ class BoldSearch:
                 hit.pop("family_name", None)
                 hit.pop("genus_name", None)
                 hit.pop("species_name", None)
+
                 hits_with_metadata[query_title]['hits'][i] = hit
 
         self.raw_hits = None
@@ -270,7 +270,6 @@ class BoldSearch:
     ) -> list[str]:
         """Extract taxa (taxonomic_identification)."""
         taxa = []
-        # print(f"Hits Result in _extract_taxa: {hits}")
         for result in query_results.values():
             for hit in result['hits']:
                 taxonomic_identification = hit.get("taxonomic_identification")
@@ -334,3 +333,38 @@ class BoldSearch:
             )
 
         return records
+
+    def _fetch_kingdoms(self, taxonomies: dict) -> dict:
+        """Fetch correct taxonomic kingdom for each taxonomy."""
+        phyla = {
+            data['phylum']: None
+            for data in taxonomies.values()
+        }
+
+        with ThreadPoolExecutor(max_workers=20) as executor:
+            futures = {
+                executor.submit(fetch_kingdom, phylum): phylum
+                for phylum in phyla.keys()
+            }
+            for future in as_completed(futures):
+                phylum = futures[future]
+                try:
+                    kingdom = future.result()
+                    if kingdom:
+                        phyla[phylum] = kingdom
+                    else:
+                        logger.warning(
+                            f"Kingdom not found for phylum: {phylum}"
+                        )
+                except Exception as e:
+                    logger.error(
+                        f"Error fetching kingdom for phylum {phylum}: {e}"
+                    )
+
+        return {
+            taxon: {
+                **data,
+                "kingdom": phyla[data['phylum']] or 'NONE',
+            }
+            for taxon, data in taxonomies.items()
+        }

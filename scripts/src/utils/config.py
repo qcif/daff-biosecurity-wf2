@@ -64,6 +64,14 @@ class Config:
                                  'db_coverage.json')
     DB_COVERAGE_TOI_LIMIT = int(os.getenv("DB_COVERAGE_TOI_LIMIT", 10))
 
+    # BOLD-specific
+    BOLD_TAXON_COUNT_JSON = os.getenv("BOLD_TAXON_COUNT_JSON",
+                                      "bold_taxon_counts.json")
+    BOLD_TAXON_COLLECTORS_JSON = os.getenv("BOLD_TAXON_COLLECTORS_JSON",
+                                           "bold_taxon_collectors.json")
+    BOLD_TAXONOMY_JSON = os.getenv("BOLD_TAXONOMY_JSON",
+                                   "bold_taxonomy.json")
+
     BOLD_FLAG = 'BOLD'
     DB_COVERAGE_MAX_CANDIDATES = 3
     FLAG_FILE_TEMPLATE = '{identifier}.flag'
@@ -183,7 +191,7 @@ class Config:
         query_title_path = query_dir / self.QUERY_TITLE_FILE
         with query_title_path.open("w") as f:
             f.write(query_title)
-            logger.info(f"BLAST query title written to {query_title_path}")
+            logger.info(f"Query title written to {query_title_path}")
         return query_dir
 
     def configure_query_logger(self, query_dir):
