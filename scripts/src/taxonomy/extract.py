@@ -115,9 +115,6 @@ def taxids(species_list: list[str]) -> dict[str, str]:
                 check=True,
             )
         except subprocess.CalledProcessError as exc:
-            print(f"Error: {exc}")
-            print(f"Standard Output: {exc.stdout}")
-            print(f"Standard Error: {exc.stderr}")
             logger.error(
                 "[extract.taxids] taxonkit name2taxid failed with error:\n"
                 + exc.stderr
