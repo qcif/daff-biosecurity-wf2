@@ -23,38 +23,41 @@ TAXONOMIC_RANKS = [
 
 def taxonomies(taxids: list[str]) -> dict[str, dict[str, str]]:
     """Use taxonkit lineage to extract taxonomic data for given taxids."""
+
+    # Because temporary file handling in Windows is different,
+    # delete parameter need to be set to False and closed manually
     with tempfile.NamedTemporaryFile(mode='w+', delete=False) as temp_file:
         temp_file.write("\n".join(taxids))
         temp_file.flush()
         temp_file_name = temp_file.name
-        try:
-            result = subprocess.run(
-                [
-                    'taxonkit',
-                    'lineage',
-                    '-R',
-                    '-c', temp_file_name,
-                    '--data-dir', config.TAXONKIT_DATA,
-                ],
-                capture_output=True,
-                check=True,
-                text=True,
+    try:
+        result = subprocess.run(
+            [
+                'taxonkit',
+                'lineage',
+                '-R',
+                '-c', temp_file_name,
+                '--data-dir', config.TAXONKIT_DATA,
+            ],
+            capture_output=True,
+            check=True,
+            text=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        logger.error(
+            "[extract.taxonomies] taxonkit lineage failed with error:\n"
+            + exc.stderr
+        )
+        raise exc
+    finally:
+        if temp_file:
+            temp_file.close()
+        # Clean up the temporary file after processing
+        if os.path.exists(temp_file_name):
+            os.remove(temp_file_name)
+            logger.info(
+                f"Temporary file {temp_file_name} deleted successfully."
             )
-        except subprocess.CalledProcessError as exc:
-            logger.error(
-                "[extract.taxonomies] taxonkit lineage failed with error:\n"
-                + exc.stderr
-            )
-            raise exc
-        finally:
-            if temp_file:
-                temp_file.close()
-            # Clean up the temporary file after processing
-            if os.path.exists(temp_file_name):
-                os.remove(temp_file_name)
-                logger.info(
-                    f"Temporary file {temp_file_name} deleted successfully."
-                )
 
     logger.debug(
         "[extract.taxids] taxonkit name2taxid stdout:\n"
@@ -98,37 +101,40 @@ def taxids(species_list: list[str]) -> dict[str, str]:
         f" name2taxid with {len(species_list)} species:\n"
         + "\n".join(species_list[:3] + ['...'])
     )
+
+    # Because temporary file handling in Windows is different,
+    # delete parameter need to be set to False and closed manually
     with tempfile.NamedTemporaryFile(mode='w+', delete=False) as temp_file:
         temp_file.write("\n".join(species_list))
         temp_file.flush()
         temp_file_name = temp_file.name
-        try:
-            result = subprocess.run(
-                [
-                    'taxonkit',
-                    'name2taxid',
-                    temp_file.name,
-                    '--data-dir', config.TAXONKIT_DATA,
-                ],
-                capture_output=True,
-                text=True,
-                check=True,
+    try:
+        result = subprocess.run(
+            [
+                'taxonkit',
+                'name2taxid',
+                temp_file.name,
+                '--data-dir', config.TAXONKIT_DATA,
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        logger.error(
+            "[extract.taxids] taxonkit name2taxid failed with error:\n"
+            + exc.stderr
+        )
+        raise exc
+    finally:
+        if temp_file:
+            temp_file.close()
+        # Clean up the temporary file after processing
+        if os.path.exists(temp_file_name):
+            os.remove(temp_file_name)
+            logger.info(
+                f"Temporary file {temp_file_name} deleted successfully."
             )
-        except subprocess.CalledProcessError as exc:
-            logger.error(
-                "[extract.taxids] taxonkit name2taxid failed with error:\n"
-                + exc.stderr
-            )
-            raise exc
-        finally:
-            if temp_file:
-                temp_file.close()
-            # Clean up the temporary file after processing
-            if os.path.exists(temp_file_name):
-                os.remove(temp_file_name)
-                logger.info(
-                    f"Temporary file {temp_file_name} deleted successfully."
-                )
 
     logger.debug(
         "[extract.taxids] taxonkit name2taxid stdout:\n"
