@@ -46,7 +46,7 @@ def main():
     config.set_output_dir(args.output_dir)
     config.configure_query_logger(args.query_dir)
     result = config.read_hits_json(args.query_dir)
-    if args.bold:
+    if args.is_bold:
         candidate_hits, candidate_hits_strict = _filter_candidates_bold(
             result['hits'])
     else:
@@ -71,8 +71,9 @@ def _parse_args():
         help=f"Path to output directory. Defaults to {config.output_dir}.")
     parser.add_argument(
         "--bold",
+        dest="is_bold",
         action="store_true",
-        help="Process outputs from BOLD API search.")
+        help="Outputs are from BOLD query.")
     return parser.parse_args()
 
 
