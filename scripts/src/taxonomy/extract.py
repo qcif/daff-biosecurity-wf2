@@ -1,4 +1,5 @@
 import logging
+import os
 import subprocess
 import tempfile
 
@@ -22,7 +23,7 @@ TAXONOMIC_RANKS = [
 
 def taxonomies(taxids: list[str]) -> dict[str, dict[str, str]]:
     """Use taxonkit lineage to extract taxonomic data for given taxids."""
-    with tempfile.NamedTemporaryFile(mode='w+') as temp_file:
+    with tempfile.NamedTemporaryFile(mode='w+', delete=False) as temp_file:
         temp_file.write("\n".join(taxids))
         temp_file.flush()
         temp_file_name = temp_file.name
@@ -45,6 +46,15 @@ def taxonomies(taxids: list[str]) -> dict[str, dict[str, str]]:
                 + exc.stderr
             )
             raise exc
+        finally:
+            if temp_file:
+                temp_file.close()
+            # Clean up the temporary file after processing
+            if os.path.exists(temp_file_name):
+                os.remove(temp_file_name)
+                logger.info(
+                    f"Temporary file {temp_file_name} deleted successfully."
+                )
 
     logger.debug(
         "[extract.taxids] taxonkit name2taxid stdout:\n"
