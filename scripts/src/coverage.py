@@ -219,7 +219,6 @@ def _parallel_process_tasks(
         results,
         target_taxids,
         target_gbif_taxa,
-        taxid_to_taxon,
         candidate_list,
         toi_list,
         pmi,
@@ -230,7 +229,6 @@ def _collect_results(
     results,
     target_taxids,
     target_gbif_taxa,
-    taxid_to_taxon,
     candidate_list,
     toi_list,
     pmi,
@@ -240,41 +238,33 @@ def _collect_results(
     toi_results = {}
     pmi_results = {}
 
-    for taxid in target_taxids.values():
-        target_taxon = taxid_to_taxon[taxid]
-        result = results[get_target_coverage.__name__].get(taxid)
-        error_detected = error_detected or result is None
-
-        if target_taxon in candidate_list:
-            candidate_results[target_taxon] = candidate_results.get(
-                target_taxon, {})
-            candidate_results[target_taxon]['target'] = result
-        if target_taxon in toi_list:
-            toi_results[target_taxon] = toi_results.get(target_taxon, {})
-            toi_results[target_taxon]['target'] = result
-        if target_taxon == pmi:
-            pmi_results[target_taxon] = {
-                'target': result,
-            }
-
     for target_taxon, gbif_taxon in target_gbif_taxa.items():
+        taxid = target_taxids[target_taxon]
+        target_result = results[get_target_coverage.__name__].get(taxid)
         related_result = results[get_related_coverage.__name__].get(gbif_taxon)
         country_result = results[get_related_country_coverage.__name__].get(
             gbif_taxon)
         error_detected = (
             error_detected
-            or related_result is None
-            or country_result is None
+            or None in (target_result, related_result, country_result)
         )
         if target_taxon in candidate_list:
+            candidate_results[target_taxon] = candidate_results.get(
+                target_taxon, {})
+            candidate_results[target_taxon]['target'] = target_result
             candidate_results[target_taxon]['related'] = related_result
             candidate_results[target_taxon]['country'] = country_result
         if target_taxon in toi_list:
+            toi_results[target_taxon] = toi_results.get(target_taxon, {})
+            toi_results[target_taxon]['target'] = target_result
             toi_results[target_taxon]['related'] = related_result
             toi_results[target_taxon]['country'] = country_result
         if target_taxon == pmi:
-            pmi_results[target_taxon]['related'] = related_result
-            pmi_results[target_taxon]['country'] = country_result
+            pmi_results[target_taxon] = {
+                'target': target_result,
+                'related': related_result,
+                'country': country_result,
+            }
 
     return {
         TARGETS.CANDIDATE: candidate_results,

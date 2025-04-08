@@ -112,12 +112,17 @@
             "name": "P5 DB coverage",
             "program": "${workspaceFolder}/scripts/p5_db_coverage.py",
             "args": [
-                // "output/query_001_LC438549"
-                "output/query_002_ON075825",
+                "output/query_001_LC438549"
+                // "output/query_002_ON075825",
                 // "output/query_006_VE24-1086_COI"
+                // "output/test-cases/issue_25_p5_keyerror/query_002_barcode88_contig1_PE250203-A_REP1_KAPA",
+
+                // "--output_dir", "output/test-cases/issue_25_p5_keyerror",
             ],
             "env": {
                 "LOGGING_DEBUG": "1",
+                "INPUT_METADATA_CSV_FILEPATH": "output/test-cases/issue_25_p5_keyerror/metadata.csv",
+                "INPUT_FASTA_FILEPATH": "output/test-cases/issue_25_p5_keyerror/queries.fasta",
             },
             "preLaunchTask": "clear-log-files"
         },
