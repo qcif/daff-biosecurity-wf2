@@ -5,9 +5,12 @@ import logging
 import pandas as pd
 import geopandas as gpd
 from pathlib import Path
-from matplotlib import pyplot as plt
-from matplotlib.colors import LogNorm
-from pygbif import occurrences
+
+logging.getLogger('matplotlib').setLevel(logging.WARNING)
+
+from matplotlib import pyplot as plt  # noqa:E402
+from matplotlib.colors import LogNorm  # noqa:E402
+from pygbif import occurrences  # noqa:E402
 
 logger = logging.getLogger(__name__)
 MODULE_NAME = 'GBIF MAPS'
