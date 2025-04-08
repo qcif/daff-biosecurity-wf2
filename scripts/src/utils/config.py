@@ -33,8 +33,6 @@ class Config:
     TAXONKIT_DATA = os.getenv("TAXONKIT_DATA",
                               Path('~/.taxonkit').expanduser())
     TIMESTAMP_FILENAME = os.getenv("TIMESTAMP_FILENAME", 'timestamp.txt')
-    INPUT_FASTA_FILEPATH = Path(os.getenv("INPUT_FASTA_FILEPATH",
-                                          "tests/test-data/queries.fasta"))
     ACCESSIONS_FILENAME = os.getenv("ACCESSIONS_FILENAME", "accessions.txt")
     TAXONOMY_FILE = os.getenv("TAXONOMY_FILENAME", 'taxonomy.csv')
     QUERY_TITLE_FILE = os.getenv("QUERY_TITLE_FILENAME", 'query_title.txt')
@@ -113,7 +111,7 @@ class Config:
         )
         FASTA_FILEPATH = Path(
             os.getenv(
-                "INPUT_FASTA_PATH",
+                "INPUT_FASTA_FILEPATH",
                 Path(__file__).parent.parent.parent.parent
                 / 'tests/test-data/queries.fasta')
         )
@@ -352,7 +350,7 @@ class Config:
         """Read query FASTA file."""
         if not hasattr(self, "query_sequences"):
             self.query_sequences = list(
-                SeqIO.parse(self.INPUT_FASTA_FILEPATH, "fasta"))
+                SeqIO.parse(self.INPUTS.FASTA_FILEPATH, "fasta"))
         if index is not None:
             return self.query_sequences[int(index)]
         return self.query_sequences
