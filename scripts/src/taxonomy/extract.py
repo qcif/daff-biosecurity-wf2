@@ -98,9 +98,10 @@ def taxids(species_list: list[str]) -> dict[str, str]:
         f" name2taxid with {len(species_list)} species:\n"
         + "\n".join(species_list[:3] + ['...'])
     )
-    with tempfile.NamedTemporaryFile(mode='w+') as temp_file:
+    with tempfile.NamedTemporaryFile(mode='w+', delete=False) as temp_file:
         temp_file.write("\n".join(species_list))
         temp_file.flush()
+        temp_file_name = temp_file.name
         try:
             result = subprocess.run(
                 [
@@ -114,11 +115,23 @@ def taxids(species_list: list[str]) -> dict[str, str]:
                 check=True,
             )
         except subprocess.CalledProcessError as exc:
+            print(f"Error: {exc}")
+            print(f"Standard Output: {exc.stdout}")
+            print(f"Standard Error: {exc.stderr}")
             logger.error(
                 "[extract.taxids] taxonkit name2taxid failed with error:\n"
                 + exc.stderr
             )
             raise exc
+        finally:
+            if temp_file:
+                temp_file.close()
+            # Clean up the temporary file after processing
+            if os.path.exists(temp_file_name):
+                os.remove(temp_file_name)
+                logger.info(
+                    f"Temporary file {temp_file_name} deleted successfully."
+                )
 
     logger.debug(
         "[extract.taxids] taxonkit name2taxid stdout:\n"
