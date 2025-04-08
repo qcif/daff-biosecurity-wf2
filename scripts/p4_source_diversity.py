@@ -28,7 +28,7 @@ def main():
     config.configure_query_logger(args.query_dir)
     species, hits = _read_candidate_hits(args.query_dir)
     species, hits, aggregated_sources = _collect_sources_per_species(
-        species, hits)
+        species, hits, bold=args.is_bold)
     _set_flags(species, args.query_dir)
     candidates = {
         "species": species,
@@ -48,30 +48,43 @@ def _parse_args():
         type=existing_path,
         default=config.output_dir,
         help=f"Path to output directory. Defaults to {config.output_dir}.")
+    parser.add_argument(
+        "--bold",
+        dest="is_bold",
+        action="store_true",
+        help="Outputs are from BOLD query.")
     return parser.parse_args()
 
 
-def _collect_sources_per_species(species, hits) -> list[dict]:
+def _collect_sources_per_species(species, hits, bold=False) -> list[dict]:
     aggregated_sources = {}
     accession_sources = genbank.fetch_sources([
         hit["accession"] for hit in hits
+        if hit["accession"]
     ])
     for sp_ix, spec in enumerate(species):
         species_str = spec["species"]
         independent_sources = []
         for hit_ix, hit in enumerate(hits):
             if hit["species"] == species_str:
-                source = accession_sources[hit["accession"]]
-                matched = False
-                for j, independent_source in enumerate(independent_sources):
-                    for src in independent_source:
-                        if source.matches(src):
-                            independent_sources[j].append(source)
-                            matched = True
-                            break
-                if not matched:
-                    independent_sources.append([source])
+                if hit["accession"] in accession_sources:
+                    source = accession_sources[hit["accession"]]
+                    matched = False
+                    for j, independent_source in enumerate(
+                        independent_sources
+                    ):
+                        for src in independent_source:
+                            if source.matches(src):
+                                independent_sources[j].append(source)
+                                matched = True
+                                break
+                    if not matched:
+                        independent_sources.append([source])
+                else:
+                    # It's a BOLD hit without a genbank ID - do nothing for now
+                    pass
                 hits[hit_ix]["source"] = source
+
         species[sp_ix]['independent_sources'] = len(independent_sources)
         species[sp_ix]['hit_count'] = hit_ix + 1
         aggregated_sources[species_str] = independent_sources
