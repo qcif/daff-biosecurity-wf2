@@ -41,9 +41,6 @@ def taxonomies(taxids: list[str]) -> dict[str, dict[str, str]]:
                 text=True,
             )
         except subprocess.CalledProcessError as exc:
-            print(f"Error: {exc}")
-            print(f"Standard Output: {exc.stdout}")
-            print(f"Standard Error: {exc.stderr}")
             logger.error(
                 "[extract.taxonomies] taxonkit lineage failed with error:\n"
                 + exc.stderr
