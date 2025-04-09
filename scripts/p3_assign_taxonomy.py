@@ -56,6 +56,7 @@ def main():
         args.query_dir,
         candidate_hits,
         candidate_hits_strict,
+        bold=args.is_bold,
     )
     _detect_taxa_of_interest(candidate_species, args.query_dir)
 
@@ -120,7 +121,12 @@ def _filter_candidates_bold(hits):
     return candidate_hits, candidate_hits_strict
 
 
-def _assign_species_id(query_dir, candidate_hits, candidate_hits_strict):
+def _assign_species_id(
+        query_dir,
+        candidate_hits,
+        candidate_hits_strict,
+        bold=False,
+    ):
     """Attempt species ID from BLAST hits.json data."""
     query_ix = config.get_query_ix(query_dir)
     candidate_species = deduplicate([
@@ -155,7 +161,7 @@ def _assign_species_id(query_dir, candidate_hits, candidate_hits_strict):
         selected_species,
     )
     if len(selected_species) > config.CRITERIA.MAX_CANDIDATES_FOR_ANALYSIS:
-        _write_boxplot(query_dir, selected_hits)
+        _write_boxplot(query_dir, selected_hits, bold)
     taxonomic_id = _write_taxonomic_id(query_dir, candidate_species_strict)
     _write_pmi_match(taxonomic_id, query_ix, query_dir)
     return selected_species
@@ -269,13 +275,15 @@ def _write_pmi_match(taxonomic_identity, query_ix, query_dir):
         logger.info("No taxonomic ID - no PMI flag (7) written.")
 
 
-def _write_boxplot(query_dir, hits):
+def _write_boxplot(query_dir, hits, bold=False):
+    title = 'Similarity to query (%)' if bold else 'Identity to query (%)'
+    identity_key = 'similarity' if bold else 'identity'
     genera = {}
     for hit in hits:
         genus = hit['species'].split(' ')[0] if hit['species'] else 'No genus'
         if genus not in genera:
             genera[genus] = []
-        genera[genus].append(hit['identity'] * 100)
+        genera[genus].append(hit[identity_key] * 100)
     labels = []
     identities = []
     for genus, values in genera.items():
@@ -286,7 +294,7 @@ def _write_boxplot(query_dir, hits):
     if len(genera) > 5:
         plt.xticks(rotation=80)
     plt.xlabel('Genus', fontsize=14)
-    plt.ylabel('Identity to query (%)', fontsize=14)
+    plt.ylabel(title, fontsize=14)
     boxplot_image_path = query_dir / config.BOXPLOT_IMG_FILENAME
     plt.savefig(boxplot_image_path, bbox_inches='tight', dpi=150)
     plt.close()
