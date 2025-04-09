@@ -41,7 +41,7 @@ def render(query):
     # TODO: If BOLD, replace 'identity' with 'similarity'
 
     report_path = config.get_report_path(query_ix)
-    with open(report_path, 'w') as f:
+    with open(report_path, 'w', encoding="utf-8") as f:
         f.write(rendered_html)
     logger.info(f"HTML document written to {report_path}")
 
@@ -58,7 +58,7 @@ def _get_static_file_contents():
             ]
         elif root.name == 'js':
             static_files['js'] = sorted([
-                f'/* {f} */\n' + (root / f).read_text()
+                f'/* {f} */\n' + (root / f).read_text(encoding="utf-8")
                 for f in files
             ])
         elif root.name == 'img':

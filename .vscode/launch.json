@@ -60,12 +60,12 @@
             "name": "P3 Assign taxonomy",
             "program": "${workspaceFolder}/scripts/p3_assign_taxonomy.py",
             "args": [
-                // "output/query_001_LC438549"
+                "output/query_001_LC438549"
                 // "output/query_002_ON075825"
                 // "output/query_003_PP466915"
                 // "output/query_004_JQ585746"
                 // "output/query_005_LC547004"
-                "output/query_006_VE24-1086_COI"
+                // "output/query_006_VE24-1086_COI"
             ],
             "env": {
                 "INPUT_TOI_FILEPATH": "tests/test-data/taxa_of_interest.txt",
@@ -138,7 +138,7 @@
                 "--output_dir", "output",
             ],
             "env": {
-                "INPUT_FASTA_FILEPATH": "tests/test-data/query.fasta",
+                "INPUT_FASTA_FILEPATH": "tests/test-data/queries.fasta",
             },
         }
     ]
