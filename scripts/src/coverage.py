@@ -359,7 +359,7 @@ def assess_coverage(query_dir) -> dict[str, dict[str, dict]]:
         toi_list,
         pmi,
     )
-    _set_flags(results, query_dir)
+    _set_flags(results, query_dir, higher_taxon_targets)
     return results, is_error
 
 
@@ -485,10 +485,16 @@ def fetch_gb_records_for_species(species_names, locus):
     return species_counts, errors
 
 
-def _set_flags(db_coverage, query_dir):
+def _set_flags(db_coverage, query_dir, higher_taxon_targets):
     """Set flags 5.1 - 5.3 (DB coverage) for each target."""
     def set_target_coverage_flag(target, target_type, count):
-        if count is None or count == 'NA':
+        if count is None:
+            logger.warning(
+                f"Could not set DB coverage flags 5.* for target '{target}'"
+                f" ({target_type}) - species counts are None but expected"
+                " a dict. This indicates an error has occurred above.")
+            return
+        elif count == FLAGS.NA:
             # Indicates a higher level taxon (family or higher)
             flag_value = FLAGS.NA
         elif not isinstance(count, int):
@@ -510,8 +516,12 @@ def _set_flags(db_coverage, query_dir):
         )
 
     def set_related_coverage_flag(target, target_type, species_counts):
-        if not species_counts:
-            return  # TODO: Indicates a fatal error
+        if species_counts is None:
+            logger.warning(
+                f"Could not set DB coverage flags 5.* for target '{target}'"
+                f" ({target_type}) - species counts are None but expected"
+                " a dict. This indicates an error has occurred above.")
+            return
         if species_counts == FLAGS.NA:
             flag_value = FLAGS.NA
         elif isinstance(species_counts, str):
@@ -520,17 +530,20 @@ def _set_flags(db_coverage, query_dir):
                 f" species ({target_type}) '{target}': {species_counts}.")
         else:
             total_species = len(species_counts)
-            represented_species = len([
-                count for count in species_counts.values()
-                if count > 0
-            ])
-            percent_coverage = 100 * represented_species / total_species
-            if percent_coverage > config.CRITERIA.DB_COV_RELATED_MIN_A:
-                flag_value = FLAGS.A
-            elif percent_coverage > config.CRITERIA.DB_COV_RELATED_MIN_B:
-                flag_value = FLAGS.B
+            if total_species:
+                represented_species = len([
+                    count for count in species_counts.values()
+                    if count > 0
+                ])
+                percent_coverage = 100 * represented_species / total_species
+                if percent_coverage > config.CRITERIA.DB_COV_RELATED_MIN_A:
+                    flag_value = FLAGS.A
+                elif percent_coverage > config.CRITERIA.DB_COV_RELATED_MIN_B:
+                    flag_value = FLAGS.B
+                else:
+                    flag_value = FLAGS.C
             else:
-                flag_value = FLAGS.C
+                flag_value = FLAGS.NA
         Flag.write(
             query_dir,
             FLAGS.DB_COVERAGE_RELATED,
@@ -541,7 +554,11 @@ def _set_flags(db_coverage, query_dir):
 
     def set_country_coverage_flag(target, target_type, species_counts):
         if species_counts is None:
-            return  # TODO: Indicates a fatal error
+            logger.warning(
+                f"Could not set DB coverage flags 5.* for target '{target}'"
+                f" ({target_type}) - species counts are None but expected"
+                " a dict. This indicates an error has occurred above.")
+            return
         if species_counts == FLAGS.NA:
             flag_value = FLAGS.NA
         else:
@@ -573,12 +590,11 @@ def _set_flags(db_coverage, query_dir):
 
     for target_type, target_data in db_coverage.items():
         for target_species, coverage_data in target_data.items():
-            if 'related' not in coverage_data:
-                # Indicates a higher level taxon (family or higher)
+            if target_species in higher_taxon_targets:
+                # Target is family or higher - flags are not set
                 coverage_data['target'] = FLAGS.NA
                 coverage_data['related'] = FLAGS.NA
                 coverage_data['country'] = FLAGS.NA
-
             try:
                 set_target_coverage_flag(
                     target_species,
