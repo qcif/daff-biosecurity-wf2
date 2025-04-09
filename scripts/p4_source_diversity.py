@@ -28,7 +28,7 @@ def main():
     config.configure_query_logger(args.query_dir)
     species, hits = _read_candidate_hits(args.query_dir)
     species, hits, aggregated_sources = _collect_sources_per_species(
-        species, hits, bold=args.is_bold)
+        species, hits)
     _set_flags(species, args.query_dir)
     candidates = {
         "species": species,
@@ -48,15 +48,10 @@ def _parse_args():
         type=existing_path,
         default=config.output_dir,
         help=f"Path to output directory. Defaults to {config.output_dir}.")
-    parser.add_argument(
-        "--bold",
-        dest="is_bold",
-        action="store_true",
-        help="Outputs are from BOLD query.")
     return parser.parse_args()
 
 
-def _collect_sources_per_species(species, hits, bold=False) -> list[dict]:
+def _collect_sources_per_species(species, hits) -> list[dict]:
     aggregated_sources = {}
     accession_sources = genbank.fetch_sources([
         hit["accession"] for hit in hits
@@ -82,7 +77,9 @@ def _collect_sources_per_species(species, hits, bold=False) -> list[dict]:
                         independent_sources.append([source])
                 else:
                     # It's a BOLD hit without a genbank ID - do nothing for now
-                    pass
+                    logger.warning(
+                        f"Hit {hit['accession']} not found in genbank sources."
+                    )
                 hits[hit_ix]["source"] = source
 
         species[sp_ix]['independent_sources'] = len(independent_sources)
