@@ -10,8 +10,9 @@ from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
 
 from .outcomes import DetectedTaxon
-from ..utils import config
-from ..utils.flags import Flag, FLAGS, TARGETS
+from src.utils import config
+from src.utils.flags import Flag, FLAGS, TARGETS
+from src.utils import serialize
 
 logger = logging.getLogger(__name__)
 config = config.Config()
@@ -27,10 +28,9 @@ def render(query):
     template = j2.get_template('index.html')
     context = _get_report_context(query_ix)
 
-    # ! TODO: Remove this
-    path = config.output_dir / 'example_report_context.json'
+    # ! TODO: Remove this eventually
+    path = config.output_dir / 'report_context.json'
     with path.open('w') as f:
-        from src.utils import serialize
         print(f"Writing report context to {path}")
         json.dump(context, f, default=serialize, indent=2)
     # ! ~~~
