@@ -15,16 +15,16 @@
   <tbody>
     {% for row in toi_rows %}
     <tr>
-      {% if row["Match rank"] %}
-        {% for value in row.values() %}
-        <td>{{ value or '-' }}</td>
-        {% endfor %}
-      {% else %}
-      <td>{{ row['Taxon of interest'] }}</td>
+    {% if row["Match rank"] %}
+      {% for value in row.values() %}
+      <td class="text-success">{{ value or '-' }}</td>
+      {% endfor %}
+    {% else %}
+      <td class="text-danger">{{ row['Taxon of interest'] }}</td>
       <td colspan="5" class="text-danger text-center" style="padding-right: 15%;">
         Did not match any candidate
       </td>
-      {% endif %}
+    {% endif %}
     </tr>
     {% endfor %}
 </table>
