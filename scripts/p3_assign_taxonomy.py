@@ -352,9 +352,9 @@ def _write_toi_detected(query_dir, toi, detected, write_flag=True):
     """Record whether a given TOI was detected and set flag."""
     if write_flag:
         if detected:
-            value = FLAGS.B
-        else:
             value = FLAGS.A
+        else:
+            value = FLAGS.B
         Flag.write(
             query_dir,
             FLAGS.TOI,

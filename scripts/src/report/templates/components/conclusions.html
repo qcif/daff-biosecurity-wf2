@@ -45,13 +45,13 @@
 
 {% if conclusions.summary.toi %}
 <table
-  class="table border alert-{{  conclusions.summary.toi['bs-class'] }}"
+  class="table border-{{ conclusions.summary.toi['bs-class'] }}"
 >
-  <tr>
-    <td>Taxa of interest ruled out</td>
+  <tr class="alert-{{ conclusions.summary.toi['bs-class'] }}">
+    <td>Taxa of interest detected</td>
     <td style="width: 75px;">
-      <strong class="text-{% if conclusions.summary.toi.ruled_out %}success{% else %}danger{% endif %}">
-        {{ conclusions.summary.toi.ruled_out }}
+      <strong class="text-{% if conclusions.summary.toi.detected %}success{% else %}danger{% endif %}">
+        {{ 'True' if conclusions.summary.toi.detected else 'False' }}
       </strong>
     </td>
   </tr>

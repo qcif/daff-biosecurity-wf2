@@ -205,7 +205,7 @@ def _get_toi_result(query_ix, flags):
         ]
     flag_2 = flags[FLAGS.TOI]
     criteria_2 = f"<strong>Flag {flag_2}</strong>: {flag_2.explanation}"
-    ruled_out = flag_2.value == FLAGS.A
+    ruled_out = flag_2.value == FLAGS.B
     criteria = [
         {
             'message': criteria_2,
@@ -247,7 +247,7 @@ def _get_toi_result(query_ix, flags):
         'detected': detected_tois,
         'criteria': criteria,
         'ruled_out': ruled_out,
-        'bs-class': 'success' if ruled_out else 'danger',
+        'bs-class': 'success' if detected_tois else 'danger',
     }
 
 
