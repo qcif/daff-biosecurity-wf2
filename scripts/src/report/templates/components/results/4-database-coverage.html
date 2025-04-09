@@ -23,13 +23,9 @@
     aria-orientation="vertical"
     style="margin-right: -2px; position: relative; z-index: 2;"
   >
-    <!-- <div class="text-danger" style="position: absolute; left: -100px; top: 170px; width: 80px; border-right: 5px solid red; height: 150px; padding-top: 50px;">
-      Not yet available
-    </div> -->
     {{ render_target_btn(db_coverage.candidate, 'Candidates', 'candidate', conclusions.flags) }}
     {{ render_target_btn(db_coverage.pmi, 'Preliminary ID', 'pmi', conclusions.flags) }}
     {{ render_target_btn(db_coverage.toi, 'Taxa of interest', 'toi', conclusions.flags) }}
-
     <script>
       // Select first tab when page loads
       document.addEventListener('DOMContentLoaded', function() {
