@@ -154,7 +154,7 @@ class Config:
         ]
 
     class REPORT:
-        TITLE = "Taxonomic assignment report"
+        TITLE = "Taxonomic identification report"
 
     def configure(self, output_dir=None, bold=False):
         if output_dir:

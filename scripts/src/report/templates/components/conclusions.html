@@ -1,8 +1,8 @@
 <h3>Result overview</h3>
 
 <div class="my-3">
-  <p class="alert alert-{{ conclusions.flags['1'].bs_class }}">
-    <span class="font-xl">
+  <div class="alert alert-{{ conclusions.flags['1'].bs_class }}">
+    <p class="font-xl mb-1">
       {% if conclusions.summary.result.confirmed %}
       <em>
         {{ conclusions.summary.result.species }}
@@ -10,13 +10,15 @@
       {% else %}
       <strong>Inconclusive</strong>
       {% endif %}
-    </span>
-    <br>
-    {{ conclusions.flags['1'].outcome }}.
-    <br>
-    <strong>Reasoning - Flag 1{{ conclusions.flags['1'].value }}</strong>:
-    {{ conclusions.flags['1'].explanation }}.
-  </p>
+    </p>
+    <p class="mb-1">
+      {{ conclusions.flags['1'].outcome }}.
+    </p>
+    <p class="mb-1">
+      <strong>Reasoning: [Flag 1{{ conclusions.flags['1'].value }}]</strong>
+      {{ conclusions.flags['1'].explanation }}.
+    </p>
+  </div>
 </div>
 
 <table class="table border alert-{{ conclusions.summary.pmi['bs-class'] }}">
