@@ -15,6 +15,7 @@ from src.utils import errors
 from src.utils.throttle import ENDPOINTS, Throttle
 
 logger = logging.getLogger(__name__)
+BOLD_DATABASE = "COX1_SPECIES_PUBLIC"
 ID_ENGINE_URL = "http://v4.boldsystems.org/index.php/Ids_xml"
 FULL_DATA_URL = "http://v4.boldsystems.org/index.php/API_Public/combined"
 SEQUENCE_DATA_URL = "http://v4.boldsystems.org/index.php/API_Public/sequence"
@@ -89,7 +90,7 @@ class BoldSearch:
     def _bold_sequence_search(
         self,
         fasta_file: Path,
-        db: str = "COX1_SPECIES_PUBLIC",
+        db: str = BOLD_DATABASE,
     ) -> dict[str, list[dict[str, any]]]:
         """Submit a sequence search request to BOLD API with throttling."""
         hits = {}
