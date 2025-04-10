@@ -3,7 +3,7 @@ name: 🚀 Enhancement
 about: |
   You've spotted something in the HTML report, or workflow analysis that could
   be improved.
-title: '[ENHANCEMENT] Suggest an enhancement'
+title: 'Suggest an enhancement'
 labels: enhancement
 assignees: 'neoformit'
 

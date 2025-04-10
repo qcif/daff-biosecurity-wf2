@@ -3,7 +3,7 @@ name: 🐛 HTML report bug
 about: |
   You found a bug in the HTML report, like something is rendering incorrectly
   or inconsistently.
-title: '[BUG] Report a bug in the HTML report'
+title: 'Report a bug in the HTML report'
 labels: bug
 assignees: 'neoformit'
 

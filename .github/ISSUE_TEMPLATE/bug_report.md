@@ -3,7 +3,7 @@ name: 🐛 Workflow bug
 about: |
   A bug report should be filed if you have encountered an unexpected error
   during worflow execution, which results in an error message being produced.
-title: '[BUG] Report a bug in the workflow'
+title: 'Report a bug in the workflow'
 labels: bug
 assignees: 'neoformit'
 
