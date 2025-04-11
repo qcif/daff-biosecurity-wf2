@@ -134,8 +134,10 @@
             "program": "${workspaceFolder}/scripts/p6_report.py",
             "args": [
                 // "output/query_001_LC438549",
-                "output/query_002_ON075825",
+                "output/bold/query_001_LC438549",
+                // "output/query_002_ON075825",
                 "--output_dir", "output",
+                "--bold",
             ],
             "env": {
                 "INPUT_FASTA_FILEPATH": "tests/test-data/queries.fasta",

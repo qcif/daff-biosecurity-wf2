@@ -21,12 +21,13 @@ TEMPLATE_DIR = Path(__file__).parent / 'templates'
 STATIC_DIR = Path(__file__).parent / 'static'
 
 
-def render(query):
+def render(query, bold=False):
     """Render to HTML report to the configured output directory."""
-    query_ix = config.get_query_ix(query)
+    query_ix = config.get_query_ix(query, bold=bold)
     j2 = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
     template = j2.get_template('index.html')
-    context = _get_report_context(query_ix)
+    context = _get_report_context(query_ix, bold=bold)
+    context['bold'] = bool(bold)
 
     # ! TODO: Remove this eventually
     path = config.output_dir / 'report_context.json'
@@ -39,6 +40,11 @@ def render(query):
     rendered_html = template.render(**context, **static_files)
 
     # TODO: If BOLD, replace 'identity' with 'similarity'
+    if bold:
+        for hit in context['hits']:
+            hit['similarity'] = hit.get('similarity', 0)
+
+    logger.debug(f"Context hits data: {json.dumps(context['hits'], indent=2)}")
 
     report_path = config.get_report_path(query_ix)
     with open(report_path, 'w', encoding="utf-8") as f:
@@ -78,10 +84,16 @@ def _get_img_src(path):
     )
 
 
-def _get_report_context(query_ix):
+def _get_report_context(query_ix, bold=False):
     """Build the context for the report template."""
     query_fasta_str = config.read_query_fasta(query_ix).format('fasta')
-    hits = config.read_hits_json(query_ix)['hits']
+    hits = config.read_hits_json(query_ix, bold)['hits']
+    # if bold:
+    # if not bold:
+    tree_path = config.get_query_dir(query_ix, bold) / config.TREE_NWK_FILENAME
+    tree_nwk_str = tree_path.read_text().strip() if tree_path.exists() else ""
+    # else:
+    #     tree_nwk_str = ""  # Or None, depending on your template handling
     return {
         'url_from_accession': config.url_from_accession,
         'title': config.REPORT.TITLE,
@@ -101,8 +113,9 @@ def _get_report_context(query_ix):
         'toi_rows': _read_toi_detected(query_ix),
         'aggregated_sources': _read_source_diversity(query_ix),
         'db_coverage': _read_db_coverage(query_ix),
-        'tree_nwk_str': (config.get_query_dir(query_ix)
-                         / config.TREE_NWK_FILENAME).read_text().strip(),
+        'tree_nwk_str': tree_nwk_str,
+        # 'tree_nwk_str': (config.get_query_dir(query_ix, bold=bold)
+        #                  / config.TREE_NWK_FILENAME).read_text().strip(),
     }
 
 

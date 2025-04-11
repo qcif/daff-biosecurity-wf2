@@ -196,16 +196,18 @@ class Config:
         conf = get_logging_config(query_dir / self.QUERY_LOG_FILENAME)
         dictConfig(conf)
 
-    def get_query_ix(self, ix_or_dir):
+    def get_query_ix(self, ix_or_dir, bold=False):
         """Resolve query index/dir to query index."""
         if (
             isinstance(ix_or_dir, str) and QUERY_DIR_PREFIX in ix_or_dir
         ) or isinstance(ix_or_dir, Path):
             query_dir = Path(ix_or_dir)
+            if bold:  # Adjust for bold directory
+                query_dir = query_dir.parent / 'bold' / query_dir.name
             return int(query_dir.name.split("_")[1]) - 1
         return ix_or_dir
 
-    def get_query_dir(self, ix_or_dir):
+    def get_query_dir(self, ix_or_dir, bold=False):
         """Resolve query index/dir to query dir Path."""
         if (
             isinstance(ix_or_dir, str) and QUERY_DIR_PREFIX in ix_or_dir
@@ -219,6 +221,8 @@ class Config:
             self.output_dir
             / f"{QUERY_DIR_PREFIX}{query_ix + 1:>03}_{sample_id}"
         )
+        if bold:
+            query_dir = query_dir.parent / 'bold' / query_dir.name
         query_dir.mkdir(exist_ok=True, parents=True)
         return query_dir
 
@@ -355,9 +359,9 @@ class Config:
             return self.query_sequences[int(index)]
         return self.query_sequences
 
-    def read_hits_json(self, query):
+    def read_hits_json(self, query, bold=False):
         """Read BLAST hits from JSON file."""
-        query_dir = self.get_query_dir(query)
+        query_dir = self.get_query_dir(query, bold)
         path = query_dir / self.HITS_JSON
         return self.read_json(path)
 
