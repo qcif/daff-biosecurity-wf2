@@ -1,8 +1,13 @@
+{% from "macros/alert-level-icon.html" import render_level_icon %}
+{% from "macros/db-coverage-target-modal.html" import render_target_modal %}
+
 <h2>Taxa of interest (TOI)</h2>
 
 <p>
   This sections shows the taxa of interest (TOI) specified by the sample submitter. Each of these taxa has been cross-referenced against the candidate species to determine if they might match the taxonomic identity of the sample. A blank row indicates a TOI that did not match any candidate species, meaning that it is unlikely that the sample matches that TOI.
 </p>
+
+{% set flags = conclusions.flags %}
 
 <table class="table table-striped">
   <thead>
@@ -10,21 +15,42 @@
       {% for colname in toi_rows[0] %}
       <th>{{ colname }}</th>
       {% endfor %}
+      <th class="text-center">DB coverage</th>
     </tr>
   </thead>
   <tbody>
     {% for row in toi_rows %}
+    {% set taxon = row['Taxon of interest'] %}
     <tr>
     {% if row["Match rank"] %}
       {% for value in row.values() %}
       <td class="text-success">{{ value or '-' }}</td>
       {% endfor %}
     {% else %}
-      <td class="text-danger">{{ row['Taxon of interest'] }}</td>
+      <td class="text-danger">{{ taxon }}</td>
       <td colspan="5" class="text-danger text-center" style="padding-right: 15%;">
         Did not match any candidate
       </td>
     {% endif %}
+    <td class="text-center">
+      {% set target_id = 'toi-' + taxon.replace(' ', '-') %}
+      {% set all_flags = [flags['5.1']['toi'][taxon], flags['5.2']['toi'][taxon], flags['5.3']['toi'][taxon]] %}
+      {% set flag = all_flags | max(attribute='level') %}
+      <button
+        class="btn btn-{{ flag.bs_class }}"
+        data-bs-toggle="tooltip"
+        data-bs-placement="bottom"
+        title="{{ flag.outcome }}"
+        onclick="new bootstrap.Modal(document.getElementById('{{ target_id }}Modal')).show();"
+        type="button"
+        style="min-width: 3rem;"
+      >
+        {{ render_level_icon(flag.level) }}
+      </button>
+
+      {{ render_target_modal(db_coverage['toi'][taxon], target_id, taxon, 'toi', flags, metadata) }}
+
+    </td>
     </tr>
     {% endfor %}
 </table>
