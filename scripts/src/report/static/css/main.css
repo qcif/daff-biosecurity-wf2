@@ -114,6 +114,11 @@ tr.interactive.active {
   background: rgb(166, 213, 255);
 }
 
+/* Source diversity */
+.hide {
+  display: none;
+}
+
 /* Database coverage */
 #dbcov-tabs-buttons {
   position: relative;
