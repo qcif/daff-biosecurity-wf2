@@ -137,6 +137,12 @@
               <strong>Reasoning:</strong> {{ flag_5_2.explanation }}
             </p>
 
+            <p>
+              This analysis evaluates the number of species in the given genus for which there are records in the reference database. Species in the given genus are retrieved from the
+              <a href="https://gbif.org/">
+                GBIF database</a>.
+            </p>
+
             <div class="my-5">
               <p>
                 <span class="small-number alert-{{ flag_5_2.bs_class }}">
@@ -240,6 +246,13 @@
               {{ flag_5_3.outcome }}
               <br>
               <strong>Reasoning:</strong> {{ flag_5_3.explanation }}
+            </p>
+
+            <p>
+              This analysis evaluates the number of species in the given genus for which there are records in the reference database, where only species reported in the country of origin are included. Species in the given genus are retrieved from the
+              <a href="https://gbif.org/">
+                GBIF database</a>.
+              These species are then filtered to include only those that have been reported in the country of origin, according to GBIF occurrence records.
             </p>
 
             <div class="my-5">
