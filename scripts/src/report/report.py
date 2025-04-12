@@ -21,12 +21,13 @@ TEMPLATE_DIR = Path(__file__).parent / 'templates'
 STATIC_DIR = Path(__file__).parent / 'static'
 
 
-def render(query):
+def render(query, bold=False):
     """Render to HTML report to the configured output directory."""
     query_ix = config.get_query_ix(query)
     j2 = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
     template = j2.get_template('index.html')
     context = _get_report_context(query_ix)
+    context['bold'] = bold
 
     # ! TODO: Remove this eventually
     path = config.output_dir / 'report_context.json'
@@ -39,6 +40,9 @@ def render(query):
     rendered_html = template.render(**context, **static_files)
 
     # TODO: If BOLD, replace 'identity' with 'similarity'
+    if bold:
+        for hit in context['hits']:
+            hit['similarity'] = hit.get('similarity', 0)
 
     report_path = config.get_report_path(query_ix)
     with open(report_path, 'w', encoding="utf-8") as f:
