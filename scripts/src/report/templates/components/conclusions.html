@@ -1,8 +1,14 @@
+{% from "macros/alert-level-icon.html" import render_level_icon %}
+{% from "macros/db-coverage-target-modal.html" import render_target_modal %}
+
 <h3>Result overview</h3>
 
 <div class="my-3">
   <div class="alert alert-{{ conclusions.flags['1'].bs_class }}">
-    <p class="font-xl mb-1">
+    <p class="box-{{ conclusions.flags['1'].bs_class }} text-center font-xxl mb-3">
+      <span class="px-3">
+        {{ render_level_icon(conclusions.flags['1'].level) }}
+      </span>
       {% if conclusions.summary.result.confirmed %}
       <em>
         {{ conclusions.summary.result.species }}
@@ -11,10 +17,10 @@
       <strong>Inconclusive</strong>
       {% endif %}
     </p>
-    <p class="mb-1">
-      {{ conclusions.flags['1'].outcome }}.
+    <p class="font-large mb-1">
+      <strong>Outcome</strong>: {{ conclusions.flags['1'].outcome }}.
     </p>
-    <p class="mb-1">
+    <p class="font-large mb-1">
       <strong>Reasoning: [Flag 1{{ conclusions.flags['1'].value }}]</strong>
       {{ conclusions.flags['1'].explanation }}.
     </p>
@@ -35,19 +41,42 @@
     </td>
   </tr>
   <tr>
-    <td colspan="2">
+    <td>
       <small>
         <p class="alert mb-1 p-2">
           {{ conclusions.summary.pmi.explanation | safe }}
         </p>
       </small>
     </td>
+    <td style="width: 75px;">
+      {% set flags = conclusions.flags %}
+      {% set taxon = metadata.preliminary_id %}
+      {% set target_id = 'pmi-' + taxon.replace(' ', '-') %}
+      {% set all_flags = [flags['5.1']['pmi'][taxon], flags['5.2']['pmi'][taxon], flags['5.3']['pmi'][taxon]] %}
+      {% set flag = all_flags | max(attribute='level') %}
+
+      <button
+        class="btn btn-{{ flag.bs_class }}"
+        data-bs-toggle="tooltip"
+        data-bs-placement="bottom"
+        title="{{ flag.outcome }}"
+        onclick="new bootstrap.Modal(document.getElementById('{{ target_id }}Modal')).show();"
+        type="button"
+        style="min-width: 3rem;"
+      >
+        {{ render_level_icon(flag.level) }}
+      </button>
+
+
+      {{ render_target_modal(db_coverage['pmi'][taxon], target_id, taxon, 'pmi', "Preliminary Morphology ID", flags, metadata) }}
+    </td>
   </tr>
 </table>
 
 {% if conclusions.summary.toi %}
 <table
-  class="table border-{{ conclusions.summary.toi['bs-class'] }}"
+  class="table"
+  style="background: #eee;"
 >
   <tr class="alert-{{ conclusions.summary.toi['bs-class'] }}">
     <td>Taxa of interest detected</td>

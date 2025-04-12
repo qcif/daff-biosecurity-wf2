@@ -1,4 +1,6 @@
 {% from "macros/subjective.html" import render_subjective_input %}
+{% from "macros/alert-level-icon.html" import render_level_icon %}
+{% from "macros/db-coverage-target-modal.html" import render_target_modal %}
 
 <h2>Identification of candidate species</h2>
 
@@ -22,118 +24,140 @@
 
 <div class="row my-5">
   <div class="col">
-    <div class="mb-5">
-      <p class="lead">
-        Candidate hits must meet ONE of these criteria:
-      </p>
+    <p class="lead" style="margin-bottom: 2rem;">
+      Candidate hits must meet ONE of these criteria:
+    </p>
 
-      <table class="table tight">
-        <tr>
-          <td>
-            <strong>Minimum alignment length</strong>
-          </td>
-          <td>
-            <code>{{ config.CRITERIA.ALIGNMENT_MIN_NT }}bp</code>
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <strong>Minimum query coverage</strong>
-          </td>
-          <td>
-            <code>{{ config.CRITERIA.ALIGNMENT_MIN_Q_COVERAGE * 100 }}%</code>
-          </td>
-        </tr>
-      </table>
-    </div>
-
-    <div>
-      <p class="lead">
-        Candidate hits are then classified as follows:
-      </p>
-      <table class="table">
-        <thead>
-          <th>Classification</th>
-          <th>Alignment identity</th>
-          <th>Number of hits</th>
-          <th>Number of species</th>
-        </thead>
-        <tr class="{% if candidates.strict %}alert-success{% endif %}">
-          <td>
-            <strong>STRONG MATCH</strong>
-          </td>
-          <td>
-            &ge; {{ config.CRITERIA.ALIGNMENT_MIN_IDENTITY_STRICT * 100 }}%
-          </td>
-          {% if candidates.strict %}
-          <td>{{ candidates.hits | length }}</td>
-          <td>{{ candidates.species | length }}</td>
-          {% else %}
-          <td>0</td>
-          <td>0</td>
-          {% endif %}
-        </tr>
-        <tr class="{% if candidates.strict %}alert-warning{% endif %}">
-          <td>
-            <strong>MODERATE MATCH</strong>
-          </td>
-          <td>
-            &ge; {{ config.CRITERIA.ALIGNMENT_MIN_IDENTITY * 100 }}%
-          </td>
-          {% if not candidates.strict %}
-          <td>{{ candidates.hits | length }}</td>
-          <td>{{ candidates.species | length }}</td>
-          {% else %}
-          <td>NA</td>
-          <td>NA</td>
-          {% endif %}
-        </tr>
-        <tr>
-          <td>NO MATCH</td>
-          <td>
-            &lt; {{ config.CRITERIA.ALIGNMENT_MIN_IDENTITY * 100 }}%
-          </td>
-          <td></td>
-          <td></td>
-        </tr>
-      </table>
-    </div>
+    <table class="table">
+      <tr>
+        <td>
+          <strong>Minimum alignment length</strong>
+        </td>
+        <td>
+          <code>{{ config.CRITERIA.ALIGNMENT_MIN_NT }}bp</code>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <strong>Minimum query coverage</strong>
+        </td>
+        <td>
+          <code>{{ config.CRITERIA.ALIGNMENT_MIN_Q_COVERAGE * 100 }}%</code>
+        </td>
+      </tr>
+    </table>
   </div>
 
   <div class="col">
     <p class="lead">
-      Hits per candidate species
-      (top 10 candidates only)
+      Candidate hits have then been classified as follows:
     </p>
-
     <table class="table tight font-small">
       <thead>
-        <th>Species</th>
-        <th>Hits</th>
-        <th>Identity</th>
-        <th>E-value</th>
+        <th>Classification</th>
+        <th>Alignment identity</th>
+        <th>Number of hits</th>
+        <th>Number of species</th>
       </thead>
-      {% for candidate in candidates.species[:10] %}
-      <tr>
-        <td><em>{{ candidate.species }}</em></td>
-        <td>{{ candidate.hit_count }}</td>
-        <td>{{ candidate.identity * 100 }}%</td>
-        <td>{{ candidate.e_value }}</td>
+      <tr class="{% if candidates.strict %}alert-success{% endif %}">
+        <td>
+          <strong style="white-space: nowrap;">STRONG MATCH</strong>
+        </td>
+        <td>
+          &ge; {{ config.CRITERIA.ALIGNMENT_MIN_IDENTITY_STRICT * 100 }}%
+        </td>
+        {% if candidates.strict %}
+        <td>{{ candidates.hits | length }}</td>
+        <td>{{ candidates.species | length }}</td>
+        {% else %}
+        <td>0</td>
+        <td>0</td>
+        {% endif %}
       </tr>
-      {% endfor %}
+      <tr class="{% if candidates.strict %}alert-warning{% endif %}">
+        <td>
+          <strong style="white-space: nowrap;">MODERATE MATCH</strong>
+        </td>
+        <td>
+          &ge; {{ config.CRITERIA.ALIGNMENT_MIN_IDENTITY * 100 }}%
+        </td>
+        {% if not candidates.strict %}
+        <td>{{ candidates.hits | length }}</td>
+        <td>{{ candidates.species | length }}</td>
+        {% else %}
+        <td>NA</td>
+        <td>NA</td>
+        {% endif %}
+      </tr>
+      <tr>
+        <td>
+          <strong style="white-space: nowrap;">NO MATCH</strong>
+        </td>
+        <td>
+          &lt; {{ config.CRITERIA.ALIGNMENT_MIN_IDENTITY * 100 }}%
+        </td>
+        <td></td>
+        <td></td>
+      </tr>
     </table>
-
-    <p class="text-center">
-      <button
-        class="btn btn-primary"
-        data-bs-toggle="modal"
-        data-bs-target="#blastHitsModal"
-      >
-        View all BLAST hits
-      </button>
-    </p>
-    {% include 'components/results/1a-blast-hits-modal.html' %}
   </div>
+</div>
+
+<div class="my-5">
+  <h3>Candidate species</h3>
+
+  <table class="table table-striped" style"max-height: 500px; overflow-y: auto;">
+
+    {% set flags = conclusions.flags %}
+
+    <thead>
+      <th>Species</th>
+      <th>Hits</th>
+      <th>Identity</th>
+      <th>E-value</th>
+      <th class="text-center">Database coverage</th>
+    </thead>
+    {% for candidate in candidates.species %}
+    {% set taxon = candidate.species %}
+    <tr>
+      <td><em>{{ taxon }}</em></td>
+      <td>{{ candidate.hit_count }}</td>
+      <td>{{ candidate.identity * 100 }}%</td>
+      <td>{{ candidate.e_value }}</td>
+      <td class="text-center">
+        {% set target_id = 'candidate-' + taxon.replace(' ', '-') %}
+        {% set all_flags = [flags['5.1']['candidate'][taxon], flags['5.2']['candidate'][taxon], flags['5.3']['candidate'][taxon]] %}
+        {% set flag = all_flags | max(attribute='level') %}
+
+        <button
+          class="btn btn-{{ flag.bs_class }}"
+          data-bs-toggle="tooltip"
+          data-bs-placement="bottom"
+          title="{{ flag.outcome }}"
+          onclick="new bootstrap.Modal(document.getElementById('{{ target_id }}Modal')).show();"
+          type="button"
+          style="min-width: 3rem;"
+        >
+          {{ render_level_icon(flag.level) }}
+        </button>
+
+        {{ render_target_modal(db_coverage['candidate'][taxon], target_id, taxon, 'candidate', 'Candidate', flags, metadata) }}
+
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  <p class="text-center">
+    <button
+      class="btn btn-primary"
+      data-bs-toggle="modal"
+      data-bs-target="#blastHitsModal"
+    >
+      View all BLAST hits
+    </button>
+  </p>
+  {% include 'components/results/1a-blast-hits-modal.html' %}
 </div>
 
 {% if candidates_boxplot_src %}

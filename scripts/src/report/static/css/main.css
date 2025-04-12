@@ -24,6 +24,9 @@ code {
 .font-xl {
   font-size: 1.5rem;
 }
+.font-xxl {
+  font-size: 2rem;
+}
 .modal-xxl {
   max-width: 1400px;
 }
@@ -80,14 +83,17 @@ table.freeze-header th {
 .alert-secondary {
   background-color: #f5f5f5;
 }
-.border-success {
-  border: 2px solid #198754;
+.box-success {
+  background-color: #73dc62;
 }
-.border-warning {
-  border: 2px solid #ffc107;
+.box-warning {
+  background-color: #ffc107;
 }
-.border-danger {
-  border: 2px solid #dc3545;
+.box-danger {
+  background-color: #e3734b;
+}
+.box-secondary {
+  background-color: #eee;
 }
 
 
