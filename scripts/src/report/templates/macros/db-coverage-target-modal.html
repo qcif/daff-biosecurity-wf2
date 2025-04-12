@@ -1,6 +1,6 @@
 {% from "macros/alert-level-icon.html" import render_level_icon %}
 
-{% macro render_target_modal(data, target_id, target_taxon, target_type, flags, metadata) %}
+{% macro render_target_modal(data, target_id, target_taxon, target_type, target_type_text, flags, metadata) %}
 
 {% set flag_5_1 = flags['5.1'][target_type][target_taxon] %}
 {% set flag_5_2 = flags['5.2'][target_type][target_taxon] %}
@@ -13,7 +13,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">
-          Database coverage of <em>{{ target_taxon }}</em>
+          Database coverage of {{ target_type_text }} <em>{{ target_taxon }}</em>
         </h5>
         <button
           type="button"
@@ -25,7 +25,11 @@
 
       <div class="modal-body text-start">
         <p>
-          The target taxa include candidate species, the preliminary morphology ID, and any taxa of interest provided by the submitter. Each of these taxa are independently evaluated against the reference database to determine whether sufficient reference data exists to support identification of the target taxon. Insufficient coverage of a taxon can result in that taxon not be correctly identified as the taxonomic identity of the sample. For example, if the sample is <em>Homo sapiens</em>, but <em>Homo sapiens</em> sequences are not included in the reference database, the analysis will be unable to identity <em>Homo sapiens</em> as the correct taxonomic identity, and will most likely assign the closest relative with reference data as the taxonomic identity.
+          This {{ target_type_text }} has been independently evaluated against the reference database to determine whether sufficient reference data exists to support identification of this taxon. Insufficient coverage can result in that taxon not be correctly identified as the taxonomic identity of the sample (type-II error).
+        </p>
+
+        <p>
+          For example, if your sample is from <em>Homo sapiens</em>, but there are no <em>Homo sapiens</em> DNA records in the reference database, the analysis will be unable to detect <em>Homo sapiens</em> as the correct taxonomic identity. In the latter case, the analysis will most likely try to assign the closest relative with existing reference data as the taxonomic identity.
         </p>
 
         <div class="border p-5">
@@ -139,7 +143,7 @@
                   <span class="relatedHasReference-{{ target_id }}"></span>/<span class="relatedCount-{{ target_id }}"></span>
                   (<span class="relatedCoveragePercent-{{ target_id }}"></span>%)
                 </span>
-                 sequence records were found in the reference database for:
+                 of sequence records were found in the reference database for:
               </p>
 
                <ul>
@@ -244,7 +248,7 @@
                   <span class="relatedCountryHasReference-{{ target_id }}"></span>/<span class="relatedCountryCount-{{ target_id }}"></span>
                   (<span class="relatedCountryCoveragePercent-{{ target_id }}"></span>%)
                 </span>
-                 sequence records were found in the reference database for:
+                 of sequence records were found in the reference database for:
               </p>
 
                <ul>
