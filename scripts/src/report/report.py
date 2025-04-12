@@ -218,10 +218,13 @@ def _get_toi_result(query_ix, flags):
         },
     ]
 
-    if TARGETS.TOI in flags[FLAGS.DB_COVERAGE_TARGET]:
-        flags_5_1_targets = flags[FLAGS.DB_COVERAGE_TARGET][TARGETS.TOI]
+    db_coverage_target_flags = flags.get(FLAGS.DB_COVERAGE_TARGET, {})
+    
+    if TARGETS.TOI in db_coverage_target_flags:
+    # if TARGETS.TOI in flags[FLAGS.DB_COVERAGE_TARGET]:
+        flags_5_1_targets = db_coverage_target_flags.get(TARGETS.TOI, {})
         flag_5_1_max = max(flags_5_1_targets.values(), key=lambda x: x.value)
-        flags_5_2_targets = flags[FLAGS.DB_COVERAGE_RELATED][TARGETS.TOI]
+        flags_5_2_targets = flags.get(FLAGS.DB_COVERAGE_RELATED, {}).get(TARGETS.TOI, {})
         flag_5_2_max = max(flags_5_2_targets.values(), key=lambda x: x.value)
         criteria_5_1 = (
             f"<strong>Flag {flag_5_1_max}</strong>:"
