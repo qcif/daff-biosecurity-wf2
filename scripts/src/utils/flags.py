@@ -4,6 +4,8 @@ import logging
 
 from .config import Config
 
+PATH_SUB_STR = '[-]'
+
 logger = logging.getLogger(__name__)
 config = Config()
 
@@ -107,6 +109,7 @@ class Flag:
                         data[ttype] = {}
         return flags
 
+    @staticmethod
     def _parse_flag_filename(path):
         """Parse flag filename to extract flag_id, target, target_type."""
         stem = path.stem
@@ -116,7 +119,8 @@ class Flag:
                 flag_id, target = stem.split("-", 1)
                 if '-' in target:
                     target_type, target = target.split("-", 1)
-                target = target.replace("_", " ").replace('~', '-')
+                # Reconstitute BOLD unclassified species chars:
+                target = target.replace("_", " ").replace(PATH_SUB_STR, '-')
             else:
                 flag_id = stem
                 target = None
@@ -125,6 +129,21 @@ class Flag:
             raise ValueError(
                 f"Error parsing flag filename {path}"
             ) from exc
+
+    @staticmethod
+    def _build_flag_identifier(flag_id, target, target_type):
+        """Build flag identifier from flag_id, target, target_type."""
+        identifier = flag_id
+        target_str = ''
+        if target:
+            if '-' in target:
+                # Preserve special chars (BOLD unclassified species ID):
+                target = target.replace('-', PATH_SUB_STR)
+            type_str = f"{target_type}-" if target_type else ''
+            target_str = f"-{type_str}{target}".replace(' ', '_')
+            identifier += target_str
+            target_str = ' ' + target_str.strip('-')
+        return identifier
 
     @classmethod
     def write(
@@ -140,21 +159,14 @@ class Flag:
         target: the target taxon name
         target_type: one of TARGETS.[candidate, pmi, toi]
         """
-        identifier = flag_id
-        target_str = ''
-        if target:
-            if '-' in target:
-                # Assume it's a BOLD unclassified species ID
-                target = target.replace('-', '~')
-            type_str = f"{target_type}-" if target_type else ''
-            target_str = f"-{type_str}{target}".replace(' ', '_')
-            identifier += target_str
-            target_str = ' ' + target_str.strip('-')
+        identifier = cls._build_flag_identifier(
+            flag_id, target, target_type
+        )
         path = query_dir / config.FLAG_FILE_TEMPLATE.format(
             identifier=identifier)
         with path.open('w') as f:
             f.write(value)
-        logger.info(f"Flag {flag_id}{value}{target_str} written to {path}")
+        logger.info(f"Flag {flag_id}{value} written to {path}")
 
 
 class TARGETS:
