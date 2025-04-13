@@ -1,0 +1,346 @@
+{% from "macros/alert-level-icon.html" import render_level_icon %}
+
+{% macro render_target_modal(data, target_id, target_taxon, target_type, target_type_text, flags, metadata) %}
+
+{% set flag_5_1 = flags['5.1'][target_type][target_taxon] %}
+{% set flag_5_2 = flags['5.2'][target_type][target_taxon] %}
+{% set flag_5_3 = flags['5.3'][target_type][target_taxon] %}
+{% set all_flags = [flag_5_1, flag_5_2, flag_5_3] %}
+{% set flag = all_flags | max(attribute='level') %}
+
+<div class="modal fade" id="{{ target_id }}Modal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          Database coverage of {{ target_type_text }} <em>{{ target_taxon }}</em>
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+
+      <div class="modal-body text-start">
+        <p>
+          This {{ target_type_text }} has been independently evaluated against the reference database to determine whether sufficient reference data exists to support identification of this taxon. Insufficient coverage can result in that taxon not be correctly identified as the taxonomic identity of the sample (type-II error).
+        </p>
+
+        <p>
+          For example, if your sample is from <em>Homo sapiens</em>, but there are no <em>Homo sapiens</em> DNA records in the reference database, the analysis will be unable to detect <em>Homo sapiens</em> as the correct taxonomic identity. In the latter case, the analysis will most likely try to assign the closest relative with existing reference data as the taxonomic identity.
+        </p>
+
+        <div class="border p-5">
+          <table style="margin: 0 auto 2rem auto;">
+            <tbody>
+              <tr
+                onclick="document.getElementById('dbCovTarget-{{ target_id }}').scrollIntoView({ behavior: 'smooth' });"
+                style="cursor: pointer;"
+              >
+                <td class="btn btn-{{ flag_5_1.bs_class }} text-center mb-2">
+                  {{ render_level_icon(flag_5_1.level) }}
+                </td>
+                <td class="px-3">
+                  Coverage of <em>{{ target_taxon }}</em>
+                </td>
+              </tr>
+              <tr
+                onclick="document.getElementById('dbCovRelated-{{ target_id }}').scrollIntoView({ behavior: 'smooth' });"
+                style="cursor: pointer;"
+              >
+                <td class="btn btn-{{ flag_5_2.bs_class }} text-center mb-2">
+                  {{ render_level_icon(flag_5_2.level) }}
+                </td>
+                <td class="px-3">
+                  Coverage of species in genus <em>{{ target_taxon.split(' ')[0] }}</em>
+                </td>
+              </tr>
+              <tr
+                onclick="document.getElementById('dbCovCountry-{{ target_id }}').scrollIntoView({ behavior: 'smooth' });"
+                style="cursor: pointer;"
+              >
+                <td class="btn btn-{{ flag_5_3.bs_class }} text-center mb-2">
+                  {{ render_level_icon(flag_5_3.level) }}
+                </td>
+                <td class="px-3">
+                  Coverage of species in genus <em>{{ target_taxon.split(' ')[0] }}</em>
+                  in country of origin <strong>{{ metadata.country }}</strong>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <hr>
+
+          <div class="my-5" id="dbCovTarget-{{ target_id }}">
+            <h3>Database coverage of <em>{{ target_taxon }}</em></h3>
+
+            <p class="alert alert-{{ flag_5_1.bs_class }}">
+              <strong>Flag {{ flag_5_1.flag_id }}{{ flag_5_1.value }}:</strong>
+              {{ flag_5_1.outcome }}
+              <br>
+              <strong>Reasoning:</strong> {{ flag_5_1.explanation }}
+            </p>
+
+            <div class="row my-5">
+              <div class="col">
+                <div class="big-number alert-{{ flag_5_1.bs_class }}">
+                  {{ data.target }} records
+                </div>
+                <p class="my-3">
+                  There are {{ data.target }} sequences in the reference database for
+                  <em>{{ target_taxon }}</em>
+                  at the given locus <strong>{{ metadata.locus }}</strong>.
+                </p>
+              </div>
+
+              {% if data.map_src_base64 %}
+              <div class="col" style="position: relative;">
+                <div
+                  class="occurrence-map"
+                  onclick="this.classList.toggle('expanded')"
+                  title="Click to expand/close"
+                  data-bs-toggle="tooltip"
+                  data-bs-placement="bottom"
+                >
+                  <img
+                    src="{{ data.map_src_base64 }}"
+                    alt="Map of database coverage"
+                    class="img-fluid"
+                  >
+                  <p style="color: white; text-align: center;">
+                    Global occurrence records for <em>{{ target_taxon }}</em>.
+                    <br>
+                    <small class="hide-small">
+                      Note that the occurrence data are not exhaustive, and it is possible for this species to occur in regions not shown on the map.
+                    </small>
+                  </p>
+                </div>
+              </div>
+              {% endif%}
+            </div>
+          </div>
+
+          {% if flag.value != 'NA' %}
+
+          <hr>
+
+          <div class="my-5" id="dbCovRelated-{{ target_id }}">
+            <h3>Database coverage of species in genus <em>{{ target_taxon.split(' ')[0] }}</em></h3>
+
+            <p class="alert alert-{{ flag_5_2.bs_class }}">
+              <strong>Flag {{ flag_5_2.flag_id }}{{ flag_5_2.value }}:</strong>
+              {{ flag_5_2.outcome }}
+              <br>
+              <strong>Reasoning:</strong> {{ flag_5_2.explanation }}
+            </p>
+
+            <div class="my-5">
+              <p>
+                <span class="small-number alert-{{ flag_5_2.bs_class }}">
+                  <span class="relatedHasReference-{{ target_id }}"></span>/<span class="relatedCount-{{ target_id }}"></span>
+                  (<span class="relatedCoveragePercent-{{ target_id }}"></span>%)
+                </span>
+                 of sequence records were found in the reference database for:
+              </p>
+
+               <ul>
+                <li>
+                  Species in the genus <em>{{ target_taxon.split(' ')[0] }}</em>
+                </li>
+                <li>
+                  At the target locus <strong>{{ metadata.locus }}</strong>
+                </li>
+               </ul>
+            </div>
+
+            <div class="accordion" id="accordionRelated-{{ target_id }}">
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button
+                    class="accordion-button collapsed"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#collapseAccordionRelated-{{ target_id }}"
+                    aria-expanded="false"
+                    aria-controls="collapseAccordionRelated-{{ target_id }}"
+                  >
+                    Per-species reference sequence counts
+                  </button>
+                </h2>
+
+                <div
+                  id="collapseAccordionRelated-{{ target_id }}"
+                  class="accordion-collapse collapse"
+                  data-bs-parent="#accordionRelated-{{ target_id }}"
+                >
+                  <div class="accordion-body">
+                    <p class="mb-0 text-center">
+                      Number of GenBank records at locus <strong>{{ metadata.locus }}</strong>
+                    </p>
+
+                    <div class="verticalScrollChart" id="dbcov-plot-related-{{ target_id }}"></div>
+
+                    <script>
+                      document.addEventListener('DOMContentLoaded', function() {
+                        var data = DB_COVERAGE['{{ target_type }}']['{{ target_taxon }}'].related;
+                        var entries = Object.entries(data);
+                        entries.sort((a, b) => a[1] - b[1]);
+                        var keys = entries.map(entry => entry[0]);
+                        var values = entries.map(entry => entry[1]);
+                        var keyLength = Math.max(...keys.map(key => key.length));
+                        var plotData = [{
+                          type: 'bar',
+                          x: values,
+                          y: keys,
+                          orientation: 'h'
+                        }];
+                        var height = Math.max(300, 25 * keys.length);
+                        Plotly.newPlot(
+                          'dbcov-plot-related-{{ target_id }}',
+                          plotData,
+                          {
+                            margin: { t: 20, r: 0, b: 0, l: keyLength * 8 },
+                            height: height,
+                            xaxis: {
+                              side: 'top',
+                            },
+                          }
+                        );
+                        window.addEventListener('resize', function() {
+                          Plotly.Plots.resize('dbcov-plot-related-{{ target_id }}');
+                        });
+
+                        zeroValues = values.filter(value => value === 0).length;
+                        coverage = values.length - zeroValues;
+                        coverage_percent = Math.round(coverage / values.length * 100);
+                        $(".relatedHasReference-{{ target_id }}").text(coverage);
+                        $(".relatedCount-{{ target_id }}").text(values.length);
+                        $(".relatedCoveragePercent-{{ target_id }}").text(coverage_percent);
+                      });
+                    </script>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <hr>
+
+          <div class="my-5" id="dbCovCountry-{{ target_id }}">
+            <h3>
+              Database coverage of species in genus <em>{{ target_taxon.split(' ')[0] }}</em>
+              that occur in country of origin <strong>{{ metadata.country }}</strong>
+            </h3>
+
+            <p class="alert alert-{{ flag_5_3.bs_class }}">
+              <strong>Flag {{ flag_5_3.flag_id }}{{ flag_5_3.value }}:</strong>
+              {{ flag_5_3.outcome }}
+              <br>
+              <strong>Reasoning:</strong> {{ flag_5_3.explanation }}
+            </p>
+
+            <div class="my-5">
+              <p>
+                <span class="small-number alert-{{ flag_5_3.bs_class }}">
+                  <span class="relatedCountryHasReference-{{ target_id }}"></span>/<span class="relatedCountryCount-{{ target_id }}"></span>
+                  (<span class="relatedCountryCoveragePercent-{{ target_id }}"></span>%)
+                </span>
+                 of sequence records were found in the reference database for:
+              </p>
+
+               <ul>
+                <li>
+                  Species in the genus <em>{{ target_taxon.split(' ')[0] }}</em>
+                </li>
+                <li>
+                  At the target locus <strong>{{ metadata.locus }}</strong>
+                </li>
+                <li>
+                  In the sample country of origin <strong>{{ metadata.country }}</strong>
+                </li>
+               </ul>
+            </div>
+
+            <div class="accordion" id="accordionRelatedCountry-{{ target_id }}">
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button
+                    class="accordion-button collapsed"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#collapseAccordionRelatedCountry-{{ target_id }}"
+                    aria-expanded="false"
+                    aria-controls="collapseAccordionRelatedCountry-{{ target_id }}"
+                  >
+                    Per-species reference sequence counts
+                  </button>
+                </h2>
+
+                <div
+                  id="collapseAccordionRelatedCountry-{{ target_id }}"
+                  class="accordion-collapse collapse"
+                  data-bs-parent="#accordionRelatedCountry-{{ target_id }}"
+                >
+                  <div class="accordion-body">
+                    <p class="mb-0 text-center">
+                      Number of GenBank records at locus
+                      <strong>{{ metadata.locus }}</strong>
+                    </p>
+
+                    <div class="verticalScrollChart" id="dbcov-plot-relatedCountry-{{ target_id }}"></div>
+
+                    <script>
+                      document.addEventListener('DOMContentLoaded', function() {
+                        var data = DB_COVERAGE['{{ target_type }}']['{{ target_taxon }}'].country;
+                        var entries = Object.entries(data);
+                        entries.sort((a, b) => a[1] - b[1]);
+                        var keys = entries.map(entry => entry[0]);
+                        var values = entries.map(entry => entry[1]);
+                        var keyLength = Math.max(...keys.map(key => key.length));
+                        var plotData = [{
+                          type: 'bar',
+                          x: values,
+                          y: keys,
+                          orientation: 'h'
+                        }];
+                        var height = Math.max(300, 25 * keys.length);
+                        Plotly.newPlot(
+                          'dbcov-plot-relatedCountry-{{ target_id }}',
+                          plotData,
+                          {
+                            margin: { t: 20, r: 0, b: 0, l: keyLength * 5.8 },
+                            height: height,
+                            xaxis: {
+                              side: 'top',
+                            },
+                          }
+                        );
+                        window.addEventListener('resize', function() {
+                          Plotly.Plots.resize('dbcov-plot-relatedCountry-{{ target_id }}');
+                        });
+
+                        zeroValues = values.filter(value => value === 0).length;
+                        coverage = values.length - zeroValues;
+                        coverage_percent = Math.round(coverage / values.length * 100);
+                        $(".relatedCountryHasReference-{{ target_id }}").text(coverage);
+                        $(".relatedCountryCount-{{ target_id }}").text(values.length);
+                        $(".relatedCountryCoveragePercent-{{ target_id }}").text(coverage_percent);
+                      });
+                    </script>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endmacro %}
