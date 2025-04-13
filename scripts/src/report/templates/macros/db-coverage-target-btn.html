@@ -9,7 +9,7 @@
 </p>
 
 {% for species in data %}
-{% set species_id = 'p5-' + target_type + '-' + species.replace(' ', '-') %}
+{% set species_id = 'p5-' + target_type + '-' + species | css_hash %}
 {% set all_flags = [flags['5.1'][target_type][species], flags['5.2'][target_type][species], flags['5.3'][target_type][species]] %}
 {% set flag = all_flags | max(attribute='level') %}
 <button

@@ -125,7 +125,7 @@
       <td>{{ candidate.identity * 100 }}%</td>
       <td>{{ candidate.e_value }}</td>
       <td class="text-center">
-        {% set target_id = 'candidate-' + taxon.replace(' ', '-') %}
+        {% set target_id = 'candidate-' + taxon | css_hash %}
         {% set all_flags = [flags['5.1']['candidate'][taxon], flags['5.2']['candidate'][taxon], flags['5.3']['candidate'][taxon]] %}
         {% set flag = all_flags | max(attribute='level') %}
 

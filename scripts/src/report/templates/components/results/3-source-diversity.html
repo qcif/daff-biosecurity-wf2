@@ -22,7 +22,7 @@
       <strong>Candidates</strong>
     </p>
     {% for species in aggregated_sources %}
-    {% set species_id = 'p4-' + species.replace(' ', '-') %}
+    {% set species_id = 'p4-' + species | css_hash %}
     {% set flag = conclusions.flags['4'][species] %}
     <button
       class="btn btn-{{ flag.bs_class }} {% if not loop.index0 %}active{% endif %}"
@@ -42,7 +42,7 @@
 
   <div class="tab-content" id="sources-tabs-content">
     {% for species, src_groups in aggregated_sources.items() %}
-    {% set species_id = 'p4-' + species.replace(' ', '-') %}
+    {% set species_id = 'p4-' + species | css_hash %}
     <div
       class="tab-pane fade{% if not loop.index0 %} show active{% endif %}"
       id="{{ species_id }}"

@@ -51,7 +51,7 @@
     <td style="width: 75px;">
       {% set flags = conclusions.flags %}
       {% set taxon = metadata.preliminary_id %}
-      {% set target_id = 'pmi-' + taxon.replace(' ', '-') %}
+      {% set target_id = 'pmi-' + taxon | css_hash %}
       {% set all_flags = [flags['5.1']['pmi'][taxon], flags['5.2']['pmi'][taxon], flags['5.3']['pmi'][taxon]] %}
       {% set flag = all_flags | max(attribute='level') %}
 
