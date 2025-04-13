@@ -136,6 +136,63 @@
   </div>
 </div>
 
+<div class="my-5">
+  <h3>Candidate species</h3>
+
+  <table class="table table-striped" style"max-height: 500px; overflow-y: auto;">
+
+    {% set flags = conclusions.flags %}
+
+    <thead>
+      <th>Species</th>
+      <th>Hits</th>
+      <th>Identity</th>
+      <th>E-value</th>
+      <th class="text-center">Database coverage</th>
+    </thead>
+    {% for candidate in candidates.species %}
+    {% set taxon = candidate.species %}
+    <tr>
+      <td><em>{{ taxon }}</em></td>
+      <td>{{ candidate.hit_count }}</td>
+      <td>{{ candidate.identity * 100 }}%</td>
+      <td>{{ candidate.e_value }}</td>
+      <td class="text-center">
+        {% set target_id = 'candidate-' + taxon | css_hash %}
+        {% set all_flags = [flags['5.1']['candidate'][taxon], flags['5.2']['candidate'][taxon], flags['5.3']['candidate'][taxon]] %}
+        {% set flag = all_flags | max(attribute='level') %}
+
+        <button
+          class="btn btn-{{ flag.bs_class }}"
+          data-bs-toggle="tooltip"
+          data-bs-placement="bottom"
+          title="{{ flag.outcome }}"
+          onclick="new bootstrap.Modal(document.getElementById('{{ target_id }}Modal')).show();"
+          type="button"
+          style="min-width: 3rem;"
+        >
+          {{ render_level_icon(flag.level) }}
+        </button>
+
+        {{ render_target_modal(db_coverage['candidate'][taxon], target_id, taxon, 'candidate', 'Candidate', flags, metadata) }}
+
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  <p class="text-center">
+    <button
+      class="btn btn-primary"
+      data-bs-toggle="modal"
+      data-bs-target="#blastHitsModal"
+    >
+      View all BLAST hits
+    </button>
+  </p>
+  {% include 'components/results/1a-blast-hits-modal.html' %}
+</div>
+
 {% if candidates_boxplot_src %}
 <div class="my-5">
   <img class="img-fluid my-3" src="{{ candidates_boxplot_src }}" alt="Boxplot of BLAST hit identity percent grouped by genus">

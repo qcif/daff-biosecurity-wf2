@@ -135,10 +135,18 @@
             "args": [
                 "output/query_001_LC438549",
                 // "output/query_002_ON075825",
-                "--output_dir", "output",
+                // "--output_dir", "output",
+
+                // For testing issue cases:
+                // "output/issues/44/query_001_VE25-1406_COI",
+                // "--output_dir", "output/issues/44",
             ],
             "env": {
                 "INPUT_FASTA_FILEPATH": "tests/test-data/queries.fasta",
+
+                // For testing issue cases:
+                // "INPUT_FASTA_FILEPATH": "output/issues/44/query.fasta",
+                // "INPUT_METADATA_CSV_FILEPATH": "output/issues/44/metadata.csv",
             },
         }
     ]

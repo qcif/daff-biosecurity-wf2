@@ -25,6 +25,25 @@
         Did not match any candidate
       </td>
     {% endif %}
+    <td class="text-center">
+      {% set target_id = 'toi-' + taxon | css_hash %}
+      {% set all_flags = [flags['5.1']['toi'][taxon], flags['5.2']['toi'][taxon], flags['5.3']['toi'][taxon]] %}
+      {% set flag = all_flags | max(attribute='level') %}
+      <button
+        class="btn btn-{{ flag.bs_class }}"
+        data-bs-toggle="tooltip"
+        data-bs-placement="bottom"
+        title="{{ flag.outcome }}"
+        onclick="new bootstrap.Modal(document.getElementById('{{ target_id }}Modal')).show();"
+        type="button"
+        style="min-width: 3rem;"
+      >
+        {{ render_level_icon(flag.level) }}
+      </button>
+
+      {{ render_target_modal(db_coverage['toi'][taxon], target_id, taxon, 'toi', 'Taxon of Interest', flags, metadata) }}
+
+    </td>
     </tr>
     {% endfor %}
 </table>

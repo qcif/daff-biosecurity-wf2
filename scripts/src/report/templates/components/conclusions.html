@@ -42,6 +42,28 @@
         </p>
       </small>
     </td>
+    <td style="width: 75px;">
+      {% set flags = conclusions.flags %}
+      {% set taxon = metadata.preliminary_id %}
+      {% set target_id = 'pmi-' + taxon | css_hash %}
+      {% set all_flags = [flags['5.1']['pmi'][taxon], flags['5.2']['pmi'][taxon], flags['5.3']['pmi'][taxon]] %}
+      {% set flag = all_flags | max(attribute='level') %}
+
+      <button
+        class="btn btn-{{ flag.bs_class }}"
+        data-bs-toggle="tooltip"
+        data-bs-placement="bottom"
+        title="{{ flag.outcome }}"
+        onclick="new bootstrap.Modal(document.getElementById('{{ target_id }}Modal')).show();"
+        type="button"
+        style="min-width: 3rem;"
+      >
+        {{ render_level_icon(flag.level) }}
+      </button>
+
+
+      {{ render_target_modal(db_coverage['pmi'][taxon], target_id, taxon, 'pmi', "Preliminary Morphology ID", flags, metadata) }}
+    </td>
   </tr>
 </table>
 
