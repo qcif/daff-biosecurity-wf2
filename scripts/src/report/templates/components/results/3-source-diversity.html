@@ -96,7 +96,7 @@
             <tbody>
               {% for src in src_group %}
               {% for publication in src.publications %}
-              <tr>
+              <tr {% if loop.index > 2 %}class="hide"{% endif %}>
                 <td>
                   <a href="{{ url_from_accession(src['accession']) }}" target="_blank">
                     {{ src.accession }}
@@ -113,9 +113,28 @@
               </tr>
               {% endfor %}
 
+              {% set remaining_publications = src.publications | length - 2 %}
+              {% if remaining_publications > 0 %}
+              <tr>
+                <td colspan="5">
+                  <a href="javascript:void(0);" onclick="togglePublicationsCollapse(this);">
+                    <span class="toggle-collapse">Show</span>
+                    <span class="toggle-collapse hide">Hide</span>
+                    {{ remaining_publications }}
+                    <span class="toggle-collapse">more</span>
+                    publication{% if remaining_publications > 1 %}s{% endif %}...
+                  </a>
+                </td>
+              </tr>
+              {% endif %}
+
               {% if not src.publications %}
               <tr>
-                <td>{{ src.accession }}</td>
+                <td>
+                  <a href="{{ url_from_accession(src['accession']) }}" target="_blank">
+                    {{ src.accession }}
+                  </a>
+                </td>
                 <td>{{ src.is_automated }}</td>
                 <td colspan="3">No publications for this record</td>
               </tr>
@@ -135,3 +154,22 @@
 {% else %}
 <p class="alert alert-secondary">No candidate species to report on.</p>
 {% endif %}
+
+<script>
+  function togglePublicationsCollapse(link) {
+    const tableRow = link.closest('tr');
+
+    // Change the text in the "toggle" link
+    tableRow.querySelectorAll('.toggle-collapse').forEach((el) => {
+      el.classList.toggle('hide');
+    });
+
+    // Toggle the visibility of the surplus rows
+    const tableBody = tableRow.parentElement;
+    const rows = tableBody.querySelectorAll('tr.hide,tr.show');
+    rows.forEach((row) => {
+      row.classList.toggle('hide');
+      row.classList.toggle('show');
+    });
+  }
+</script>
