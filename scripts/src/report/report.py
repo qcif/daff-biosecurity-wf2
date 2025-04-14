@@ -86,8 +86,6 @@ def _get_report_context(query_ix, bold):
     """Build the context for the report template."""
     query_fasta_str = config.read_query_fasta(query_ix).format('fasta')
     hits = config.read_hits_json(query_ix)['hits']
-    # tree_path = config.get_query_dir(query_ix) / config.TREE_NWK_FILENAME
-    # tree_nwk_str = tree_path.read_text().strip() if tree_path.exists() else ""
     return {
         'url_from_accession': config.url_from_accession,
         'title': config.REPORT.TITLE,
@@ -108,7 +106,6 @@ def _get_report_context(query_ix, bold):
         'toi_rows': _read_toi_detected(query_ix),
         'aggregated_sources': _read_source_diversity(query_ix),
         'db_coverage': _read_db_coverage(query_ix),
-        # 'tree_nwk_str': tree_nwk_str,
         # 'tree_nwk_str': (config.get_query_dir(query_ix)
         #                  / config.TREE_NWK_FILENAME).read_text().strip(),
     }

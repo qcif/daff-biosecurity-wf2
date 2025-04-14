@@ -127,9 +127,9 @@
       <button
         class="btn btn-primary"
         data-bs-toggle="modal"
-        data-bs-target="#blastHitsModal"
+        data-bs-target="{{ '#boldHitsModal' if bold else '#blastHitsModal' }}"
       >
-        View all BLAST hits
+        {{ 'View all BOLD hits' if bold else 'View all BLAST hits' }}
       </button>
     </p>
     {% if bold %}
