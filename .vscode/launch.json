@@ -139,6 +139,9 @@
                 // "--output_dir", "output",
                 "--output_dir", "output/bold",
                 "--bold",
+                // For testing issue cases:
+                // "output/issues/44/query_001_VE25-1406_COI",
+                // "--output_dir", "output/issues/44",
             ],
             "env": {
                 "INPUT_FASTA_FILEPATH": "tests/test-data/queries.fasta",
