@@ -132,7 +132,11 @@
         View all BLAST hits
       </button>
     </p>
-    {% include 'components/results/1a-blast-hits-modal.html' %}
+    {% if bold %}
+      {% include "components/results/1b-bold-hits-modal.html" %}
+    {% else %}
+      {% include "components/results/1a-blast-hits-modal.html" %}
+    {% endif %}
   </div>
 </div>
 

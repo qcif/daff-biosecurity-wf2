@@ -138,6 +138,7 @@
                 // "output/query_002_ON075825",
                 // "--output_dir", "output",
                 "--output_dir", "output/bold",
+                "--bold",
             ],
             "env": {
                 "INPUT_FASTA_FILEPATH": "tests/test-data/queries.fasta",

@@ -26,7 +26,7 @@ def render(query, bold=False):
     query_ix = config.get_query_ix(query)
     j2 = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
     template = j2.get_template('index.html')
-    context = _get_report_context(query_ix)
+    context = _get_report_context(query_ix, bold)
     context['bold'] = bold
 
     # ! TODO: Remove this eventually
@@ -82,10 +82,12 @@ def _get_img_src(path):
     )
 
 
-def _get_report_context(query_ix):
+def _get_report_context(query_ix, bold):
     """Build the context for the report template."""
     query_fasta_str = config.read_query_fasta(query_ix).format('fasta')
     hits = config.read_hits_json(query_ix)['hits']
+    # tree_path = config.get_query_dir(query_ix) / config.TREE_NWK_FILENAME
+    # tree_nwk_str = tree_path.read_text().strip() if tree_path.exists() else ""
     return {
         'url_from_accession': config.url_from_accession,
         'title': config.REPORT.TITLE,
@@ -100,13 +102,15 @@ def _get_report_context(query_ix):
         'conclusions': _draw_conclusions(query_ix),
         'hits': hits,
         'candidates': _get_candidates(query_ix),
-        'hits_taxonomy': _load_taxonomies(hits),
+        # 'hits_taxonomy': _load_taxonomies(hits),
+        'hits_taxonomy': _load_taxonomies_bold(hits) if bold else _load_taxonomies(hits),
         'candidates_boxplot_src': _get_boxplot_src(query_ix),
         'toi_rows': _read_toi_detected(query_ix),
         'aggregated_sources': _read_source_diversity(query_ix),
         'db_coverage': _read_db_coverage(query_ix),
-        'tree_nwk_str': (config.get_query_dir(query_ix)
-                         / config.TREE_NWK_FILENAME).read_text().strip(),
+        # 'tree_nwk_str': tree_nwk_str,
+        # 'tree_nwk_str': (config.get_query_dir(query_ix)
+        #                  / config.TREE_NWK_FILENAME).read_text().strip(),
     }
 
 
@@ -279,6 +283,21 @@ def _load_taxonomies(hits):
     return {
         hit['accession']: run_taxonomies.get(hit['accession'])
         for hit in hits
+    }
+
+
+def _load_taxonomies_bold(hits):
+    return {
+        hit['accession']: {
+            "kingdom": hit.get("taxonomy", {}).get("kingdom", ""),
+            "phylum": hit.get("taxonomy", {}).get("phylum", ""),
+            "class": hit.get("taxonomy", {}).get("class", ""),
+            "order": hit.get("taxonomy", {}).get("order", ""),
+            "family": hit.get("taxonomy", {}).get("family", ""),
+            "genus": hit.get("taxonomy", {}).get("genus", ""),
+            "species": hit.get("taxonomy", {}).get("species", "")
+        }
+        for hit in hits if 'accession' in hit
     }
 
 
