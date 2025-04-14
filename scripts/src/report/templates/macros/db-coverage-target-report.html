@@ -1,7 +1,7 @@
 {% macro render_target_report(target_data, target_type, flags, metadata, show_active=False) %}
 
 {% for species, data in target_data.items() %}
-{% set species_id = 'p5-' + target_type + '-' + species.replace(' ', '-') %}
+{% set species_id = 'p5-' + target_type + '-' + species | css_hash %}
 {% set flag_5_1 = flags['5.1'][target_type][species] %}
 {% set flag_5_2 = flags['5.2'][target_type][species] %}
 {% set flag_5_3 = flags['5.3'][target_type][species] %}

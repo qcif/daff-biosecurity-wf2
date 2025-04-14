@@ -9,6 +9,7 @@ from datetime import datetime
 from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
 
+from .filters.css_hash import css_hash
 from .outcomes import DetectedTaxon
 from src.utils import config
 from src.utils.flags import Flag, FLAGS, TARGETS
@@ -25,6 +26,7 @@ def render(query, bold=False):
     """Render to HTML report to the configured output directory."""
     query_ix = config.get_query_ix(query)
     j2 = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
+    j2.filters['css_hash'] = css_hash
     template = j2.get_template('index.html')
     context = _get_report_context(query_ix, bold)
     context['bold'] = bold
