@@ -119,10 +119,9 @@ class BoldSearch:
                 errors.write(
                     errors.LOCATIONS.BOLD_ID_ENGINE,
                     msg,
-                    None,
-                    data={
+                    response.text,
+                    context={
                         "query_ix": i,
-                        "response": response.text,
                     },
                 )
                 hits[sequence.id] = []
@@ -307,7 +306,7 @@ class BoldSearch:
                     errors.LOCATIONS.BOLD_TAXA,
                     msg,
                     None,
-                    data={"taxa": taxa},
+                    context={"taxa": taxa},
                 )
                 return records
 
@@ -326,10 +325,9 @@ class BoldSearch:
             errors.write(
                 errors.LOCATIONS.BOLD_TAXA,
                 msg,
-                None,
-                data={
+                response.text,
+                context={
                     "taxa": taxa,
-                    "response": response.text,
                 },
             )
 

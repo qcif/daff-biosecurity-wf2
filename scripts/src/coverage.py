@@ -189,7 +189,7 @@ def _get_taxids(targets, query_dir):
             msg,
             None,
             query_dir=query_dir,
-            data={
+            context={
                 "targets": [k for k, v in target_taxids.items() if not v],
             },
         )
@@ -212,7 +212,7 @@ def _fetch_target_taxa(targets, query_dir):
                 msg,
                 exc,
                 query_dir=query_dir,
-                data={"target": target},
+                context={"target": target},
             )
             continue
         if gbif_target.rank > RANK.GENUS:
@@ -309,7 +309,8 @@ def _parallel_process_tasks(
                     errors.LOCATIONS.DATABASE_COVERAGE,
                     msg,
                     exc,
-                    query_dir=query_dir)
+                    query_dir=query_dir,
+                    context={'target': species_name})
                 if isinstance(exc, urllib.error.URLError):
                     raise errors.APIError(
                         f"Fatal error fetching data from Entrez API: '{exc}'"
@@ -423,7 +424,8 @@ def _get_related_coverage(gbif_target, locus, query_dir):
                 errors.DB_COVERAGE_RELATED,
                 msg,
                 exc,
-                query_dir=query_dir)
+                query_dir=query_dir,
+                target=species)
     return results
 
 
@@ -455,7 +457,9 @@ def _get_related_country_coverage(
                 errors.LOCATIONS.DB_COVERAGE_RELATED_COUNTRY,
                 msg,
                 exc,
-                query_dir=query_dir)
+                query_dir=query_dir,
+                context={'target': species},
+            )
     return results
 
 

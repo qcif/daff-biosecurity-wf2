@@ -1,18 +1,10 @@
 """Define error handling logic."""
 
 import json
-from pathlib import Path
 
 from .config import Config
 
 config = Config()
-
-ERROR_CSV_HEADER = [
-    "location",
-    "message",
-    "exception",
-    "data",
-]
 
 
 class FASTAFormatError(Exception):
@@ -49,7 +41,7 @@ class LOCATIONS:
     DB_COVERAGE_RELATED_COUNTRY = 5.3
 
 
-def write(location, msg, exc, query_dir=None, data=None):
+def write(location, msg, exc, query_dir=None, context=None):
     """Write a non-fatal error to file for later recall.
 
     location: display the error message in an appropriate
@@ -74,7 +66,7 @@ def write(location, msg, exc, query_dir=None, data=None):
             "location": location,
             "message": msg,
             "exception": str(exc),
-            "data": data,
+            "context": context,
         }, f)
 
 
