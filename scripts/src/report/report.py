@@ -42,9 +42,6 @@ def render(query, bold=False):
     rendered_html = template.render(**context, **static_files)
 
     # TODO: If BOLD, replace 'identity' with 'similarity'
-    if bold:
-        for hit in context['hits']:
-            hit['similarity'] = hit.get('similarity', 0)
 
     report_path = config.get_report_path(query_ix)
     with open(report_path, 'w', encoding="utf-8") as f:
@@ -102,14 +99,14 @@ def _get_report_context(query_ix, bold):
         'conclusions': _draw_conclusions(query_ix),
         'hits': hits,
         'candidates': _get_candidates(query_ix),
-        # 'hits_taxonomy': _load_taxonomies(hits),
         'hits_taxonomy': _load_taxonomies_bold(hits) if bold else _load_taxonomies(hits),
         'candidates_boxplot_src': _get_boxplot_src(query_ix),
         'toi_rows': _read_toi_detected(query_ix),
         'aggregated_sources': _read_source_diversity(query_ix),
         'db_coverage': _read_db_coverage(query_ix),
-        # 'tree_nwk_str': (config.get_query_dir(query_ix)
-        #                  / config.TREE_NWK_FILENAME).read_text().strip(),
+        'tree_nwk_str': (config.get_query_dir(query_ix)
+                         / config.TREE_NWK_FILENAME).read_text().strip(),
+        'bold': bold,
     }
 
 
@@ -221,13 +218,10 @@ def _get_toi_result(query_ix, flags):
         },
     ]
 
-    db_coverage_target_flags = flags.get(FLAGS.DB_COVERAGE_TARGET, {})
-    
-    if TARGETS.TOI in db_coverage_target_flags:
-    # if TARGETS.TOI in flags[FLAGS.DB_COVERAGE_TARGET]:
-        flags_5_1_targets = db_coverage_target_flags.get(TARGETS.TOI, {})
+    if TARGETS.TOI in flags[FLAGS.DB_COVERAGE_TARGET]:
+        flags_5_1_targets = flags[FLAGS.DB_COVERAGE_TARGET][TARGETS.TOI]
         flag_5_1_max = max(flags_5_1_targets.values(), key=lambda x: x.value)
-        flags_5_2_targets = flags.get(FLAGS.DB_COVERAGE_RELATED, {}).get(TARGETS.TOI, {})
+        flags_5_2_targets = flags[FLAGS.DB_COVERAGE_RELATED][TARGETS.TOI]
         flag_5_2_max = max(flags_5_2_targets.values(), key=lambda x: x.value)
         criteria_5_1 = (
             f"<strong>Flag {flag_5_1_max}</strong>:"
