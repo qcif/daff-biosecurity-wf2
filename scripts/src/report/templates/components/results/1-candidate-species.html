@@ -148,16 +148,21 @@
     {% endfor %}
   </table>
 
-  <p class="text-center">
-    <button
-      class="btn btn-primary"
-      data-bs-toggle="modal"
-      data-bs-target="#blastHitsModal"
-    >
-      View all BLAST hits
-    </button>
-  </p>
-  {% include 'components/results/1a-blast-hits-modal.html' %}
+    <p class="text-center">
+      <button
+        class="btn btn-primary"
+        data-bs-toggle="modal"
+        data-bs-target="{{ '#boldHitsModal' if bold else '#blastHitsModal' }}"
+      >
+        {{ 'View all BOLD hits' if bold else 'View all BLAST hits' }}
+      </button>
+    </p>
+    {% if bold %}
+      {% include "components/results/1b-bold-hits-modal.html" %}
+    {% else %}
+      {% include "components/results/1a-blast-hits-modal.html" %}
+    {% endif %}
+  </div>
 </div>
 
 {% if candidates_boxplot_src %}
