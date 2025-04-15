@@ -46,6 +46,11 @@ def assess_coverage(query_dir) -> dict[str, dict[str, dict]]:
 
     target_taxids = _get_taxids(targets, query_dir)
     taxid_to_taxon = {v: k for k, v in target_taxids.items()}
+    unknown_taxa = {
+        t for t in targets
+        if t not in target_taxids
+    }
+
     logger.info(
         f"[{MODULE_NAME}]: Assessing database coverage for {len(targets)}"
         f" species at locus '{locus}' in country '{country}'."
@@ -64,6 +69,12 @@ def assess_coverage(query_dir) -> dict[str, dict[str, dict]]:
     # 'Higher taxa' are at rank 'family' or higher
     target_gbif_taxa, higher_taxon_targets = _fetch_target_taxa(
         targets, query_dir)
+
+    unknown_taxa = unknown_taxa.union({
+        t for t in targets
+        if t not in target_gbif_taxa
+        and t not in higher_taxon_targets
+    })
 
     _draw_occurrence_maps(
         target_gbif_taxa,
@@ -110,6 +121,18 @@ def assess_coverage(query_dir) -> dict[str, dict[str, dict]]:
         toi_list,
         pmi,
     )
+    for taxon in unknown_taxa:
+        for target_type, targets in {
+            'candidate': candidate_list,
+            'toi': toi_list,
+            'pmi': [pmi],
+        }.items():
+            if taxon in targets:
+                results[target_type][taxon] = {
+                    'target': None,
+                    'related': None,
+                    'country': None,
+                }
     _set_flags(results, query_dir, higher_taxon_targets)
     return results, is_error
 

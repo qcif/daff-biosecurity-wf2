@@ -86,6 +86,10 @@
 
             <div class="row my-5">
               <div class="col">
+
+                <!-- Insert 5.01 errors here -->
+
+                {% if data.target is not none %}
                 <div class="big-number alert-{{ flag_5_1.bs_class }}">
                   {{ data.target }} records
                 </div>
@@ -94,6 +98,7 @@
                   <em>{{ target_taxon }}</em>
                   at the given locus <strong>{{ metadata.locus }}</strong>.
                 </p>
+                {% endif %}
               </div>
 
               {% if data.map_src_base64 %}
@@ -123,7 +128,7 @@
             </div>
           </div>
 
-          {% if flag.value != 'NA' %}
+          {% if flag.value not in [None, 'NA'] %}
 
           <hr>
 
