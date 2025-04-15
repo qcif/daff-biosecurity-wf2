@@ -222,9 +222,17 @@ def _get_toi_result(query_ix, flags):
 
     if TARGETS.TOI in flags[FLAGS.DB_COVERAGE_TARGET]:
         flags_5_1_targets = flags[FLAGS.DB_COVERAGE_TARGET][TARGETS.TOI]
-        flag_5_1_max = max(flags_5_1_targets.values(), key=lambda x: x.value)
+        flag_5_1_max = max(
+            flags_5_1_targets.values(),
+            # Rank NA values the lowest so they don't clobber proper results
+            key=lambda x: x.value if x.value != 'NA' else '0',
+        )
         flags_5_2_targets = flags[FLAGS.DB_COVERAGE_RELATED][TARGETS.TOI]
-        flag_5_2_max = max(flags_5_2_targets.values(), key=lambda x: x.value)
+        flag_5_2_max = max(
+            flags_5_2_targets.values(),
+            # Rank NA values the lowest so they don't clobber proper results
+            key=lambda x: x.value if x.value != 'NA' else '0',
+        )
         criteria_5_1 = (
             f"<strong>Flag {flag_5_1_max}</strong>:"
             f" {flag_5_1_max.explanation}")
