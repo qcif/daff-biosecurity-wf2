@@ -4,8 +4,8 @@ import logging
 import pygbif
 from functools import cached_property
 
-from ..utils import config
-from ..utils.throttle import ENDPOINTS, Throttle
+from src.utils import config
+from src.utils.throttle import ENDPOINTS, Throttle
 
 logger = logging.getLogger(__name__)
 config = config.Config()
