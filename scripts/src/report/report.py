@@ -29,7 +29,6 @@ def render(query, bold=False):
     j2.filters['css_hash'] = css_hash
     template = j2.get_template('index.html')
     context = _get_report_context(query_ix, bold)
-    context['bold'] = bold
 
     # ! TODO: Remove this eventually
     path = config.output_dir / 'report_context.json'
