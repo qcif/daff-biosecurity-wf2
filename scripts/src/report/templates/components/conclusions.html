@@ -29,7 +29,7 @@
 
 <table class="table border alert-{{ conclusions.summary.pmi['bs-class'] }}">
   <tr>
-    <td>Preliminary morphology ID confirmed</td>
+    <td>Preliminary morphology ID confirmed?</td>
     <td style="width: 75px;">
       {% if conclusions.summary.result.confirmed %}
       <strong class="text-{{ conclusions.summary.pmi['bs-class'] }}">
@@ -45,6 +45,7 @@
       <small>
         <p class="alert mb-1 p-2">
           {{ conclusions.summary.pmi.explanation | safe }}
+          <em>{{ metadata.preliminary_id }}</em>.
         </p>
       </small>
     </td>
@@ -79,7 +80,7 @@
   style="background: #eee;"
 >
   <tr class="alert-{{ conclusions.summary.toi['bs-class'] }}">
-    <td>Taxa of interest detected</td>
+    <td>Taxa of interest detected?</td>
     <td style="width: 75px;">
       <strong class="text-{% if conclusions.summary.toi.detected %}success{% else %}danger{% endif %}">
         {{ 'True' if conclusions.summary.toi.detected else 'False' }}

@@ -24,7 +24,120 @@ config = Config()
 MODULE_NAME = "Database Coverage"
 
 
-def read_candidate_species(query_dir):
+def assess_coverage(query_dir) -> dict[str, dict[str, dict]]:
+    def get_args(func, query_dir, target, taxid, locus, country):
+        if func == _get_target_coverage:
+            return func, taxid, locus
+        elif func == _get_related_coverage:
+            return func, target, locus, query_dir
+        elif func == _get_related_country_coverage:
+            return func, target, locus, country, query_dir
+
+    locus = config.get_locus_for_query(query_dir)
+    country = config.get_country_for_query(query_dir, code=True)
+    candidate_list, toi_list, pmi = _get_targets(query_dir)
+    targets = candidate_list + toi_list + [pmi]
+    if not targets:
+        logger.info(
+            f"[{MODULE_NAME}]: Skipping analysis - no target species"
+            " identified for database coverage assessment."
+        )
+        return None
+
+    target_taxids = _get_taxids(targets, query_dir)
+    taxid_to_taxon = {v: k for k, v in target_taxids.items()}
+    unknown_taxa = {
+        t for t in targets
+        if t not in target_taxids
+    }
+
+    logger.info(
+        f"[{MODULE_NAME}]: Assessing database coverage for {len(targets)}"
+        f" species at locus '{locus}' in country '{country}'."
+    )
+    logger.debug(
+        f"[{MODULE_NAME}]: collected targets:\n"
+        f"  - Candidates: {candidate_list}\n"
+        f"  - Taxa of interest: {toi_list}\n"
+        f"  - PMI: {pmi}"
+    )
+    logger.debug(
+        f"[{MODULE_NAME}]: Taxids for targets (extracted by taxonkit):\n"
+        + pformat(target_taxids, indent=2)
+    )
+
+    # 'Higher taxa' are at rank 'family' or higher
+    target_gbif_taxa, higher_taxon_targets = _fetch_target_taxa(
+        targets, query_dir)
+
+    unknown_taxa = unknown_taxa.union({
+        t for t in targets
+        if t not in target_gbif_taxa
+        and t not in higher_taxon_targets
+    })
+
+    _draw_occurrence_maps(
+        target_gbif_taxa,
+        higher_taxon_targets,
+        query_dir,
+    )
+
+    tasks = [
+        get_args(
+            func,
+            query_dir,
+            target_gbif_taxa[target],
+            taxid,
+            locus,
+            country,
+        )
+        for target, taxid in target_taxids.items()
+        for func in (
+            _get_target_coverage,
+            _get_related_coverage,
+            _get_related_country_coverage,
+        )
+        if target in target_gbif_taxa
+    ]
+
+    tasks += [
+        (_get_target_coverage, taxid, locus)
+        for target, taxid in target_taxids.items()
+        if target in higher_taxon_targets
+    ]
+
+    if not len(tasks):
+        raise ValueError(
+            "No tasks created for database coverage assessment. This likely"
+            " indicates a bug in the code - please report this issue.")
+
+    results, is_error = _parallel_process_tasks(
+        tasks,
+        query_dir,
+        target_taxids,
+        target_gbif_taxa,
+        taxid_to_taxon,
+        candidate_list,
+        toi_list,
+        pmi,
+    )
+    for taxon in unknown_taxa:
+        for target_type, targets in {
+            'candidate': candidate_list,
+            'toi': toi_list,
+            'pmi': [pmi],
+        }.items():
+            if taxon in targets:
+                results[target_type][taxon] = {
+                    'target': None,
+                    'related': None,
+                    'country': None,
+                }
+    _set_flags(results, query_dir, higher_taxon_targets)
+    return results, is_error
+
+
+def _read_candidate_species(query_dir):
     candidates = config.read_json(query_dir / config.CANDIDATES_JSON)
     return [
         c["species"]
@@ -33,7 +146,7 @@ def read_candidate_species(query_dir):
 
 
 def _get_targets(query_dir):
-    candidates = read_candidate_species(query_dir)
+    candidates = _read_candidate_species(query_dir)
     if len(candidates) > config.DB_COVERAGE_MAX_CANDIDATES:
         logger.info(
             f"[{MODULE_NAME}]: Skipping database coverage assessment for"
@@ -158,9 +271,9 @@ def _parallel_process_tasks(
 ):
     with ThreadPoolExecutor(max_workers=50) as executor:
         results = {
-            get_target_coverage.__name__: {},
-            get_related_coverage.__name__: {},
-            get_related_country_coverage.__name__: {},
+            _get_target_coverage.__name__: {},
+            _get_related_coverage.__name__: {},
+            _get_related_country_coverage.__name__: {},
         }
         logger.debug(
             f"[{MODULE_NAME}]: Threading {len(tasks)} tasks..."
@@ -240,9 +353,10 @@ def _collect_results(
 
     for target_taxon, gbif_taxon in target_gbif_taxa.items():
         taxid = target_taxids[target_taxon]
-        target_result = results[get_target_coverage.__name__].get(taxid)
-        related_result = results[get_related_coverage.__name__].get(gbif_taxon)
-        country_result = results[get_related_country_coverage.__name__].get(
+        target_result = results[_get_target_coverage.__name__].get(taxid)
+        related_result = results[_get_related_coverage.__name__].get(
+            gbif_taxon)
+        country_result = results[_get_related_country_coverage.__name__].get(
             gbif_taxon)
         error_detected = (
             error_detected
@@ -273,97 +387,7 @@ def _collect_results(
     }, error_detected
 
 
-def assess_coverage(query_dir) -> dict[str, dict[str, dict]]:
-    def get_args(func, query_dir, target, taxid, locus, country):
-        if func == get_target_coverage:
-            return func, taxid, locus
-        elif func == get_related_coverage:
-            return func, target, locus, query_dir
-        elif func == get_related_country_coverage:
-            return func, target, locus, country, query_dir
-
-    locus = config.get_locus_for_query(query_dir)
-    country = config.get_country_for_query(query_dir, code=True)
-    candidate_list, toi_list, pmi = _get_targets(query_dir)
-    targets = candidate_list + toi_list + [pmi]
-    if not targets:
-        logger.info(
-            f"[{MODULE_NAME}]: Skipping analysis - no target species"
-            " identified for database coverage assessment."
-        )
-        return None
-
-    target_taxids = _get_taxids(targets, query_dir)
-    taxid_to_taxon = {v: k for k, v in target_taxids.items()}
-    logger.info(
-        f"[{MODULE_NAME}]: Assessing database coverage for {len(targets)}"
-        f" species at locus '{locus}' in country '{country}'."
-    )
-    logger.debug(
-        f"[{MODULE_NAME}]: collected targets:\n"
-        f"  - Candidates: {candidate_list}\n"
-        f"  - Taxa of interest: {toi_list}\n"
-        f"  - PMI: {pmi}"
-    )
-    logger.debug(
-        f"[{MODULE_NAME}]: Taxids for targets (extracted by taxonkit):\n"
-        + pformat(target_taxids, indent=2)
-    )
-
-    # 'Higher taxa' are at rank 'family' or higher
-    target_gbif_taxa, higher_taxon_targets = _fetch_target_taxa(
-        targets, query_dir)
-
-    _draw_occurrence_maps(
-        target_gbif_taxa,
-        higher_taxon_targets,
-        query_dir,
-    )
-
-    tasks = [
-        get_args(
-            func,
-            query_dir,
-            target_gbif_taxa[target],
-            taxid,
-            locus,
-            country,
-        )
-        for target, taxid in target_taxids.items()
-        for func in (
-            get_target_coverage,
-            get_related_coverage,
-            get_related_country_coverage,
-        )
-        if target in target_gbif_taxa
-    ]
-
-    tasks += [
-        (get_target_coverage, taxid, locus)
-        for target, taxid in target_taxids.items()
-        if target in higher_taxon_targets
-    ]
-
-    if not len(tasks):
-        raise ValueError(
-            "No tasks created for database coverage assessment. This likely"
-            " indicates a bug in the code - please report this issue.")
-
-    results, is_error = _parallel_process_tasks(
-        tasks,
-        query_dir,
-        target_taxids,
-        target_gbif_taxa,
-        taxid_to_taxon,
-        candidate_list,
-        toi_list,
-        pmi,
-    )
-    _set_flags(results, query_dir, higher_taxon_targets)
-    return results, is_error
-
-
-def get_target_coverage(taxid, locus):
+def _get_target_coverage(taxid, locus):
     """Return a count of the number of accessions for the given target."""
     # TODO: potential for caching gb count result here
     logger.info(
@@ -373,7 +397,7 @@ def get_target_coverage(taxid, locus):
     return genbank.fetch_gb_records(locus, taxid, count=True)
 
 
-def get_related_coverage(gbif_target, locus, query_dir):
+def _get_related_coverage(gbif_target, locus, query_dir):
     """Return a count of the number of related species (same genus) and the
     number of species which have at least one accession in the database.
     """
@@ -389,7 +413,7 @@ def get_related_coverage(gbif_target, locus, query_dir):
         f" related species..."
     )
     # TODO: potential for caching GBIF related taxa here
-    results, err = fetch_gb_records_for_species(species_names, locus)
+    results, err = _fetch_gb_records_for_species(species_names, locus)
     if err:
         for species, exc in err:
             msg = (
@@ -403,7 +427,7 @@ def get_related_coverage(gbif_target, locus, query_dir):
     return results
 
 
-def get_related_country_coverage(
+def _get_related_country_coverage(
     gbif_target,
     locus,
     country,
@@ -421,7 +445,7 @@ def get_related_country_coverage(
         f" '{gbif_target.taxon}' (locus: '{locus}'; country: '{country}')"
         f" - {len(species_names)} related species"
     )
-    results, err = fetch_gb_records_for_species(species_names, locus)
+    results, err = _fetch_gb_records_for_species(species_names, locus)
     if err:
         for species, exc in err:
             msg = (
@@ -435,7 +459,7 @@ def get_related_country_coverage(
     return results
 
 
-def fetch_gb_records_for_species(species_names, locus):
+def _fetch_gb_records_for_species(species_names, locus):
     """Fetch a count of the number of Genbank accessions for each species in
     the list.
     """
