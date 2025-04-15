@@ -14,7 +14,7 @@ def main():
     args = _parse_args()
     config.configure(args.output_dir)
     config.configure_query_logger(args.query_dir)
-    report.render(args.query_dir)
+    report.render(args.query_dir, args.bold)
 
 
 def _parse_args():
@@ -26,6 +26,12 @@ def _parse_args():
         type=existing_path,
         default=config.output_dir,
         help=f"Path to output directory. Defaults to {config.output_dir}.")
+    parser.add_argument(
+        "--bold",
+        action="store_true",
+        help="If set, will enable the 'bold' logic for rendering the report."
+    )
+
     return parser.parse_args()
 
 

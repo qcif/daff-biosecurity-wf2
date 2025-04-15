@@ -22,13 +22,13 @@ TEMPLATE_DIR = Path(__file__).parent / 'templates'
 STATIC_DIR = Path(__file__).parent / 'static'
 
 
-def render(query):
+def render(query, bold=False):
     """Render to HTML report to the configured output directory."""
     query_ix = config.get_query_ix(query)
     j2 = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
     j2.filters['css_hash'] = css_hash
     template = j2.get_template('index.html')
-    context = _get_report_context(query_ix)
+    context = _get_report_context(query_ix, bold)
 
     # ! TODO: Remove this eventually
     path = config.output_dir / 'report_context.json'
@@ -80,7 +80,7 @@ def _get_img_src(path):
     )
 
 
-def _get_report_context(query_ix):
+def _get_report_context(query_ix, bold):
     """Build the context for the report template."""
     query_fasta_str = config.read_query_fasta(query_ix).format('fasta')
     hits = config.read_hits_json(query_ix)['hits']
@@ -98,7 +98,9 @@ def _get_report_context(query_ix):
         'conclusions': _draw_conclusions(query_ix),
         'hits': hits,
         'candidates': _get_candidates(query_ix),
-        'hits_taxonomy': _load_taxonomies(hits),
+        'hits_taxonomy': (
+            _load_taxonomies_bold(hits) if bold else _load_taxonomies(hits)
+        ),
         'candidates_boxplot_src': _get_boxplot_src(query_ix),
         'toi_rows': _read_toi_detected(query_ix),
         'aggregated_sources': _read_source_diversity(query_ix),
@@ -106,6 +108,7 @@ def _get_report_context(query_ix):
         'tree_nwk_str': (config.get_query_dir(query_ix)
                          / config.TREE_NWK_FILENAME).read_text().strip(),
         'error_log': ErrorLog(config.get_query_dir(query_ix)),
+        'bold': bold,
     }
 
 
@@ -275,6 +278,23 @@ def _load_taxonomies(hits):
     return {
         hit['accession']: run_taxonomies.get(hit['accession'])
         for hit in hits
+    }
+
+
+def _load_taxonomies_bold(hits):
+    return {
+        hit['accession']: {
+            key: hit.get("taxonomy", {}).get(key, "")
+            for key in (
+                "phylum",
+                "class",
+                "order",
+                "family",
+                "genus",
+                "species",
+            )
+        }
+        for hit in hits if 'accession' in hit
     }
 
 
