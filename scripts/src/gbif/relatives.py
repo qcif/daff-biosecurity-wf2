@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 config = config.Config()
 
 MODULE_NAME = 'GBIF API'
-GBIF_SPECIES_BASE_URL = 'https://www.gbif.org/species/'
 
 
 class GBIFRecordNotFound(Exception):
