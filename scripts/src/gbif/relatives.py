@@ -12,6 +12,34 @@ config = config.Config()
 
 MODULE_NAME = 'GBIF API'
 
+CANONICAL_TAXA = {
+    "fungi": {"rank": "Kingdom", "canonical_name": "fungi"},
+    "fungus": {"rank": "Kingdom", "canonical_name": "fungi"},
+    "mycota": {"rank": "Kingdom", "canonical_name": "fungi"},
+    "plant": {"rank": "Kingdom", "canonical_name": "plantae"},
+    "plants": {"rank": "Kingdom", "canonical_name": "plantae"},
+    "plantae": {"rank": "Kingdom", "canonical_name": "plantae"},
+    "chlorophyta": {"rank": "Kingdom", "canonical_name": "plantae"},
+    "animal": {"rank": "Kingdom", "canonical_name": "animalia"},
+    "animals": {"rank": "Kingdom", "canonical_name": "animalia"},
+    "animalia": {"rank": "Kingdom", "canonical_name": "animalia"},
+    "metazoa": {"rank": "Kingdom", "canonical_name": "animalia"},
+    "bacteria": {"rank": "Kingdom", "canonical_name": "bacteria"},
+    "bacterium": {"rank": "Kingdom", "canonical_name": "bacteria"},
+    "archaea": {"rank": "Kingdom", "canonical_name": "archaea"},
+    "archaeabacteria": {"rank": "Kingdom", "canonical_name": "archaea"},
+    "virus": {"rank": "Kingdom", "canonical_name": "viruses"},
+    "viruses": {"rank": "Kingdom", "canonical_name": "viruses"},
+    "viroid": {"rank": "Kingdom", "canonical_name": "viruses"},
+    "viral": {"rank": "Kingdom", "canonical_name": "viruses"},
+    "protozoa": {"rank": "Kingdom", "canonical_name": "protista"},
+    "protozoan": {"rank": "Kingdom", "canonical_name": "protista"},
+    "protist": {"rank": "Kingdom", "canonical_name": "protista"},
+    "protists": {"rank": "Kingdom", "canonical_name": "protista"},
+    "protista": {"rank": "Kingdom", "canonical_name": "protista"},
+    "chromista": {"rank": "Kingdom", "canonical_name": "chromista"},
+}
+
 
 class GBIFRecordNotFound(Exception):
     pass
@@ -54,6 +82,9 @@ class RelatedTaxaGBIF:
             'q': taxon,
             'limit': 20,
         }
+        if canonical_taxon := CANONICAL_TAXA.get(taxon.lower()):
+            kwargs["q"] = canonical_taxon['canonical_name']
+            kwargs['rank'] = canonical_taxon['rank']
         throttle = Throttle(ENDPOINTS.GBIF_FAST)
         res = throttle.with_retry(
             pygbif.species.name_suggest,
