@@ -57,13 +57,6 @@ def _parse_args():
         help="Path to queries.fasta input file.",
         required=True,
     )
-    # parser.add_argument( # TODO: required?
-    #     "--output_dir",
-    #     type=Path,
-    #     help="Directory to save parsed output files (JSON and FASTA). Defaults"
-    #          f" to env variable 'OUTPUT_DIR' or '{config.output_dir}'.",
-    #     default=config.output_dir,
-    # )
     return parser.parse_args()
 
 
@@ -263,3 +256,7 @@ def _validate_taxdbs(path):
             " archive can be downloaded from NCBI: "
             + ', '.join(missing)
         )
+
+
+if __name__ == '__main__':
+    main()
