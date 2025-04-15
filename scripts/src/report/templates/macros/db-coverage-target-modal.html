@@ -1,12 +1,14 @@
 {% from "macros/alert-level-icon.html" import render_level_icon %}
+{% from "macros/error-message.html" import render_error_message %}
 
-{% macro render_target_modal(data, target_id, target_taxon, target_type, target_type_text, flags, metadata) %}
+{% macro render_target_modal(data, target_id, target_taxon, target_type, target_type_text, flags, metadata, error_log) %}
 
 {% set flag_5_1 = flags['5.1'][target_type][target_taxon] %}
 {% set flag_5_2 = flags['5.2'][target_type][target_taxon] %}
 {% set flag_5_3 = flags['5.3'][target_type][target_taxon] %}
 {% set all_flags = [flag_5_1, flag_5_2, flag_5_3] %}
 {% set flag = all_flags | max(attribute='level') %}
+{% set errors = error_log.filter(location_min=5.0, location_max=5.99) %}
 
 <div class="modal fade" id="{{ target_id }}Modal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-xl">
@@ -87,7 +89,10 @@
             <div class="row my-5">
               <div class="col">
 
-                <!-- Insert 5.01 errors here -->
+                {% set p5_01_errors = errors.filter(location=5.01, context={'target': target_taxon }) %}
+                {% if p5_01_errors %}
+                {{ render_error_message(p5_01_errors) }}
+                {% endif %}
 
                 {% if data.target is not none %}
                 <div class="big-number alert-{{ flag_5_1.bs_class }}">

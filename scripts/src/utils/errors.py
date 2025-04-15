@@ -1,6 +1,7 @@
 """Define error handling logic."""
 
 import json
+from pathlib import Path
 
 from .config import Config
 
@@ -41,8 +42,14 @@ class LOCATIONS:
     DB_COVERAGE_RELATED_COUNTRY = 5.3
 
 
-def write(location, msg, exc, query_dir=None, context=None):
-    """Write a non-fatal error to file for later recall.
+def write(
+    location: float,
+    msg: str,
+    exc: Exception,
+    query_dir: Path = None,
+    context: dict = None,
+):
+    """Write a non-fatal error to file for later reporting.
 
     location: display the error message in an appropriate
               location in the report.
@@ -50,7 +57,8 @@ def write(location, msg, exc, query_dir=None, context=None):
     exception: optional, can be None.
     query_dir: the location of error output file
                if the error happens in any specific query.
-    data: optional, the context data of the error.
+    context: optional, the context of the error to help locate it in the
+             report e.g. 'target'.
     """
     parent = query_dir or config.output_dir
     next_path = parent / config.ERRORS_DIR / 'next.txt'
@@ -70,28 +78,62 @@ def write(location, msg, exc, query_dir=None, context=None):
         }, f)
 
 
-def read(query_dir=None, index=None):
-    """Read all error files from given error directory."""
-    errors = {}
-    parent = query_dir or config.output_dir
-    for path in (parent / config.ERRORS_DIR).glob('*.json'):
-        with path.open() as f:
-            errors[int(path.stem)] = json.load(f)
-    if index:
-        return errors.get(index)
-    return errors
+class ErrorLog:
+    """Provide access to error messages logged throughout the workflow run."""
 
+    def __init__(self, query_dir: Path = None, errors: list[dict] = None):
+        """Read all errors from error files."""
+        self.query_dir = query_dir
+        self.errors = errors or self._read()
 
-def report(path: Path, query_dir=None, location_min=0, location_max=999):
-    """Write the specified errors to the given path for reporting."""
-    errors = [
-        x for x in read(query_dir=query_dir).values()
-        if x['location'] >= location_min
-        and x['location'] <= location_max
-    ]
-    with path.open('w') as f:
-        for error in errors:
-            f.write(
-                f'Message: {error["message"]}\n'
-                f'Exception: {error["exception"]}\n\n'
-            )
+    def __iter__(self):
+        """Iterate over errors."""
+        return iter(self.errors)
+
+    def _read(self):
+        """Read all error files from given error directory."""
+        errors = []
+        parent = self.query_dir or config.output_dir
+        for path in (parent / config.ERRORS_DIR).glob('*.json'):
+            with path.open() as f:
+                errors.append(json.load(f))
+        return errors
+
+    def filter(
+        self,
+        location: int = None,
+        location_min: int = 0,
+        location_max: int = 999,
+        context: dict = None,
+    ) -> 'ErrorLog':
+        """List requested errors from the error log."""
+        errors = self.errors
+        if location:
+            errors = [
+                x for x in errors
+                if x['location'] == location
+            ]
+        if location_min is not None:
+            errors = [
+                x for x in errors
+                if x['location'] >= location_min
+            ]
+        if location_max is not None:
+            errors = [
+                x for x in errors
+                if x['location'] <= location_max
+            ]
+        if context:
+            errors = [
+                x for x in errors
+                if all(
+                    x.get('context', {}).get(k) == v
+                    for k, v in context.items()
+                )
+            ]
+
+        return ErrorLog(query_dir=self.query_dir, errors=errors)
+
+    def to_json(self) -> list[dict]:
+        """Convert error log to JSON."""
+        return self.errors

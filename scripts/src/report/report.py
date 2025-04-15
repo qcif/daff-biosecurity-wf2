@@ -11,9 +11,9 @@ from pathlib import Path
 
 from .filters.css_hash import css_hash
 from .outcomes import DetectedTaxon
-from src.utils import config
+from src.utils import config, serialize
+from src.utils.errors import ErrorLog
 from src.utils.flags import Flag, FLAGS, TARGETS
-from src.utils import serialize
 
 logger = logging.getLogger(__name__)
 config = config.Config()
@@ -105,6 +105,7 @@ def _get_report_context(query_ix):
         'db_coverage': _read_db_coverage(query_ix),
         'tree_nwk_str': (config.get_query_dir(query_ix)
                          / config.TREE_NWK_FILENAME).read_text().strip(),
+        'error_log': ErrorLog(config.get_query_dir(query_ix)),
     }
 
 

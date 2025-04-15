@@ -1,0 +1,21 @@
+{% macro render_error_message(errorlist) %}
+
+<div class="alert alert-danger">
+  <strong>Errors encountered:</strong>
+  <ul>
+    {% for error in errorlist %}
+    <li>
+      {{ error.message }}
+      <br>
+      <small>
+        <strong>Exception:</strong>
+        <code>
+          {{ error.exception }}
+        </code>
+      </small>
+    </li>
+    {% endfor %}
+  </ul>
+</d>
+
+{% endmacro %}
