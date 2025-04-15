@@ -10,5 +10,7 @@ docker build -t $IMAGE:$TAG .
 
 # if -p in args, push the image to the registry
 if [[ $* == *-p* ]]; then
+  docker tag $IMAGE:$TAG $IMAGE:latest
   docker push $IMAGE:$TAG
+  docker push $IMAGE:latest
 fi
