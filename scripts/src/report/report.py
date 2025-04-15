@@ -99,7 +99,9 @@ def _get_report_context(query_ix, bold):
         'conclusions': _draw_conclusions(query_ix),
         'hits': hits,
         'candidates': _get_candidates(query_ix),
-        'hits_taxonomy': _load_taxonomies_bold(hits) if bold else _load_taxonomies(hits),
+        'hits_taxonomy': (
+            _load_taxonomies_bold(hits) if bold else _load_taxonomies(hits)
+        ),
         'candidates_boxplot_src': _get_boxplot_src(query_ix),
         'toi_rows': _read_toi_detected(query_ix),
         'aggregated_sources': _read_source_diversity(query_ix),
@@ -282,13 +284,15 @@ def _load_taxonomies(hits):
 def _load_taxonomies_bold(hits):
     return {
         hit['accession']: {
-            "kingdom": hit.get("taxonomy", {}).get("kingdom", ""),
-            "phylum": hit.get("taxonomy", {}).get("phylum", ""),
-            "class": hit.get("taxonomy", {}).get("class", ""),
-            "order": hit.get("taxonomy", {}).get("order", ""),
-            "family": hit.get("taxonomy", {}).get("family", ""),
-            "genus": hit.get("taxonomy", {}).get("genus", ""),
-            "species": hit.get("taxonomy", {}).get("species", "")
+            key: hit.get("taxonomy", {}).get(key, "")
+            for key in (
+                "phylum",
+                "class",
+                "order",
+                "family",
+                "genus",
+                "species",
+            )
         }
         for hit in hits if 'accession' in hit
     }
