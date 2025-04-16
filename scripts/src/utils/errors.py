@@ -84,11 +84,16 @@ class ErrorLog:
     def __init__(self, query_dir: Path = None, errors: list[dict] = None):
         """Read all errors from error files."""
         self.query_dir = query_dir
-        self.errors = errors or self._read()
+        self.errors = errors if errors is not None else self._read()
+
+    def __len__(self):
+        return len(self.errors)
 
     def __iter__(self):
-        """Iterate over errors."""
         return iter(self.errors)
+
+    def __bool__(self):
+        return bool(self.errors)
 
     def _read(self):
         """Read all error files from given error directory."""
