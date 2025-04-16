@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 IMAGE=neoformit/daff-taxonomic-assignment
 
 read -p "Enter the tag for the image (default: latest): " TAG
