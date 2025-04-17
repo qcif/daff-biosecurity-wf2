@@ -126,7 +126,7 @@ class Config:
         FASTA_MAX_SEQUENCES = 150
 
     class CRITERIA:
-        ALIGNMENT_MIN_NT = int(os.getenv('MIN_NT', 400))
+        ALIGNMENT_MIN_NT = int(os.getenv('MIN_NT', 300))
         ALIGNMENT_MIN_Q_COVERAGE = float(os.getenv('MIN_Q_COVERAGE', 0.85))
         ALIGNMENT_MIN_IDENTITY = float(os.getenv('MIN_IDENTITY', 0.935))
         ALIGNMENT_MIN_IDENTITY_STRICT = float(
