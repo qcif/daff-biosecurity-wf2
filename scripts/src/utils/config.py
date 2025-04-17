@@ -123,7 +123,7 @@ class Config:
         )
         FASTA_MAX_LENGTH_NT = 3000
         FASTA_MIN_LENGTH_NT = 20
-        FASTA_MAX_SEQUENCES = 10
+        FASTA_MAX_SEQUENCES = 150
 
     class CRITERIA:
         ALIGNMENT_MIN_NT = int(os.getenv('MIN_NT', 400))
