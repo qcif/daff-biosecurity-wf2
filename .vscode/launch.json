@@ -9,7 +9,7 @@
                 "discover",
                 "-s", "tests",
                 "-p", "test*.py",
-                // "-p", "test_taxonkit.py",
+                // "-p", "test_validation.py",
                 "-b",
             ],
             "env": {

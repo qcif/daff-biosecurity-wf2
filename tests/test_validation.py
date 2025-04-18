@@ -11,16 +11,17 @@ from p0_validation import (
     TAXDB_EXPECT_FILES,
     _validate_fasta,
     _validate_metadata,
-    _validate_metadata_sample_id,
-    _validate_metadata_locus,
-    _validate_metadata_preliminary_id,
-    _validate_metadata_taxa_of_interest,
     _validate_metadata_country,
     _validate_metadata_host,
+    _validate_metadata_locus,
+    _validate_metadata_preliminary_id,
+    _validate_metadata_sample_id,
+    _validate_metadata_taxa_of_interest,
     _validate_taxdbs,
 )
-from src.utils.errors import FASTAFormatError, MetadataFormatError
+
 from src.utils.config import Config
+from src.utils.errors import FASTAFormatError, MetadataFormatError
 
 logging.disable(logging.CRITICAL)
 
@@ -38,6 +39,8 @@ METADATA_MISSING_SAMPLE_ID = (
     TEST_DATA_DIR / 'validation/metadata_missing_sample_id.csv')
 METADATA_MISSING_SEQUENCE_ID = (
     TEST_DATA_DIR / 'validation/metadata_missing_sequence_id.csv')
+METADATA_MISSING_TOI_COUNTRY = (
+    TEST_DATA_DIR / 'validation/metadata_missing_toi_country.csv')
 METADATA_EXPECT_IDS = [
     'LC438549.1',
     'ON075825.1',
@@ -64,6 +67,7 @@ class ValidationTestCase(unittest.TestCase):
 
     def test_it_can_validate_metadata_csv(self):
         _validate_metadata(METADATA_VALID, METADATA_EXPECT_IDS)
+        _validate_metadata(METADATA_MISSING_TOI_COUNTRY, METADATA_EXPECT_IDS)
         with self.assertRaises(MetadataFormatError):
             _validate_metadata(METADATA_INVALID_COLUMNS, METADATA_EXPECT_IDS)
         with self.assertRaises(MetadataFormatError):

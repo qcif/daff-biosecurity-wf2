@@ -109,7 +109,6 @@ class Config:
             "sample_id",
             "locus",
             "preliminary_id",
-            "country",
             "host",
         )
         FASTA_FILEPATH = Path(
@@ -317,6 +316,8 @@ class Config:
 
     def get_country_for_query(self, query, code=False) -> str:
         country = self._get_metadata_for_query(query, "country")
+        if not country:
+            return None
         if code:
             return countries.get_code(country)
         return country

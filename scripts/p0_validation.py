@@ -154,7 +154,7 @@ def _validate_metadata(path: Path, seq_ids: list[str]):
             )
         for col_id, colname in columns.items():
             if (
-                col_id not in config.INPUTS.METADATA_CSV_REQUIRED_FIELDS
+                col_id in config.INPUTS.METADATA_CSV_REQUIRED_FIELDS
                 and not row[colname].strip()
             ):
                 raise MetadataFormatError(
@@ -231,6 +231,8 @@ def _validate_metadata_taxa_of_interest(value):
 
 def _validate_metadata_country(value):
     value = value.strip()
+    if not value:
+        return None
     country_code = countries.get_code(value)
     if not country_code:
         raise MetadataFormatError(
