@@ -141,7 +141,19 @@
           {{ render_level_icon(flag.level) }}
         </button>
 
-        {{ render_target_modal(db_coverage['candidate'][taxon], target_id, taxon, 'candidate', 'Candidate', flags, metadata, error_log) }}
+        {% set modal_context = {
+          'data': db_coverage['candidate'][taxon],
+          'target_id': target_id,
+          'target_taxon': taxon,
+          'target_type': 'candidate',
+          'target_type_text': "Candidate",
+          'flags': flags,
+          'metadata': metadata,
+          'error_log': error_log,
+          'config': config,
+          'tois_detected': {},
+        } %}
+        {{ render_target_modal(modal_context) }}
 
       </td>
     </tr>

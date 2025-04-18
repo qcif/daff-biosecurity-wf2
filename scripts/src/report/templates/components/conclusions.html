@@ -67,12 +67,25 @@
       >
         {{ render_level_icon(flag.level) }}
       </button>
-
-
-      {{ render_target_modal(db_coverage['pmi'][taxon], target_id, taxon, 'pmi', "Preliminary Morphology ID", flags, metadata, error_log) }}
     </td>
   </tr>
 </table>
+
+
+{% set modal_context = {
+  'data': db_coverage['pmi'][taxon],
+  'target_id': target_id,
+  'target_taxon': taxon,
+  'target_type': 'pmi',
+  'target_type_text': "Preliminary Morphology ID",
+  'flags': flags,
+  'metadata': metadata,
+  'error_log': error_log,
+  'config': config,
+  'tois_detected': {},
+} %}
+{{ render_target_modal(modal_context) }}
+
 
 {% if conclusions.summary.toi %}
 <table
