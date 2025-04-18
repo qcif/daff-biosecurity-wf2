@@ -11,12 +11,12 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pprint import pformat
 
 from src.entrez import genbank
-from src.utils.flags import Flag, FLAGS, TARGETS
-from src.gbif.relatives import GBIFRecordNotFound, RANK, RelatedTaxaGBIF
 from src.gbif.maps import draw_occurrence_map
+from src.gbif.relatives import GBIFRecordNotFound, RANK, RelatedTaxaGBIF
 from src.taxonomy import extract
 from src.utils import errors
 from src.utils.config import Config
+from src.utils.flags import FLAGS, Flag, TARGETS
 
 logger = logging.getLogger(__name__)
 config = Config()
@@ -352,7 +352,13 @@ def _collect_results(
     toi_results = {}
     pmi_results = {}
 
-    for target_taxon, gbif_taxon in target_gbif_taxa.items():
+    taxa = list({
+        **target_taxids,
+        **target_gbif_taxa,
+    }.keys())
+
+    for target_taxon in taxa:
+        gbif_taxon = target_gbif_taxa.get(target_taxon)
         taxid = target_taxids[target_taxon]
         target_result = results[_get_target_coverage.__name__].get(taxid)
         related_result = results[_get_related_coverage.__name__].get(
@@ -361,7 +367,11 @@ def _collect_results(
             gbif_taxon)
         error_detected = (
             error_detected
-            or None in (target_result, related_result, country_result)
+            or (
+                # None result is expected in higher taxon targets
+                target_taxon in target_gbif_taxa
+                and None in (target_result, related_result, country_result)
+            )
         )
         if target_taxon in candidate_list:
             candidate_results[target_taxon] = candidate_results.get(
@@ -515,16 +525,20 @@ def _fetch_gb_records_for_species(species_names, locus):
 
 def _set_flags(db_coverage, query_dir, higher_taxon_targets):
     """Set flags 5.1 - 5.3 (DB coverage) for each target."""
-    def set_target_coverage_flag(target, target_type, count):
-        if count is None:
+    def set_target_coverage_flag(
+        target,
+        target_type,
+        count,
+        higher_taxon=False,
+    ):
+        if higher_taxon:
+            flag_value = FLAGS.NA
+        elif count is None:
             logger.warning(
                 f"Could not set DB coverage flags 5.* for target '{target}'"
                 f" ({target_type}) - species counts are None but expected"
                 " a dict. This indicates an error has occurred above.")
             return
-        elif count == FLAGS.NA:
-            # Indicates a higher level taxon (family or higher)
-            flag_value = FLAGS.NA
         elif not isinstance(count, int):
             raise ValueError(
                 f"[{MODULE_NAME}]: Unexpected count value for target"
@@ -543,15 +557,20 @@ def _set_flags(db_coverage, query_dir, higher_taxon_targets):
             target_type=target_type,
         )
 
-    def set_related_coverage_flag(target, target_type, species_counts):
-        if species_counts is None:
+    def set_related_coverage_flag(
+        target,
+        target_type,
+        species_counts,
+        higher_taxon=False,
+    ):
+        if higher_taxon:
+            flag_value = FLAGS.NA
+        elif species_counts is None:
             logger.warning(
                 f"Could not set DB coverage flags 5.* for target '{target}'"
                 f" ({target_type}) - species counts are None but expected"
                 " a dict. This indicates an error has occurred above.")
             return
-        if species_counts == FLAGS.NA:
-            flag_value = FLAGS.NA
         elif isinstance(species_counts, str):
             raise ValueError(
                 f"[{MODULE_NAME}]: Unexpected str count value for related"
@@ -580,15 +599,20 @@ def _set_flags(db_coverage, query_dir, higher_taxon_targets):
             target_type=target_type,
         )
 
-    def set_country_coverage_flag(target, target_type, species_counts):
-        if species_counts is None:
+    def set_country_coverage_flag(
+        target,
+        target_type,
+        species_counts,
+        higher_taxon=False,
+    ):
+        if higher_taxon:
+            flag_value = FLAGS.NA
+        elif species_counts is None:
             logger.warning(
                 f"Could not set DB coverage flags 5.* for target '{target}'"
                 f" ({target_type}) - species counts are None but expected"
                 " a dict. This indicates an error has occurred above.")
             return
-        if species_counts == FLAGS.NA:
-            flag_value = FLAGS.NA
         else:
             total_species = len(species_counts)
             represented_species = len([
@@ -618,26 +642,24 @@ def _set_flags(db_coverage, query_dir, higher_taxon_targets):
 
     for target_type, target_data in db_coverage.items():
         for target_species, coverage_data in target_data.items():
-            if target_species in higher_taxon_targets:
-                # Target is family or higher - flags are not set
-                coverage_data['target'] = FLAGS.NA
-                coverage_data['related'] = FLAGS.NA
-                coverage_data['country'] = FLAGS.NA
             try:
                 set_target_coverage_flag(
                     target_species,
                     target_type,
                     coverage_data['target'],
+                    higher_taxon=target_species in higher_taxon_targets,
                 )
                 set_related_coverage_flag(
                     target_species,
                     target_type,
                     coverage_data['related'],
+                    higher_taxon=target_species in higher_taxon_targets,
                 )
                 set_country_coverage_flag(
                     target_species,
                     target_type,
                     coverage_data['country'],
+                    higher_taxon=target_species in higher_taxon_targets,
                 )
             except Exception as exc:
                 raise RuntimeError(
