@@ -2,11 +2,12 @@
 
 import argparse
 import csv
-import re
 import os
+import re
+from pathlib import Path
+
 from Bio import SeqIO
 from Bio.Data import IUPACData
-from pathlib import Path
 
 from src.utils import countries, existing_path
 from src.utils.config import Config
@@ -14,7 +15,7 @@ from src.utils.errors import FASTAFormatError, MetadataFormatError
 
 config = Config()
 
-DNA_CHARS = set(IUPACData.unambiguous_dna_letters + 'N')
+DNA_CHARS = set(IUPACData.ambiguous_dna_letters)
 TAXDB_EXPECT_FILES = {
     "citations.dmp",
     "delnodes.dmp",
