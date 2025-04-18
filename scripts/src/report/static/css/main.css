@@ -182,7 +182,7 @@ tr.interactive.active {
 
 /* Figures */
 .verticalScrollChart {
-  max-height: 500px;
+  max-height: 350px;
   overflow-y: auto;
 }
 #phylotree {
