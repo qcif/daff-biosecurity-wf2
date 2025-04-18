@@ -9,6 +9,8 @@
 
 {% set flags = conclusions.flags %}
 
+{% if tois_detected %}
+
 <table class="table table-striped">
   <thead>
     <tr>
@@ -66,3 +68,9 @@
     </tr>
     {% endfor %}
 </table>
+
+{% else %}
+<div class="alert alert-info">
+  No Taxa of Interest to assess.
+</div>
+{% endif %}

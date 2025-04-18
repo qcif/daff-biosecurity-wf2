@@ -122,11 +122,11 @@ def _filter_candidates_bold(hits):
 
 
 def _assign_species_id(
-        query_dir,
-        candidate_hits,
-        candidate_hits_strict,
-        bold=False,
-    ):
+    query_dir,
+    candidate_hits,
+    candidate_hits_strict,
+    bold=False,
+):
     """Attempt species ID from BLAST hits.json data."""
     query_ix = config.get_query_ix(query_dir)
     candidate_species = deduplicate([
@@ -309,6 +309,12 @@ def _detect_taxa_of_interest(candidate_species, query_dir):
     """
     taxa_of_interest = config.get_toi_list_for_query(query_dir)
     if not taxa_of_interest:
+        logger.info("No taxa of interest provided - writing flag 2 NA.")
+        Flag.write(
+            query_dir,
+            FLAGS.TOI,
+            FLAGS.NA,
+        )
         logger.info("No taxa of interest provided - no output written.")
         return
     candidate_taxa_flattened = [

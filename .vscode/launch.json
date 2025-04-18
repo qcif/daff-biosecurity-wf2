@@ -60,9 +60,9 @@
             "name": "P3 Assign taxonomy",
             "program": "${workspaceFolder}/scripts/p3_assign_taxonomy.py",
             "args": [
-                "output/query_001_LC438549"
+                // "output/query_001_LC438549"
                 // "output/query_002_ON075825"
-                // "output/query_003_PP466915"
+                "output/query_003_PP466915"
                 // "output/query_004_JQ585746"
                 // "output/query_005_LC547004"
                 // "output/query_006_VE24-1086_COI"
@@ -98,8 +98,9 @@
             "name": "P4 Source diversity",
             "program": "${workspaceFolder}/scripts/p4_source_diversity.py",
             "args": [
-                "output/query_001_LC438549"
+                // "output/query_001_LC438549"
                 // "output/query_002_ON075825",
+                "output/query_003_PP466915"
                 // "output/query_006_VE24-1086_COI"
             ],
             "preLaunchTask": "clear-log-files"
@@ -110,8 +111,9 @@
             "name": "P5 DB coverage",
             "program": "${workspaceFolder}/scripts/p5_db_coverage.py",
             "args": [
-                "output/query_001_LC438549",
+                // "output/query_001_LC438549",
                 // "output/query_002_ON075825",
+                "output/query_003_PP466915"
                 // "output/query_006_VE24-1086_COI"
 
                 // For testing issue cases:
@@ -131,9 +133,11 @@
             "name": "P6 Workflow report",
             "program": "${workspaceFolder}/scripts/p6_report.py",
             "args": [
-                "output/query_001_LC438549",
-                // "output/bold/query_001_LC438549",
+                // "output/query_001_LC438549",
                 // "output/query_002_ON075825",
+                "output/query_003_PP466915"
+
+                // "output/bold/query_001_LC438549",
                 // "--output_dir", "output/bold",
                 // "--bold",
 

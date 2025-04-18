@@ -371,6 +371,7 @@ def _collect_results(
                 # None result is expected in higher taxon targets
                 target_taxon in target_gbif_taxa
                 and None in (target_result, related_result, country_result)
+                # TODO: But only if country was provided?
             )
         )
         if target_taxon in candidate_list:
@@ -445,6 +446,8 @@ def _get_related_country_coverage(
     country,
     query_dir,
 ):
+    if not country:
+        return FLAGS.NA
     species_names = [
         r["canonicalName"]
         for r in gbif_target.for_country(country)
@@ -605,7 +608,7 @@ def _set_flags(db_coverage, query_dir, higher_taxon_targets):
         species_counts,
         higher_taxon=False,
     ):
-        if higher_taxon:
+        if higher_taxon or species_counts == FLAGS.NA:
             flag_value = FLAGS.NA
         elif species_counts is None:
             logger.warning(

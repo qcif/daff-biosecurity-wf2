@@ -254,6 +254,8 @@
               that occur in country of origin <strong>{{ context.metadata.country }}</strong>
             </h3>
 
+            {% if context.metadata.country %}
+
             <p class="alert alert-{{ flag_5_3.bs_class }}">
               <strong>Flag {{ flag_5_3.flag_id }}{{ flag_5_3.value }}:</strong>
               {{ flag_5_3.outcome }}
@@ -353,6 +355,13 @@
                 </div>
               </div>
             </div>
+
+            {% else %}
+            <p class="alert alert-info">
+              A country of origin was not provided in the sample metadata, so this analysis could not be performed.
+            </p>
+            {% endif %}
+
           </div>
           {% endif %}
 

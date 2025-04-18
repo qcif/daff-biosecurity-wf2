@@ -6,6 +6,7 @@ id,name,value,explanation,outcome,level
 1,Interspecies diversity,E,No candidate species matched,Identification not possible (potential unknown species),3
 2,Taxa of interest,A,Taxon of interest detected in candidate species,At least one of the taxa of interest matched the candidates species,1
 2,Taxa of interest,B,Taxon of interest NOT detected in candidate species,None of the taxa of interest matched the candidates species,3
+2,Taxa of interest,NA,No Taxa of Interest were provided,Could not be assessed,0
 4,Reference sequence source diversity,A,Matching sequence records for this species are from >5 independent sources,Reference sequences are from diverse sources and therefore likely to be reliable,1
 4,Reference sequence source diversity,B,Matching sequence records for this species have only 1-5 independent sources,Reference sequence sources lack diversity and may therefore be unreliable,2
 5.1,Database representation for target taxon,A,The given locus for this taxon is well represented in reference database (>5 entries),The reference data supports this taxon well,1
