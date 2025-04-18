@@ -102,7 +102,8 @@ def _get_report_context(query_ix, bold):
             _load_taxonomies_bold(hits) if bold else _load_taxonomies(hits)
         ),
         'candidates_boxplot_src': _get_boxplot_src(query_ix),
-        'toi_rows': _read_toi_detected(query_ix),
+        'toi_rows': _read_toi_rows(query_ix),
+        'tois_detected': _read_toi_detected(query_ix),
         'aggregated_sources': _read_source_diversity(query_ix),
         'db_coverage': _read_db_coverage(query_ix),
         'tree_nwk_str': (config.get_query_dir(query_ix)
@@ -314,7 +315,7 @@ def _get_boxplot_src(query_ix) -> Path:
     return None
 
 
-def _read_toi_detected(query_ix):
+def _read_toi_rows(query_ix):
     """Read the taxa of interest detected from the CSV file."""
     path = config.get_query_dir(query_ix) / config.TOI_DETECTED_CSV
     if not path.exists():
@@ -322,6 +323,19 @@ def _read_toi_detected(query_ix):
     with path.open() as f:
         reader = csv.DictReader(f)
         return [row for row in reader]
+
+
+def _read_toi_detected(query_ix):
+    """Read the taxa of interest detected from the CSV file."""
+    path = config.get_query_dir(query_ix) / config.TOI_DETECTED_CSV
+    if not path.exists():
+        return {}
+    with path.open() as f:
+        reader = csv.DictReader(f)
+        return {
+            row['Taxon of interest']: bool(row['Match rank'])
+            for row in reader
+        }
 
 
 def _read_source_diversity(query_ix):

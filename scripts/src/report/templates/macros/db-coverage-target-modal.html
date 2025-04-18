@@ -99,10 +99,19 @@
                   {{ context.data.target }} records
                 </div>
                 <p class="my-3">
-                  There are {{ data.target }} sequences in the reference database for
-                  <em>{{ target_taxon }}</em>
-                  at the given locus <strong>{{ metadata.locus }}</strong>.
+                  There are {{ context.data.target }} sequences in the reference database for
+                  <em>{{ context.target_taxon }}</em>
+                  at the given locus <strong>{{ context.metadata.locus }}</strong>.
                 </p>
+
+                <!-- If toi and toi not detected, and data.target, show warning message -->
+                {% if context.target_type == 'toi' and context.tois_detected['target_taxon'] and context.data.target %}
+                <p class="alert alert-warning">
+                  <strong>Warning:</strong>
+                  The reference database includes records for <em>{{ context.target_taxon }}</em>, but they were not present in the top {{ context.config.BLAST_MAX_TARGET_SEQS }} hits with a sufficient match score to meet candidate criteria. If there are over {{ context.config.BLAST_MAX_TARGET_SEQS }} related species' records in the database (as reported below), it is possible (though rare) that a viable hit for this TOI was present in hits ranked lower than the top {{ context.config.BLAST_MAX_TARGET_SEQS }}.
+                </p>
+                {% endif %}
+
                 {% endif %}
               </div>
 
