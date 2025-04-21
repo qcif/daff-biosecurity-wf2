@@ -9,10 +9,10 @@ TAG=${TAG:-latest}
 
 # Build the Docker image
 docker build -t $IMAGE:$TAG .
+docker tag $IMAGE:$TAG $IMAGE:latest
 
 # if -p in args, push the image to the registry
 if [[ $* == *-p* ]]; then
-  docker tag $IMAGE:$TAG $IMAGE:latest
   docker push $IMAGE:$TAG
   docker push $IMAGE:latest
 fi
