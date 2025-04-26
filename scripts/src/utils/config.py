@@ -107,9 +107,7 @@ class Config:
         }
         METADATA_CSV_REQUIRED_FIELDS = (
             "sample_id",
-            "locus",
             "preliminary_id",
-            "host",
         )
         FASTA_FILEPATH = Path(
             os.getenv(
