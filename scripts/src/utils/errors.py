@@ -75,7 +75,7 @@ def write(
             "message": msg,
             "exception": str(exc),
             "context": context,
-        }, f)
+        }, f, indent=2)
 
 
 class ErrorLog:
