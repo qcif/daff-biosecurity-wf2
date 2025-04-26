@@ -111,9 +111,9 @@
             "name": "P5 DB coverage",
             "program": "${workspaceFolder}/scripts/p5_db_coverage.py",
             "args": [
-                // "output/query_001_LC438549",
+                "output/query_001_LC438549",
                 // "output/query_002_ON075825",
-                "output/query_003_PP466915"
+                // "output/query_003_PP466915"
                 // "output/query_006_VE24-1086_COI"
 
                 // For testing issue cases:
