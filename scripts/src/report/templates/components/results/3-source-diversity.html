@@ -94,9 +94,11 @@
               </tr>
             </thead>
             <tbody>
+              {% set ns = namespace(counter=0) %}
               {% for src in src_group %}
               {% for publication in src.publications %}
-              <tr {% if loop.index > 2 %}class="hide"{% endif %}>
+              {% set ns.counter = ns.counter + 1 %}
+              <tr{% if ns.counter > 2 %} class="hide"{% endif %}>
                 <td>
                   <a href="{{ url_from_accession(src['accession']) }}" target="_blank">
                     {{ src.accession }}
@@ -113,7 +115,22 @@
               </tr>
               {% endfor %}
 
-              {% set remaining_publications = src.publications | length - 2 %}
+              {% if not src.publications %}
+              {% set ns.counter = ns.counter + 1 %}
+              <tr{% if ns.counter > 2 %} class="hide"{% endif %}>
+                <td>
+                  <a href="{{ url_from_accession(src['accession']) }}" target="_blank">
+                    {{ src.accession }}
+                  </a>
+                </td>
+                <td>{{ src.is_automated }}</td>
+                <td colspan="3">No publications for this record</td>
+              </tr>
+              {% endif %}
+
+              {% endfor %}
+
+              {% set remaining_publications = ns.counter - 2 %}
               {% if remaining_publications > 0 %}
               <tr>
                 <td colspan="5">
@@ -127,20 +144,6 @@
                 </td>
               </tr>
               {% endif %}
-
-              {% if not src.publications %}
-              <tr>
-                <td>
-                  <a href="{{ url_from_accession(src['accession']) }}" target="_blank">
-                    {{ src.accession }}
-                  </a>
-                </td>
-                <td>{{ src.is_automated }}</td>
-                <td colspan="3">No publications for this record</td>
-              </tr>
-              {% endif %}
-
-              {% endfor %}
 
             </tbody>
           </table>
