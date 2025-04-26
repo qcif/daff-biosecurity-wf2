@@ -228,9 +228,6 @@
                             },
                           }
                         );
-                        window.addEventListener('resize', function() {
-                          Plotly.Plots.resize('dbcov-plot-related-{{ context.target_id }}');
-                        });
 
                         zeroValues = values.filter(value => value === 0).length;
                         coverage = values.length - zeroValues;
@@ -339,9 +336,6 @@
                             },
                           }
                         );
-                        window.addEventListener('resize', function() {
-                          Plotly.Plots.resize('dbcov-plot-relatedCountry-{{ context.target_id }}');
-                        });
 
                         zeroValues = values.filter(value => value === 0).length;
                         coverage = values.length - zeroValues;
