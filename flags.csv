@@ -9,6 +9,7 @@ id,name,value,explanation,outcome,level
 2,Taxa of interest,NA,No Taxa of Interest were provided,Could not be assessed,0
 4,Reference sequence source diversity,A,Matching sequence records for this species are from >5 independent sources,Reference sequences are from diverse sources and therefore likely to be reliable,1
 4,Reference sequence source diversity,B,Matching sequence records for this species have only 1-5 independent sources,Reference sequence sources lack diversity and may therefore be unreliable,2
+5,Database coverage,NA,Criteria to perform this analysis were not met,Database coverage could not be assessed for this taxon.,0
 5.1,Database representation for target taxon,A,The given locus for this taxon is well represented in reference database (>5 entries),The reference data supports this taxon well,1
 5.1,Database representation for target taxon,B,The given locus for this taxon has limited representation in reference database (≤5 entries),The reference data has some support for this taxon,2
 5.1,Database representation for target taxon,C,The given locus for this taxon is not present in reference database (0 entries),The reference data are likely to be unreliable for this species,3

@@ -6,8 +6,7 @@
 {% set flag_5_1 = context.flags['5.1'][context.target_type][context.target_taxon] %}
 {% set flag_5_2 = context.flags['5.2'][context.target_type][context.target_taxon] %}
 {% set flag_5_3 = context.flags['5.3'][context.target_type][context.target_taxon] %}
-{% set all_flags = [flag_5_1, flag_5_2, flag_5_3] %}
-{% set flag = all_flags | max(attribute='level') %}
+{% set flag = context.flags['5'][context.target_type].get(context.target_taxon, none) %}
 {% set errors = context.error_log.filter(location_min=5.0, location_max=5.99) %}
 
 <div class="modal fade" id="{{ context.target_id }}Modal" tabindex="-1" aria-hidden="true">
@@ -35,6 +34,9 @@
         </p>
 
         <div class="border p-5">
+
+          {% if flag %}
+
           <table style="margin: 0 auto 2rem auto;">
             <tbody>
               <tr
@@ -357,6 +359,17 @@
             {% endif %}
 
           </div>
+          {% endif %}
+
+          {% else %}
+          <p class="alert alert-info">
+            No database coverage information is available for this taxon.
+            {% if context.target_type == 'candidate' and context.flags['1'].value.lower() in ['c', 'e'] %}
+            This is because database coverage is not evaluated when there are zero or &gt;3 candidate species.
+            {% else %}
+            This is likely because the data are insufficient or inappropriate for this analysis, or because an error was encountered during the analysis.
+            {% endif %}
+          </p>
           {% endif %}
 
         </div>

@@ -154,9 +154,6 @@
     {% endfor %}
   </div>
 </div>
-{% else %}
-<p class="alert alert-secondary">No candidate species to report on.</p>
-{% endif %}
 
 <script>
   function togglePublicationsCollapse(link) {
@@ -176,3 +173,7 @@
     });
   }
 </script>
+
+{% else %}
+<p class="alert alert-secondary">No candidate species to report on.</p>
+{% endif %}
