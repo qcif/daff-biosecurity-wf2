@@ -17,13 +17,16 @@ import argparse
 import csv
 import json
 import logging
-from Bio import SeqIO
 from pathlib import Path
-import matplotlib.pyplot as plt
 
-from src.utils import deduplicate, existing_path
-from src.utils.config import Config
-from src.utils.flags import Flag, FLAGS
+logging.getLogger('matplotlib').setLevel(logging.WARNING)
+
+from Bio import SeqIO  # noqa:E402
+import matplotlib.pyplot as plt  # noqa:E402
+
+from src.utils import deduplicate, existing_path  # noqa:E402
+from src.utils.config import Config  # noqa:E402
+from src.utils.flags import FLAGS, Flag  # noqa:E402
 
 logger = logging.getLogger(__name__)
 config = Config()
