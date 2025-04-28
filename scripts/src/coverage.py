@@ -39,7 +39,7 @@ def assess_coverage(query_dir) -> dict[str, dict[str, dict]]:
     targets = candidate_list + toi_list + [pmi]
     if not targets:
         logger.info(
-            f"[{MODULE_NAME}]: Skipping analysis - no target species"
+            f"[{MODULE_NAME}]: Skipping analysis - no target taxon"
             " identified for database coverage assessment."
         )
         return None
@@ -53,7 +53,7 @@ def assess_coverage(query_dir) -> dict[str, dict[str, dict]]:
 
     logger.info(
         f"[{MODULE_NAME}]: Assessing database coverage for {len(targets)}"
-        f" species at locus '{locus}' in country '{country}'."
+        f" taxon at locus '{locus}' in country '{country}'."
     )
     logger.debug(
         f"[{MODULE_NAME}]: collected targets:\n"
@@ -178,8 +178,8 @@ def _get_taxids(targets, query_dir):
     target_taxids = extract.taxids(targets)
     if len(target_taxids) != len(targets):
         msg = (
-            "Taxonkit failed to produce taxids for some target species."
-            " Database coverage for these species is assumed to be zero, since"
+            "Taxonkit failed to produce taxids for some target taxa."
+            " Database coverage for these taxa is assumed to be zero, since"
             " this likely means they are not represented in the reference"
             " database.")
         logger.warning(
@@ -203,7 +203,7 @@ def _fetch_target_taxa(targets, query_dir):
         try:
             gbif_target = RelatedTaxaGBIF(target)
         except GBIFRecordNotFound as exc:
-            msg = (f"No GBIF record found for target species '{target}'."
+            msg = (f"No GBIF record found for target taxon '{target}'."
                    " This target could not be evaluated.")
             logger.warning(
                 f"[{MODULE_NAME}]: {msg}")
@@ -300,7 +300,7 @@ def _parallel_process_tasks(
                     else "preliminary ID"
                 )
                 msg = (
-                    f"Error processing {func.__name__} for target species"
+                    f"Error processing {func.__name__} for target taxon"
                     f" '{species_name}' ({target_source}). This target could"
                     f" not be evaluated."
                     f" Exception: {type(exc).__name__}: {exc}")
@@ -622,18 +622,12 @@ def _set_flags(db_coverage, query_dir, higher_taxon_targets):
                 count for count in species_counts.values()
                 if count > 0
             ])
-            unrepresented_species = total_species - represented_species
+            unrepresented = total_species - represented_species
             if not species_counts:
                 flag_value = FLAGS.C
-            elif (
-                unrepresented_species
-                <= config.CRITERIA.DB_COV_COUNTRY_MISSING_A
-            ):
+            elif not unrepresented:
                 flag_value = FLAGS.A
-            elif (
-                unrepresented_species
-                <= config.CRITERIA.DB_COV_COUNTRY_MISSING_B
-            ):
+            else:
                 flag_value = FLAGS.B
         Flag.write(
             query_dir,

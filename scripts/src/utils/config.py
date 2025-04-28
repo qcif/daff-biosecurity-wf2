@@ -139,9 +139,7 @@ class Config:
         DB_COV_RELATED_MIN_A = int(os.getenv('DB_COV_RELATED_MIN_A', 90))
         DB_COV_RELATED_MIN_B = int(os.getenv('DB_COV_RELATED_MIN_B', 10))
         DB_COV_COUNTRY_MISSING_A = int(
-            os.getenv('DB_COV_COUNTRY_MISSING_A', 90))
-        DB_COV_COUNTRY_MISSING_B = int(
-            os.getenv('DB_COV_COUNTRY_MISSING_B', 10))
+            os.getenv('DB_COV_COUNTRY_MISSING_A', 1))
 
     class OUTPUTS:
         TOI_DETECTED_HEADER = [
