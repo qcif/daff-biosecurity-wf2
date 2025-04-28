@@ -36,7 +36,7 @@
     {% endif %}
     <td class="text-center">
       {% set target_id = 'toi-' + taxon | css_hash %}
-      {% set flag = flags['5']['toi'].taxon or flags['5']['toi'].null %}
+      {% set flag = flags['5']['toi'].get(taxon, flags['5']['toi'].null) %}
 
       <button
         class="btn btn-{{ flag.bs_class }}"

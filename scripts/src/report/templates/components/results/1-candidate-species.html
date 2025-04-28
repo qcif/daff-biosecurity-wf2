@@ -127,7 +127,7 @@
         <td>{{ candidate.e_value }}</td>
         <td class="text-center">
           {% set target_id = 'candidate-' + taxon | css_hash %}
-          {% set flag = flags['5']['candidate'].taxon or flags['5']['candidate'].null %}
+          {% set flag = flags['5']['candidate'].get(taxon, flags['5']['candidate'].null) %}
 
           <button
             class="btn btn-{{ flag.bs_class }}"

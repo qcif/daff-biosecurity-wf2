@@ -121,16 +121,17 @@ class Flag:
                     value=FLAGS.NA,
                 )
             }
-        for ttype in [TARGETS.CANDIDATE, TARGETS.TOI]:
             if flags[FLAGS.DB_COVERAGE_TARGET][ttype]:
                 # Set flag 5 (max warning level) for each target taxon
                 for target in flags[FLAGS.DB_COVERAGE_TARGET][ttype]:
-                    flags[FLAGS.DB_COVERAGE_ALL][ttype][target] = max([
+                    max_flag = max([
                         flags[FLAGS.DB_COVERAGE_TARGET][ttype][target],
                         flags[FLAGS.DB_COVERAGE_RELATED][ttype][target],
                         flags[FLAGS.DB_COVERAGE_RELATED_COUNTRY][ttype][
                             target],
                     ], key=lambda x: x.level)
+                    if max_flag.level:
+                        flags[FLAGS.DB_COVERAGE_ALL][ttype][target] = max_flag
 
         return flags
 

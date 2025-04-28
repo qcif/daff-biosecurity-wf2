@@ -92,16 +92,18 @@
               <div class="col">
 
                 {% set p5_01_errors = errors.filter(location=5.01, context={'target': target_taxon }) %}
+
                 {% if p5_01_errors %}
                 {{ render_error_message(p5_01_errors) }}
                 {% endif %}
 
                 {% if context.data.target is not none %}
+                {% set records_str = "{:,}".format(context.data.target) %}
                 <div class="big-number alert-{{ flag_5_1.bs_class }}">
-                  {{ context.data.target }} records
+                  {{ records_str }} records
                 </div>
                 <p class="my-3">
-                  There are {{ context.data.target }} sequences in the reference database for
+                  There are {{ records_str }} sequences in the reference database for
                   <em>{{ context.target_taxon }}</em>
                   at the given locus <strong>{{ context.metadata.locus }}</strong>.
                 </p>
@@ -362,6 +364,11 @@
           {% endif %}
 
           {% else %}
+
+          {% if errors %}
+          {{ render_error_message(errors) }}
+          {% endif %}
+
           <p class="alert alert-info">
             No database coverage information is available for this taxon.
             {% if context.target_type == 'candidate' and context.flags['1'].value.lower() in ['c', 'e'] %}
