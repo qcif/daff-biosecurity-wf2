@@ -98,9 +98,9 @@
             "name": "P4 Source diversity",
             "program": "${workspaceFolder}/scripts/p4_source_diversity.py",
             "args": [
-                // "output/query_001_LC438549"
+                "output/query_001_LC438549"
                 // "output/query_002_ON075825",
-                "output/query_003_PP466915"
+                // "output/query_003_PP466915"
                 // "output/query_006_VE24-1086_COI"
             ],
             "preLaunchTask": "clear-log-files"
@@ -133,9 +133,9 @@
             "name": "P6 Workflow report",
             "program": "${workspaceFolder}/scripts/p6_report.py",
             "args": [
-                // "output/query_001_LC438549",
+                "output/query_001_LC438549",
                 // "output/query_002_ON075825",
-                "output/query_003_PP466915"
+                // "output/query_003_PP466915"
 
                 // "output/bold/query_001_LC438549",
                 // "--output_dir", "output/bold",
