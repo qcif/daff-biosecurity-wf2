@@ -8,10 +8,10 @@ import argparse
 import csv
 import logging
 
-from src.utils import existing_path
-from src.utils.config import Config
 from src.taxonomy import extract
 from src.taxonomy.extract import TAXONOMIC_RANKS
+from src.utils import existing_path
+from src.utils.config import Config
 
 logger = logging.getLogger(__name__)
 config = Config()
