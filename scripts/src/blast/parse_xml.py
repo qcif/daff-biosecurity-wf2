@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 def calculate_hit_score(hsps):
     """Calculate the total scores of all hsps for a hit."""
-    return sum(hsp.score for hsp in hsps)
+    return sum(hsp.bitscore for hsp in hsps)
 
 
 def calculate_hit_e_value(hit, effective_search_space):
