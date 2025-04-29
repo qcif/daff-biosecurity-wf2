@@ -4,7 +4,7 @@ import logging
 
 from .config import Config
 
-PATH_SUB_STR = '[-]'
+PATH_SUB_STR = '(~)'
 
 logger = logging.getLogger(__name__)
 config = Config()
