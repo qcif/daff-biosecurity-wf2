@@ -4,8 +4,22 @@ set -e
 
 IMAGE=neoformit/daff-taxonomic-assignment
 
-read -p "Enter the tag for the image (default: latest): " TAG
-TAG=${TAG:-latest}
+# Check for -t argument and set TAG if provided
+while getopts "t:" opt; do
+  case $opt in
+    t)
+      TAG=$OPTARG
+      ;;
+    *)
+      ;;
+  esac
+done
+
+if [[ -z $TAG ]]; then
+  # Prompt for the tag if not provided
+  read -p "Enter the tag for the image (default: latest): " TAG
+  TAG=${TAG:-latest}
+fi
 
 # Build the Docker image
 docker build -t $IMAGE:$TAG .
