@@ -52,10 +52,9 @@ def taxonomies(taxids: list[str]) -> dict[str, dict[str, str]]:
     finally:
         if temp_file:
             temp_file.close()
-        # Clean up the temporary file after processing
         if os.path.exists(temp_file_name):
             os.remove(temp_file_name)
-            logger.info(
+            logger.debug(
                 f"Temporary file {temp_file_name} deleted successfully."
             )
 
@@ -128,10 +127,9 @@ def taxids(species_list: list[str]) -> dict[str, str]:
     finally:
         if temp_file:
             temp_file.close()
-        # Clean up the temporary file after processing
         if os.path.exists(temp_file_name):
             os.remove(temp_file_name)
-            logger.info(
+            logger.debug(
                 f"Temporary file {temp_file_name} deleted successfully."
             )
 
