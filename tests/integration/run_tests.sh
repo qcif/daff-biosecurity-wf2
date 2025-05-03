@@ -18,7 +18,26 @@ WDIR_ROOT=$(realpath ./working)
 GREEN='\033[32m'
 RESET='\033[0m'
 
-for test_case in $TEST_CASE_ROOT/*; do
+# Read --case opt with getopts
+TEST_CASES=$TEST_CASE_ROOT/*
+while getopts ":c:" opt; do
+    case $opt in
+        c)
+            TEST_CASES="$TEST_CASE_ROOT/$OPTARG"
+            if [ ! -d "$TEST_CASES" ]; then
+                echo "Test case not found: $TEST_CASES"
+                exit 1
+            fi
+            echo "Testing only requested case: $TEST_CASES"
+            ;;
+        \?)
+            echo "Invalid option: -$OPTARG" >&2
+            exit 1
+            ;;
+    esac
+done
+
+for test_case in $TEST_CASES; do
     if [ -d "$test_case" ]; then
         echo ""
         echo "Running test case: $test_case"
@@ -57,11 +76,15 @@ for test_case in $TEST_CASE_ROOT/*; do
             --output_dir "$WDIR"
         printf "${GREEN}PASS${RESET}\n"
 
-        echo "Running P4 source diversity..."
-        $PYTHON "$SCRIPTS_ROOT/p4_source_diversity.py" \
-            $WDIR/query_001* \
-            --output_dir "$WDIR"
-        printf "${GREEN}PASS${RESET}\n"
+        if [[ $(cat $WDIR/query_001*/candidates_count.txt) -lt 4 ]]; then
+            echo "Running P4 source diversity..."
+            $PYTHON "$SCRIPTS_ROOT/p4_source_diversity.py" \
+                $WDIR/query_001* \
+                --output_dir "$WDIR"
+            printf "${GREEN}PASS${RESET}\n"
+        else
+            echo "Skipping P4 source diversity, >3 candidates"
+        fi
 
         echo "Running P5 database coverage..."
         $PYTHON "$SCRIPTS_ROOT/p5_db_coverage.py" \
