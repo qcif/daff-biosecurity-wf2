@@ -81,8 +81,6 @@ for test_case in $TEST_CASE_ROOT/*; do
         echo "Skipping non-directory in test case root: $test_case"
     fi
 
-    break
-
 done
 
 echo ""
