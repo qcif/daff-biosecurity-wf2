@@ -64,6 +64,11 @@ class Throttle:
 
     def _initialize_db(self):
         """Create table for tracking request timestamps."""
+        if not self.db_path.exists():
+            logger.info(
+                f"Creating throttle SQLite DB file: {self.db_path}"
+            )
+            self.db_path.parent.mkdir(parents=True, exist_ok=True)
         with sqlite3.connect(self.db_path) as conn:
             conn.execute(f"""
                 CREATE TABLE IF NOT EXISTS {self.name} (
@@ -81,40 +86,49 @@ class Throttle:
         window is clear.
         """
         while True:
-            with sqlite3.connect(self.db_path, isolation_level=None) as conn:
-                try:
-                    # Lock the database for writing
-                    conn.execute("BEGIN IMMEDIATE")
+            try:
+                with sqlite3.connect(
+                    self.db_path,
+                    isolation_level=None,
+                ) as conn:
+                    try:
+                        # Lock the database for writing
+                        conn.execute("BEGIN IMMEDIATE")
 
-                    now = int(time.time() * 1000)
-                    window_start = now - 2000  # Two-second sliding window
+                        now = int(time.time() * 1000)
+                        window_start = now - 2000  # Two-second sliding window
 
-                    # Remove expired timestamps (older than 1s)
-                    conn.execute(
-                        f"DELETE FROM {self.name} WHERE {self.FIELD_NAME} < ?",
-                        (window_start,))
-
-                    # Count remaining requests in the last second
-                    request_count = conn.execute(
-                        f"SELECT COUNT(*) FROM {self.name}"
-                    ).fetchone()[0]
-
-                    if request_count < self.requests_per_second:
-                        # Insert current timestamp atomically
+                        # Remove expired timestamps (older than 1s)
                         conn.execute(
-                            f"INSERT INTO {self.name} ({self.FIELD_NAME})"
-                            " VALUES (?)",
-                            (now,)
-                        )
-                        conn.commit()
-                        return
+                            f"DELETE FROM {self.name}"
+                            f" WHERE {self.FIELD_NAME} < ?",
+                            (window_start,))
 
-                    # Rollback if the request limit is exceeded
-                    conn.rollback()
+                        # Count remaining requests in the last second
+                        request_count = conn.execute(
+                            f"SELECT COUNT(*) FROM {self.name}"
+                        ).fetchone()[0]
 
-                except sqlite3.OperationalError:
-                    # Handle potential lock contention gracefully
-                    pass
+                        if request_count < self.requests_per_second:
+                            # Insert current timestamp atomically
+                            conn.execute(
+                                f"INSERT INTO {self.name} ({self.FIELD_NAME})"
+                                " VALUES (?)",
+                                (now,)
+                            )
+                            conn.commit()
+                            return
+
+                        # Rollback if the request limit is exceeded
+                        conn.rollback()
+
+                    except sqlite3.OperationalError:
+                        # Handle potential lock contention gracefully
+                        pass
+            except sqlite3.OperationalError as e:
+                raise sqlite3.OperationalError(
+                    str(e) + f"\nDB path: {self.db_path}"
+                )
 
             # Sleep for a random interval to reduce race conditions collisions
             time.sleep(round(random.uniform(0.01, 0.1), 3))
