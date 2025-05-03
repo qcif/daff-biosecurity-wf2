@@ -75,6 +75,7 @@ class Throttle:
                     {self.FIELD_NAME} INTEGER
                 )
             """)
+            conn.execute("PRAGMA journal_mode=WAL;")
             conn.commit()
 
     def await_release(self):
@@ -87,6 +88,11 @@ class Throttle:
         """
         while True:
             try:
+                if not self.db_path.exists():
+                    raise FileNotFoundError(
+                        "Throttle SQLite DB file not found:"
+                        f" {self.db_path}"
+                    )
                 with sqlite3.connect(
                     self.db_path,
                     isolation_level=None,
