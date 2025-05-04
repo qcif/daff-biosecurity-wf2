@@ -1,4 +1,7 @@
-"""Provide an interface to the BOLD API for search and metadata retrieval."""
+"""Provide an interface to the BOLD API for search and metadata retrieval.
+
+API Docs: https://v4.boldsystems.org/index.php/resources/api
+"""
 
 import csv
 import logging
@@ -281,8 +284,7 @@ class BoldSearch:
         return taxa
 
     def _fetch_records(self, taxa: list[str]) -> list[dict]:
-        """Fetch accessions by calling BOLD public API with Taxa
-        and throttling, and save accessions to a .tsv file."""
+        """Fetch records for taxa list by calling BOLD API."""
         records = []
         if not taxa:
             logger.info("No taxa to fetch BOLD metadata.")

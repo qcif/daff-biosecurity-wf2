@@ -108,6 +108,21 @@
         {
             "type": "debugpy",
             "request": "launch",
+            "name": "P4 BOLD Source diversity",
+            "program": "${workspaceFolder}/scripts/p4_source_diversity.py",
+            "args": [
+                "output/bold/query_001_LC438549",
+                "--output_dir", "output/bold",
+                "--bold",
+            ],
+            "env": {
+                "LOGGING_DEBUG": "1",
+            },
+            "preLaunchTask": "clear-log-files"
+        },
+        {
+            "type": "debugpy",
+            "request": "launch",
             "name": "P5 DB coverage",
             "program": "${workspaceFolder}/scripts/p5_db_coverage.py",
             "args": [
@@ -124,6 +139,21 @@
                 "LOGGING_DEBUG": "1",
                 // "INPUT_METADATA_CSV_FILEPATH": "output/issues/31/metadata.csv",
                 // "INPUT_FASTA_FILEPATH": "output/issues/31/queries.fasta",
+            },
+            "preLaunchTask": "clear-log-files"
+        },
+        {
+            "type": "debugpy",
+            "request": "launch",
+            "name": "P5 BOLD DB coverage",
+            "program": "${workspaceFolder}/scripts/p5_db_coverage.py",
+            "args": [
+                "output/bold/query_001_LC438549",
+                "--output_dir", "output/bold",
+                "--bold",
+            ],
+            "env": {
+                "LOGGING_DEBUG": "1",
             },
             "preLaunchTask": "clear-log-files"
         },

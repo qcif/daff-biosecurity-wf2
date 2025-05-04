@@ -29,7 +29,10 @@ def main():
     args = parse_args()
     config.configure(args.output_dir)
     config.configure_query_logger(args.query_dir)
-    results, error_detected = assess_coverage(args.query_dir)
+    results, error_detected = assess_coverage(
+        args.query_dir,
+        is_bold=args.bold,
+    )
     write_db_coverage(args.query_dir, results)
     config.cleanup()
     if error_detected:
@@ -58,6 +61,10 @@ def parse_args():
         type=existing_path,
         default=config.output_dir,
         help=f"Path to output directory. Defaults to {config.output_dir}.")
+    parser.add_argument(
+        "--bold",
+        action="store_true",
+        help="Reference the BOLD database instead of GenBank.")
     return parser.parse_args()
 
 

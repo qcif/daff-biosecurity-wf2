@@ -59,6 +59,13 @@ class RANK:
     def from_string(cls, rank: str) -> str:
         return getattr(cls, rank.upper(), None)
 
+    @classmethod
+    def to_string(cls, rank: int) -> str:
+        for name, value in cls.__dict__.items():
+            if isinstance(value, int) and value == rank:
+                return name.lower()
+        return None
+
 
 class RelatedTaxaGBIF:
     """Fetch taxonomic relatives for a given taxon from GBIF API."""
