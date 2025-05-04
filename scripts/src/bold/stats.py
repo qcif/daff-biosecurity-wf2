@@ -50,6 +50,10 @@ def fetch_bold_records_count(taxon: str, rank=None) -> dict:
         )
         res.raise_for_status()
         data = res.json()
+        if data['records_with_species_name'] == 0:
+            logger.debug(f'No BOLD records found for taxon "{taxon}".'
+                         ' Returning count=0.')
+            return 0
         if rank:
             # Pull out the query taxon at the given rank
             taxa_at_rank = (
@@ -66,8 +70,8 @@ def fetch_bold_records_count(taxon: str, rank=None) -> dict:
                 logger.debug(f'Returning {rank}-level BOLD record count for'
                              f' taxon "{taxon}": {count}')
                 return count
-            logger.debug(f'No {rank}-level BOLD record count found for'
-                         f' taxon "{taxon}". Returning count=0.')
+            logger.warning(f'No {rank}-level BOLD record count found for'
+                           f' taxon "{taxon}". Returning count=0.')
             return 0
 
         count = int(data['records_with_species_name'])
