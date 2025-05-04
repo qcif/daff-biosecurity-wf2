@@ -6,6 +6,7 @@ import json
 import logging
 import os
 from datetime import datetime
+import re
 from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
 
@@ -41,6 +42,8 @@ def render(query, bold=False):
     rendered_html = template.render(**context, **static_files)
 
     # TODO: If BOLD, replace 'identity' with 'similarity'
+    if bold:
+        rendered_html = re.sub(r"\bidentity\b", "Similarity", rendered_html, flags=re.IGNORECASE)
 
     report_path = config.get_report_path(query_ix)
     with open(report_path, 'w', encoding="utf-8") as f:
