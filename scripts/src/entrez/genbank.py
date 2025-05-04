@@ -2,8 +2,10 @@
 from NCBI/Genbank."""
 
 import logging
-from Bio import Entrez
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from xml.etree import ElementTree as ET
+
+from Bio import Entrez
 
 from ..utils.config import Config
 from ..utils.throttle import ENDPOINTS, Throttle
@@ -19,7 +21,6 @@ LOCI = {  # TODO: update with DAFF - maybe read from allowed_loci.txt file?
   # others to be confirmed with DAFF
 }
 
-REQUEST_INTERVAL_SECONDS = 0.11 if config.NCBI_API_KEY else 0.34
 Entrez.email = config.USER_EMAIL
 if config.NCBI_API_KEY:
     logger.info(f"Using NCBI API key: {config.NCBI_API_KEY[:5]}*********")
@@ -129,13 +130,27 @@ class GbRecordSource:
 def fetch_entrez(
     endpoint=Entrez.efetch,
     db='nuccore',
+    truncate_metadata=False,
     **kwargs,
 ) -> str:
     """Fetch data from NCBI Entrez database.
     Throttle requests to avoid rate limits and retry on failure.
+    If truncate_metadata is set, the response will be truncated before sequence
+    data begins to avoid downloading large amounts of surplus data.
     """
     def read(handle):
         if endpoint == Entrez.efetch:
+            if truncate_metadata:
+                data = b""
+                for line in handle:
+                    if (
+                        b'<GBSeq_feature-table>' in line
+                        or b'<GBSeq_sequence>' in line
+                    ):
+                        break
+                    data += line
+                data += b"\n</GBSeq></GBSet>"
+                return data
             return handle.read()
         return Entrez.read(handle)
 
@@ -160,19 +175,31 @@ def fetch_fasta(identifier, **kwargs):
     )
 
 
-def fetch_sources(accessions, **kwargs) -> dict[str, GbRecordSource]:
-    accession_sources = {}
-    for i in range(0, len(accessions), EFETCH_BATCH_SIZE):
-        batch = accessions[i:i + EFETCH_BATCH_SIZE]
-        ids_str = ",".join(batch)
+def fetch_sources(accessions: list, **kwargs) -> dict[str, GbRecordSource]:
+    def fetch_and_parse(accession: str):
+        """Fetch Genbank metadata for the given accession."""
+        logger.debug(f"Fetching Genbank metadata for accession {accession}")
         metadata_xml = fetch_entrez(
-            id=ids_str,
+            id=accession,
             rettype="gb",
             retmode="xml",
+            truncate_metadata=True,
             **kwargs,
         ).decode('utf-8')
-        sources = parse_metadata(metadata_xml)
-        accession_sources.update(sources)
+        return parse_metadata(metadata_xml)
+
+    accession_sources = {}
+    with ThreadPoolExecutor(max_workers=50) as executor:
+        futures = [
+            executor.submit(
+                fetch_and_parse,
+                acc,
+            )
+            for acc in accessions
+        ]
+        for future in as_completed(futures):
+            sources = future.result()
+            accession_sources.update(sources)
 
     missing_accessions = set(accessions) - set(accession_sources.keys())
     if missing_accessions:
@@ -186,7 +213,7 @@ def fetch_sources(accessions, **kwargs) -> dict[str, GbRecordSource]:
     return accession_sources
 
 
-def parse_metadata(xml_str) -> dict[str, GbRecordSource]:
+def parse_metadata(xml_str: str) -> dict[str, GbRecordSource]:
     root = ET.fromstring(xml_str)
     records = {}
     for record in root.findall('.//GBSeq'):

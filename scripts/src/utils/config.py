@@ -57,7 +57,7 @@ class Config:
     BOXPLOT_IMG_FILENAME = os.getenv("BOXPLOT_IMG_FILENAME",
                                      'identity-boxplot.png')
     TREE_NWK_FILENAME = os.getenv("TREE_NWK_FILENAME",
-                                  'candidates.msa.nwk')
+                                  'candidates.nwk')
     DB_COVERAGE_JSON = os.getenv("DB_COVERAGE_JSON_FILENAME",
                                  'db_coverage.json')
     DB_COVERAGE_TOI_LIMIT = int(os.getenv("DB_COVERAGE_TOI_LIMIT", 10))
@@ -107,9 +107,7 @@ class Config:
         }
         METADATA_CSV_REQUIRED_FIELDS = (
             "sample_id",
-            "locus",
             "preliminary_id",
-            "host",
         )
         FASTA_FILEPATH = Path(
             os.getenv(
@@ -141,9 +139,7 @@ class Config:
         DB_COV_RELATED_MIN_A = int(os.getenv('DB_COV_RELATED_MIN_A', 90))
         DB_COV_RELATED_MIN_B = int(os.getenv('DB_COV_RELATED_MIN_B', 10))
         DB_COV_COUNTRY_MISSING_A = int(
-            os.getenv('DB_COV_COUNTRY_MISSING_A', 90))
-        DB_COV_COUNTRY_MISSING_B = int(
-            os.getenv('DB_COV_COUNTRY_MISSING_B', 10))
+            os.getenv('DB_COV_COUNTRY_MISSING_A', 1))
 
     class OUTPUTS:
         TOI_DETECTED_HEADER = [

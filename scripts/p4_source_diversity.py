@@ -14,9 +14,9 @@ import json
 import logging
 
 from src.entrez import genbank
-from src.utils.flags import Flag, FLAGS
 from src.utils import existing_path, serialize
 from src.utils.config import Config
+from src.utils.flags import FLAGS, Flag
 
 logger = logging.getLogger(__name__)
 config = Config()

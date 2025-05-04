@@ -1,8 +1,9 @@
 """Fetch species under the given taxon from GBIF API."""
 
 import logging
-import pygbif
 from functools import cached_property
+
+import pygbif
 
 from src.utils import config
 from src.utils.throttle import ENDPOINTS, Throttle
@@ -57,6 +58,13 @@ class RANK:
     @classmethod
     def from_string(cls, rank: str) -> str:
         return getattr(cls, rank.upper(), None)
+
+    @classmethod
+    def to_string(cls, rank: int) -> str:
+        for name, value in cls.__dict__.items():
+            if isinstance(value, int) and value == rank:
+                return name.lower()
+        return None
 
 
 class RelatedTaxaGBIF:
@@ -127,6 +135,7 @@ class RelatedTaxaGBIF:
             'limit': config.GBIF_LIMIT_RECORDS,
         }
 
+        previous_first_name = None
         while not end_of_records:
             kwargs['offset'] = i * config.GBIF_LIMIT_RECORDS
             throttle = Throttle(ENDPOINTS.GBIF_SLOW)
@@ -134,29 +143,21 @@ class RelatedTaxaGBIF:
                 pygbif.species.name_lookup,
                 kwargs=kwargs,
             )
+            new_records = self._filter_records(res['results'])
             if i > 5:
-                first_name = self._filter_records(
-                    res['results'])[0]['canonicalName']
-                if [
-                    r for r in records
-                    if r['canonicalName'] == first_name
-                ]:
+                first_name = new_records[0]['canonicalName']
+                if first_name == previous_first_name:
                     logger.warning(
                         'GBIF API claims endofRecords=False after >5 requests,'
-                        ' but an existing canonicalName was returned.'
+                        ' but the same canonicalName was returned twice.'
                         ' Exiting early to avoid infinite loop '
                         f' - {len(records)} records have been fetched.'
                         f' Taxon: {self.taxon}, Genus key: {self.genus_key}.'
                     )
-            records += self._filter_records(res['results'])
+                previous_first_name = first_name
+            records += new_records
             end_of_records = res['endOfRecords']
             i += 1
-
-        if self.rank == RANK.SPECIES:
-            records = [
-                r for r in records
-                if r['canonicalName'].lower() != self.taxon.lower()
-            ]
 
         return records
 

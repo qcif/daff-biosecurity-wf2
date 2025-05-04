@@ -47,7 +47,7 @@ def _parse_args():
         required=True,
     )
     parser.add_argument(
-        "---query_fasta",
+        "--query_fasta",
         type=existing_path,
         help="Path to queries.fasta input file.",
         required=True,

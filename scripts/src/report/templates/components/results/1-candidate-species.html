@@ -106,59 +106,60 @@
 <div class="my-5">
   <h3>Candidate species</h3>
 
-  <table class="table table-striped" style"max-height: 500px; overflow-y: auto;">
+  <div class="mb-3" style="max-height: 500px; overflow-y: auto;">
+    <table class="table table-striped">
 
-    {% set flags = conclusions.flags %}
+      {% set flags = conclusions.flags %}
 
-    <thead>
-      <th>Species</th>
-      <th>Hits</th>
-      <th>Identity</th>
-      <th>E-value</th>
-      <th class="text-center">Database coverage</th>
-    </thead>
-    {% for candidate in candidates.species %}
-    {% set taxon = candidate.species %}
-    <tr>
-      <td><em>{{ taxon }}</em></td>
-      <td>{{ candidate.hit_count }}</td>
-      <td>{{ candidate.identity * 100 }}%</td>
-      <td>{{ candidate.e_value }}</td>
-      <td class="text-center">
-        {% set target_id = 'candidate-' + taxon | css_hash %}
-        {% set all_flags = [flags['5.1']['candidate'][taxon], flags['5.2']['candidate'][taxon], flags['5.3']['candidate'][taxon]] %}
-        {% set flag = all_flags | max(attribute='level') %}
+      <thead>
+        <th>Species</th>
+        <th>Hits</th>
+        <th>Identity</th>
+        <th>E-value</th>
+        <th class="text-center">Database coverage</th>
+      </thead>
+      {% for candidate in candidates.species %}
+      {% set taxon = candidate.species %}
+      <tr>
+        <td><em>{{ taxon }}</em></td>
+        <td>{{ candidate.hit_count }}</td>
+        <td>{{ candidate.identity * 100 }}%</td>
+        <td>{{ candidate.e_value }}</td>
+        <td class="text-center">
+          {% set target_id = 'candidate-' + taxon | css_hash %}
+          {% set flag = flags['5']['candidate'].get(taxon, flags['5']['candidate'].null) %}
 
-        <button
-          class="btn btn-{{ flag.bs_class }}"
-          data-bs-toggle="tooltip"
-          data-bs-placement="bottom"
-          title="{{ flag.outcome }}"
-          onclick="new bootstrap.Modal(document.getElementById('{{ target_id }}Modal')).show();"
-          type="button"
-          style="min-width: 3rem;"
-        >
-          {{ render_level_icon(flag.level) }}
-        </button>
+          <button
+            class="btn btn-{{ flag.bs_class }}"
+            data-bs-toggle="tooltip"
+            data-bs-placement="bottom"
+            title="{{ flag.outcome }}"
+            onclick="new bootstrap.Modal(document.getElementById('{{ target_id }}Modal')).show();"
+            type="button"
+            style="min-width: 3rem;"
+          >
+            {{ render_level_icon(flag.level) }}
+          </button>
 
-        {% set modal_context = {
-          'data': db_coverage['candidate'][taxon],
-          'target_id': target_id,
-          'target_taxon': taxon,
-          'target_type': 'candidate',
-          'target_type_text': "Candidate",
-          'flags': flags,
-          'metadata': metadata,
-          'error_log': error_log,
-          'config': config,
-          'tois_detected': {},
-        } %}
-        {{ render_target_modal(modal_context) }}
+          {% set modal_context = {
+            'data': db_coverage['candidate'][taxon],
+            'target_id': target_id,
+            'target_taxon': taxon,
+            'target_type': 'candidate',
+            'target_type_text': "Candidate",
+            'flags': flags,
+            'metadata': metadata,
+            'error_log': error_log,
+            'config': config,
+            'tois_detected': {},
+          } %}
+          {{ render_target_modal(modal_context) }}
 
-      </td>
-    </tr>
-    {% endfor %}
-  </table>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
 
   <p class="text-center">
     <button
@@ -180,7 +181,7 @@
 <div class="my-5">
   <img class="img-fluid my-3" src="{{ candidates_boxplot_src }}" alt="Boxplot of BLAST hit identity percent grouped by genus">
   <p>
-    The boxplot above shows the identity (%) of BLAST hits grouped by genus. Each data point shows the alignment identity between the query and matched reference sequence. The analyst may wish to use this to make a subjective genus-level identification for the sample.
+    The boxplot above shows the distribution of BLAST hits identity within each genus. Each data point shows the alignment identity between the query sequence and reference sequence. The analyst may wish to refer to this figure when making a subjective genus-level identification for the sample.
   </p>
 </div>
 {% endif %}

@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 def calculate_hit_score(hsps):
     """Calculate the total scores of all hsps for a hit."""
-    return sum(hsp.score for hsp in hsps)
+    return sum(hsp.bits for hsp in hsps)
 
 
 def calculate_hit_e_value(hit, effective_search_space):
@@ -149,7 +149,7 @@ def parse_blast_xml(blast_xml_path: str) -> tuple[
 
                 for hsp in alignment.hsps:
                     hsp_record = {
-                        "bitscore": hsp.score,
+                        "bitscore": hsp.bits,
                         "e_value": hsp.expect,
                         "identity": round(
                             hsp.align_length / hsp.align_length,

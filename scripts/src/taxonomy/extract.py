@@ -52,20 +52,19 @@ def taxonomies(taxids: list[str]) -> dict[str, dict[str, str]]:
     finally:
         if temp_file:
             temp_file.close()
-        # Clean up the temporary file after processing
         if os.path.exists(temp_file_name):
             os.remove(temp_file_name)
-            logger.info(
+            logger.debug(
                 f"Temporary file {temp_file_name} deleted successfully."
             )
 
     logger.debug(
-        "[extract.taxids] taxonkit name2taxid stdout:\n"
+        "[extract.taxonomies] taxonkit name2taxid stdout:\n"
         + result.stdout
     )
     if result.stderr.strip():
         logger.warning(
-            "[extract.taxids] taxonkit name2taxid stderr:\n"
+            "[extract.taxonomies] taxonkit name2taxid stderr:\n"
             + result.stderr
         )
 
@@ -85,8 +84,7 @@ def taxonomies(taxids: list[str]) -> dict[str, dict[str, str]]:
         else:
             logger.warning(
                 "[extract.taxonomies] Warning: Unexpected format in taxonkit"
-                " stdout. This may result in missing taxonomy information:\n"
-                + line)
+                " stdout. This may result in missing taxonomy information")
     return taxonomy_data
 
 
@@ -129,10 +127,9 @@ def taxids(species_list: list[str]) -> dict[str, str]:
     finally:
         if temp_file:
             temp_file.close()
-        # Clean up the temporary file after processing
         if os.path.exists(temp_file_name):
             os.remove(temp_file_name)
-            logger.info(
+            logger.debug(
                 f"Temporary file {temp_file_name} deleted successfully."
             )
 
@@ -153,13 +150,21 @@ def taxids(species_list: list[str]) -> dict[str, str]:
         fields = line.split('\t')
         if len(fields) == 2:
             species, taxid = fields
-            taxid_data[species] = taxid or None
         elif (field := fields[0].strip()) and len(fields) == 1:
             species = field
-            taxid_data[species] = None
+            taxid = None
         else:
             logger.warning(
                 "[extract.taxids] Warning: Unexpected format in taxonkit"
                 " stdout. This may result in missing taxid information:\n"
                 + line)
+        if species in taxid_data:
+            logger.warning(
+                "[extract.taxids] Warning: Duplicate species found in"
+                " taxonkit name2taxid output. The first taxid returned will"
+                " be used. This may result in incorrect taxid information:\n"
+                + line
+            )
+        else:
+            taxid_data[species] = taxid or None
     return taxid_data

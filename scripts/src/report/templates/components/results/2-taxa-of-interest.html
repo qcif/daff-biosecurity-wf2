@@ -36,8 +36,8 @@
     {% endif %}
     <td class="text-center">
       {% set target_id = 'toi-' + taxon | css_hash %}
-      {% set all_flags = [flags['5.1']['toi'][taxon], flags['5.2']['toi'][taxon], flags['5.3']['toi'][taxon]] %}
-      {% set flag = all_flags | max(attribute='level') %}
+      {% set flag = flags['5']['toi'].get(taxon, flags['5']['toi'].null) %}
+
       <button
         class="btn btn-{{ flag.bs_class }}"
         data-bs-toggle="tooltip"

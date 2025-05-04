@@ -1,13 +1,13 @@
 """Fetch GBIF occurrence data and plot on a world map."""
 
-import fsspec
 import logging
-import pandas as pd
-import geopandas as gpd
 from pathlib import Path
 
 logging.getLogger('matplotlib').setLevel(logging.WARNING)
 
+import fsspec  # noqa:E402
+import geopandas as gpd  # noqa:E402
+import pandas as pd  # noqa:E402
 from matplotlib import pyplot as plt  # noqa:E402
 from matplotlib.colors import LogNorm  # noqa:E402
 from pygbif import occurrences  # noqa:E402

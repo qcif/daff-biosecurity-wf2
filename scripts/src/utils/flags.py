@@ -4,7 +4,7 @@ import logging
 
 from .config import Config
 
-PATH_SUB_STR = '[-]'
+PATH_SUB_STR = '(~)'
 
 logger = logging.getLogger(__name__)
 config = Config()
@@ -107,6 +107,32 @@ class Flag:
                 for ttype in [TARGETS.CANDIDATE, TARGETS.PMI, TARGETS.TOI]:
                     if ttype not in data:
                         data[ttype] = {}
+
+        if FLAGS.SOURCES not in flags:
+            # Number of candidates did not meet requirements to run P4
+            flags[FLAGS.SOURCES] = None
+
+        flags[FLAGS.DB_COVERAGE_ALL] = {}
+        for ttype in [TARGETS.CANDIDATE, TARGETS.PMI, TARGETS.TOI]:
+            # Create a null flag for missing targets to fall back on
+            flags[FLAGS.DB_COVERAGE_ALL][ttype] = {
+                'null': Flag(
+                    FLAGS.DB_COVERAGE_ALL,
+                    value=FLAGS.NA,
+                )
+            }
+            if flags[FLAGS.DB_COVERAGE_TARGET][ttype]:
+                # Set flag 5 (max warning level) for each target taxon
+                for target in flags[FLAGS.DB_COVERAGE_TARGET][ttype]:
+                    max_flag = max([
+                        flags[FLAGS.DB_COVERAGE_TARGET][ttype][target],
+                        flags[FLAGS.DB_COVERAGE_RELATED][ttype][target],
+                        flags[FLAGS.DB_COVERAGE_RELATED_COUNTRY][ttype][
+                            target],
+                    ], key=lambda x: x.level)
+                    if max_flag.level:
+                        flags[FLAGS.DB_COVERAGE_ALL][ttype][target] = max_flag
+
         return flags
 
     @staticmethod
@@ -180,6 +206,7 @@ class FLAGS:
     POSITIVE_ID = '1'
     TOI = '2'
     SOURCES = '4'
+    DB_COVERAGE_ALL = '5'
     DB_COVERAGE_TARGET = '5.1'
     DB_COVERAGE_RELATED = '5.2'
     DB_COVERAGE_RELATED_COUNTRY = '5.3'

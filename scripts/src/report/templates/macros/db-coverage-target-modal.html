@@ -6,8 +6,7 @@
 {% set flag_5_1 = context.flags['5.1'][context.target_type][context.target_taxon] %}
 {% set flag_5_2 = context.flags['5.2'][context.target_type][context.target_taxon] %}
 {% set flag_5_3 = context.flags['5.3'][context.target_type][context.target_taxon] %}
-{% set all_flags = [flag_5_1, flag_5_2, flag_5_3] %}
-{% set flag = all_flags | max(attribute='level') %}
+{% set flag = context.flags['5'][context.target_type].get(context.target_taxon, none) %}
 {% set errors = context.error_log.filter(location_min=5.0, location_max=5.99) %}
 
 <div class="modal fade" id="{{ context.target_id }}Modal" tabindex="-1" aria-hidden="true">
@@ -35,6 +34,9 @@
         </p>
 
         <div class="border p-5">
+
+          {% if flag %}
+
           <table style="margin: 0 auto 2rem auto;">
             <tbody>
               <tr
@@ -90,16 +92,18 @@
               <div class="col">
 
                 {% set p5_01_errors = errors.filter(location=5.01, context={'target': target_taxon }) %}
+
                 {% if p5_01_errors %}
                 {{ render_error_message(p5_01_errors) }}
                 {% endif %}
 
                 {% if context.data.target is not none %}
+                {% set records_str = "{:,}".format(context.data.target) %}
                 <div class="big-number alert-{{ flag_5_1.bs_class }}">
-                  {{ context.data.target }} records
+                  {{ records_str }} records
                 </div>
                 <p class="my-3">
-                  There are {{ context.data.target }} sequences in the reference database for
+                  There are {{ records_str }} sequences in the reference database for
                   <em>{{ context.target_taxon }}</em>
                   at the given locus <strong>{{ context.metadata.locus }}</strong>.
                 </p>
@@ -108,7 +112,7 @@
                 {% if context.target_type == 'toi' and context.tois_detected['target_taxon'] and context.data.target %}
                 <p class="alert alert-warning">
                   <strong>Warning:</strong>
-                  The reference database includes records for <em>{{ context.target_taxon }}</em>, but they were not present in the top {{ context.config.BLAST_MAX_TARGET_SEQS }} hits with a sufficient match score to meet candidate criteria. If there are over {{ context.config.BLAST_MAX_TARGET_SEQS }} related species' records in the database (as reported below), it is possible (though rare) that a viable hit for this TOI was present in hits ranked lower than the top {{ context.config.BLAST_MAX_TARGET_SEQS }}.
+                  The reference database includes records for <em>{{ context.target_taxon }}</em>, but they were not present in the top {{ context.config.BLAST_MAX_TARGET_SEQS }} hits with a sufficient alignment identity to meet candidate criteria. If there are over {{ context.config.BLAST_MAX_TARGET_SEQS }} related species' records in the database (as reported below), it is possible (though rare) that a viable hit for this TOI was present in hits ranked lower than the top {{ context.config.BLAST_MAX_TARGET_SEQS }}.
                 </p>
                 {% endif %}
 
@@ -228,9 +232,6 @@
                             },
                           }
                         );
-                        window.addEventListener('resize', function() {
-                          Plotly.Plots.resize('dbcov-plot-related-{{ context.target_id }}');
-                        });
 
                         zeroValues = values.filter(value => value === 0).length;
                         coverage = values.length - zeroValues;
@@ -332,16 +333,13 @@
                           'dbcov-plot-relatedCountry-{{ context.target_id }}',
                           plotData,
                           {
-                            margin: { t: 20, r: 0, b: 0, l: keyLength * 5.8 },
+                            margin: { t: 20, r: 0, b: 0, l: keyLength * 8 },
                             height: height,
                             xaxis: {
                               side: 'top',
                             },
                           }
                         );
-                        window.addEventListener('resize', function() {
-                          Plotly.Plots.resize('dbcov-plot-relatedCountry-{{ context.target_id }}');
-                        });
 
                         zeroValues = values.filter(value => value === 0).length;
                         coverage = values.length - zeroValues;
@@ -363,6 +361,22 @@
             {% endif %}
 
           </div>
+          {% endif %}
+
+          {% else %}
+
+          {% if errors %}
+          {{ render_error_message(errors) }}
+          {% endif %}
+
+          <p class="alert alert-info">
+            No database coverage information is available for this taxon.
+            {% if context.target_type == 'candidate' and context.flags['1'].value.lower() in ['c', 'e'] %}
+            This is because database coverage is not evaluated when there are zero or &gt;3 candidate species.
+            {% else %}
+            This is likely because the data are insufficient or inappropriate for this analysis, or because an error was encountered during the analysis.
+            {% endif %}
+          </p>
           {% endif %}
 
         </div>
