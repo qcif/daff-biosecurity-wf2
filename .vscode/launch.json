@@ -113,7 +113,6 @@
             "args": [
                 "output/bold/query_001_LC438549",
                 "--output_dir", "output/bold",
-                "--bold",
             ],
             "env": {
                 "LOGGING_DEBUG": "1",
