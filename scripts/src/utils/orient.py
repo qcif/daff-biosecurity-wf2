@@ -44,6 +44,9 @@ from Bio.Data import CodonTable
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
+from src.utils.config import Config
+
+config = Config()
 logger = logging.getLogger(__name__)
 
 COX_PROFILE_PATH = Path(__file__).parent / "ref_data/pf00115.hmm"
@@ -83,10 +86,7 @@ def orientate(queries: list[SeqRecord]) -> list[SeqRecord]:
             )
     filtered_seqs = search_cox_profile(aa_frames)
     filtered_seqids = {s.id for s in filtered_seqs}
-    unmatched_queries = [
-        seq for seq in query_index.values()
-        if seq.id not in filtered_seqids
-    ]
+    unmatched_query_ids = set(query_index.keys()) - filtered_seqids
     for aa_seq in filtered_seqs:
         qseq = query_index[aa_seq.id]
         forward = aa_seq.annotations["forward"]
@@ -103,7 +103,16 @@ def orientate(queries: list[SeqRecord]) -> list[SeqRecord]:
                 },
             )
         )
-    for seq in unmatched_queries:
+
+    if unmatched_query_ids:
+        logger.info(
+            "HMMSearch: The following sequences could not be oriented because"
+            " they do not have a recognised COX1 HMM domain. Both orientations"
+            " will be submitted to BOLD ID Engine to determine orientation:"
+            f" {', '.join(unmatched_query_ids)}")
+
+    for seq_id in unmatched_query_ids:
+        seq = query_index[seq_id]
         seq.annotations["oriented"] = False
         seq.annotations["reverse_complement"] = False
         oriented_seqs.append(seq)
@@ -152,10 +161,15 @@ def search_cox_profile(seqlist: list[SeqRecord]) -> list[SeqRecord]:
     those that match the COX1 domain profile.
     """
     filtered_seqs = []
-    seq_index = {
-        seq.id: seq
-        for seq in seqlist
-    }
+    # Reindex sequences numerically so that seq can be extracted from hmmsearch
+    # results unambiguously (allows for seqs with same id)
+    reindexed_seqs = [
+        SeqRecord(
+            seq.seq,
+            id=str(i),
+        )
+        for i, seq in enumerate(seqlist)
+    ]
     tmp_name = None
     tmp_out_name = None
 
@@ -176,7 +190,7 @@ def search_cox_profile(seqlist: list[SeqRecord]) -> list[SeqRecord]:
             ) as tmp_out
         ):
             tmp_name = tmp.name
-            SeqIO.write(seqlist, tmp, "fasta")
+            SeqIO.write(reindexed_seqs, tmp, "fasta")
             tmp.close()
             tmp_out_name = tmp_out.name
             subprocess.run([
@@ -196,15 +210,12 @@ def search_cox_profile(seqlist: list[SeqRecord]) -> list[SeqRecord]:
                 if line.startswith("#"):
                     continue
                 fields = line.split()
-                if len(fields) > 0 and float(fields[4]) < 1e-5:
-                    seq = seq_index.get(fields[0])
-                    # TODO: check how hmmsearch handles query with no hit
-                    if seq:
-                        filtered_seqs.append(seq)
-                    else:
-                        raise RuntimeError(
-                            f"HMMSearch: Sequence ID {fields[0]} was returned"
-                            " by HMMSearch but not found in the input FASTA.")
+                if (
+                    len(fields) > 0
+                    and float(fields[4]) < config.HMMSEARCH_MIN_EVALUE
+                ):
+                    seq_ix = int(fields[0])
+                    filtered_seqs.append(seqlist[seq_ix])
 
     except subprocess.CalledProcessError as e:
         logger.error(
@@ -217,14 +228,6 @@ def search_cox_profile(seqlist: list[SeqRecord]) -> list[SeqRecord]:
         for path in (tmp_name, tmp_out_name):
             if path and os.path.exists(path):
                 os.remove(path)
-
-    missing_seqs = set(seq_index.keys()) - {seq.id for seq in filtered_seqs}
-    if missing_seqs:
-        logger.warning(
-            "HMMSearch: The following sequences could not be oriented because"
-            " they did not match the COX1 HMM profile. Both orientations will"
-            " be submitted to BOLD to determine orientation:"
-            f" {', '.join(missing_seqs)}")
 
     return filtered_seqs
 
