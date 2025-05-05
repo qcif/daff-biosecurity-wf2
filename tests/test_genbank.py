@@ -1,15 +1,15 @@
 import json
 import os
-import unittest
 import threading
 import time
-from queue import Queue
+import unittest
 from pathlib import Path
+from queue import Queue
 
 from src.entrez.genbank import (
-    fetch_sources,
-    fetch_gb_records,
     GbRecordSource,
+    fetch_gb_records,
+    fetch_sources,
 )
 from src.utils import serialize
 
@@ -56,8 +56,8 @@ class TestFetchRecords(unittest.TestCase):
 
     def test_fetch_multiple_source(self):
         result = fetch_sources(MULTIPLE_ACCESSIONS)
-        expected = EXPECT_MULTIPLE_SOURCES_JSON.read_text()
-        observed = json.dumps(result, default=serialize)
+        expected = json.loads(EXPECT_MULTIPLE_SOURCES_JSON.read_text())
+        observed = json.loads(json.dumps(result, default=serialize))
         self.assertEqual(observed, expected)
 
     @unittest.skipUnless(
