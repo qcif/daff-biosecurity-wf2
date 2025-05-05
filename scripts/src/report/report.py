@@ -43,7 +43,9 @@ def render(query, bold=False):
 
     # TODO: If BOLD, replace 'identity' with 'similarity'
     if bold:
-        rendered_html = re.sub(r"\bidentity\b", "Similarity", rendered_html, flags=re.IGNORECASE)
+        rendered_html = re.sub(r"\bidentity\b", "Similarity",
+                               rendered_html,
+                               flags=re.IGNORECASE)
 
     report_path = config.get_report_path(query_ix)
     with open(report_path, 'w', encoding="utf-8") as f:
