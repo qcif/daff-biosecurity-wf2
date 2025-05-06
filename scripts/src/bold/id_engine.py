@@ -5,16 +5,18 @@ API Docs: https://v4.boldsystems.org/index.php/resources/api
 
 import csv
 import logging
-import requests
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from xml.etree import ElementTree
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from Bio import SeqIO
 from Bio.Seq import Seq
 
+import requests
+
 from src.gbif.taxonomy import fetch_kingdom
 from src.utils import errors
+from src.utils.orient import orientate
 from src.utils.throttle import ENDPOINTS, Throttle
 
 logger = logging.getLogger(__name__)
@@ -95,16 +97,22 @@ class BoldSearch:
         fasta_file: Path,
         db: str = BOLD_DATABASE,
     ) -> dict[str, list[dict[str, any]]]:
-        """Submit a sequence search request to BOLD API with throttling."""
+        """Submit a sequence search request to BOLD API.
+        Attempt to orientate sequences before submission. For sequences which
+        cannot be oriented, both forward and reverse sequences are submitted
+        and the sequence which returns BOLD hits is used.
+        """
         hits = {}
         throttle = Throttle(ENDPOINTS.BOLD)
         sequences = self._read_sequence_from_fasta(fasta_file)
+        oriented_seqs = orientate(sequences)
         logger.debug(
-            f"Submitting {len(sequences)} sequences to BOLD ID Engine..."
+            f"Submitting {len(oriented_seqs)} sequences to BOLD ID Engine..."
         )
-        for i, sequence in enumerate(sequences):
+        for i, sequence in enumerate(oriented_seqs):
             logger.debug(
-                f"Submitting sequence {i + 1}/{len(sequences)}: {sequence.id}"
+                f"Submitting sequence {i + 1}/{len(oriented_seqs)}"
+                f": {sequence.id}"
             )
             params = {
                 "sequence": str(sequence.seq),
@@ -160,11 +168,19 @@ class BoldSearch:
                         float(longitude_str) if longitude_str else None),
                 }
                 sequence_hits.append(result)
-            hits[sequence.id] = {
-                'query_title': sequence.id + ' ' + sequence.description,
-                'query_length': len(sequence.seq),
-                'hits': sequence_hits,
-            }
+
+            # If multiple seq IDs, only keep the one with hits
+            # (the correct orientation)
+            if (
+                sequence.id not in hits
+                or sequence_hits
+            ):
+                hits[sequence.id] = {
+                    'query_title': sequence.id + ' ' + sequence.description,
+                    'query_length': len(sequence.seq),
+                    'hits': sequence_hits,
+                }
+
         return hits
 
     def _fetch_hit_metadata(self, hits) -> dict[str, list]:
