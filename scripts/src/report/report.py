@@ -43,9 +43,8 @@ def render(query, bold=False):
 
     # TODO: If BOLD, replace 'identity' with 'similarity'
     if bold:
-        rendered_html = re.sub(r"\bidentity\b", "Similarity",
-                               rendered_html,
-                               flags=re.IGNORECASE)
+        rendered_html = re.sub(r"\bidentity\b", "similarity", rendered_html)
+        rendered_html = re.sub(r"\bIdentity\b", "Similarity", rendered_html)
 
     report_path = config.get_report_path(query_ix)
     with open(report_path, 'w', encoding="utf-8") as f:
@@ -111,8 +110,8 @@ def _get_report_context(query_ix, bold):
         'tois_detected': _read_toi_detected(query_ix),
         'aggregated_sources': _read_source_diversity(query_ix),
         'db_coverage': _read_db_coverage(query_ix),
-        'tree_nwk_str': (config.get_query_dir(query_ix)
-                         / config.TREE_NWK_FILENAME).read_text().strip(),
+        # 'tree_nwk_str': (config.get_query_dir(query_ix)
+        #                  / config.TREE_NWK_FILENAME).read_text().strip(),
         'error_log': ErrorLog(config.get_query_dir(query_ix)),
         'bold': bold,
     }

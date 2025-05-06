@@ -22,8 +22,9 @@
   </em>
 </p>
 
-{% if not bold %}
+
 <div class="row my-5">
+  {% if not bold %}
   <div class="col">
     <p class="lead" style="margin-bottom: 2rem;">
       Candidate hits must meet ONE of these criteria:
@@ -117,7 +118,11 @@
         <th>Species</th>
         <th>Hits</th>
         <th>Identity</th>
-        <th>E-value</th>
+        {% if bold %}
+          <th>BOLD Record</th>
+        {% else %}
+          <th>E-value</th>
+        {% endif %}
         <th class="text-center">Database coverage</th>
       </thead>
       {% for candidate in candidates.species %}
@@ -125,8 +130,14 @@
       <tr>
         <td><em>{{ taxon }}</em></td>
         <td>{{ candidate.hit_count }}</td>
-        <td>{{ candidate.identity * 100 }}%</td>
+        <td>{{ (candidate.identity * 100) | round(2)}}%</td>
+        {% if bold %}
+        <td>
+          <a href="{{ candidate.url }}" target="_blank">{{ candidate.hit_id }}</a>
+        </td>
+        {% else %}
         <td>{{ candidate.e_value }}</td>
+        {% endif %}
         <td class="text-center">
           {% set target_id = 'candidate-' + taxon | css_hash %}
           {% set flag = flags['5']['candidate'].get(taxon, flags['5']['candidate'].null) %}
