@@ -1,14 +1,15 @@
 """Parse BLAST XML output to JSON format and extract FASTA sequences."""
 
 import logging
+
 from Bio.Blast import NCBIXML
-from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
 
 logger = logging.getLogger(__name__)
 
 
-def calculate_hit_score(hsps):
+def calculate_hit_bitscore(hsps):
     """Calculate the total scores of all hsps for a hit."""
     return sum(hsp.bits for hsp in hsps)
 
@@ -121,7 +122,7 @@ def parse_blast_xml(blast_xml_path: str) -> tuple[
             effective_search_space = blast_record.effective_search_space
 
             for alignment in blast_record.alignments:
-                hit_score = calculate_hit_score(alignment.hsps)
+                hit_score = calculate_hit_bitscore(alignment.hsps)
                 hit_e_value = calculate_hit_e_value(
                     alignment,
                     effective_search_space)

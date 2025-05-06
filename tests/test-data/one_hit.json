@@ -9,12 +9,12 @@
         "alignment_length": 602,
         "subject_length": 1575,
         "query_coverage": 1.0,
-        "bitscore": 602.0,
+        "bitscore": 1112.8,
         "e_value": 0.0,
         "identity": 1.0,
         "hsps": [
           {
-            "bitscore": 602.0,
+            "bitscore": 1112.8,
             "e_value": 0.0,
             "identities": 602,
             "identity": 1.0,

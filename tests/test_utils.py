@@ -1,9 +1,9 @@
-import tempfile
 import shutil
+import tempfile
 import unittest
 from pathlib import Path
 
-from src.utils.flags import Flag, FLAGS
+from src.utils.flags import FLAGS, Flag
 
 
 class TestUtils(unittest.TestCase):
@@ -20,13 +20,19 @@ class TestUtils(unittest.TestCase):
     def test_flags(self):
         Flag.write(self.query_dir, FLAGS.POSITIVE_ID, FLAGS.A)
         Flag.write(self.query_dir, FLAGS.TOI, FLAGS.B)
-        Flag.write(
-            self.query_dir,
+        for flag_id in (
             FLAGS.SOURCES,
-            FLAGS.A,
-            target=self.TEST_SPECIES,
-            target_type=self.TEST_TARGET_TYPE,
-        )
+            FLAGS.DB_COVERAGE_TARGET,
+            FLAGS.DB_COVERAGE_RELATED,
+            FLAGS.DB_COVERAGE_RELATED_COUNTRY,
+        ):
+            Flag.write(
+                self.query_dir,
+                flag_id,
+                FLAGS.A,
+                target=self.TEST_SPECIES,
+                target_type=self.TEST_TARGET_TYPE,
+            )
         flags = Flag.read(self.query_dir)
         flag_1 = flags[FLAGS.POSITIVE_ID]
         self.assertIsInstance(flag_1, Flag)
@@ -41,5 +47,5 @@ class TestUtils(unittest.TestCase):
         flags_json = Flag.read(self.query_dir, as_json=True)
         flag_4 = flags_json[FLAGS.SOURCES][self.TEST_TARGET_TYPE][
             self.TEST_SPECIES]
-        self.assertIsInstance(flag_4, str)
-        self.assertEqual(flag_4, FLAGS.A)
+        self.assertIsInstance(flag_4, dict)
+        self.assertEqual(flag_4['value'], FLAGS.A)

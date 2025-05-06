@@ -3,21 +3,21 @@
 All configuration values can be overridden with environment variables.
 """
 
-import os
 import csv
 import json
 import logging
-
+import os
 import shutil
 import tempfile
-from Bio import SeqIO
 from datetime import datetime, timedelta
 from logging.config import dictConfig
 from pathlib import Path
 
+from Bio import SeqIO
+
+from . import countries
 from .log import get_logging_config
 from .utils import path_safe_str
-from . import countries
 
 logger = logging.getLogger(__name__)
 
@@ -74,6 +74,7 @@ class Config:
                                    "bold_taxonomy.json")
 
     BOLD_FLAG = 'BOLD'
+    HMMSEARCH_MIN_EVALUE = 1e-5
     DB_COVERAGE_MAX_CANDIDATES = 3
     FLAG_FILE_TEMPLATE = '{identifier}.flag'
     GBIF_LIMIT_RECORDS = int(os.getenv("GBIF_LIMIT_RECORDS", 500))

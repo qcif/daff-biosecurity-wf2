@@ -9,7 +9,7 @@
                 "discover",
                 "-s", "tests",
                 "-p", "test*.py",
-                // "-p", "test_validation.py",
+                // "-p", "test_gbif.py",  // run a specific test
                 "-b",
             ],
             "env": {
