@@ -79,7 +79,16 @@ class Flag:
 
     @classmethod
     def read(cls, query, as_json=False):
-        """Read flags from CSV file."""
+        """Read flags from *.flag files.
+        If a flag file doesn't exist for a given <flag_id, type, target>
+        combination, it will be created with a default value of 'NA'.
+        """
+        def get_level(flag):
+            """Get the warning level for the given flag."""
+            if as_json:
+                return flag['level']
+            return flag.level
+
         pattern = (
             config.get_query_dir(query)
             / config.FLAG_FILE_TEMPLATE.format(identifier="*")
@@ -90,18 +99,19 @@ class Flag:
             if path.is_file():
                 flag_id, target, target_type = cls._parse_flag_filename(path)
                 value = path.read_text().strip()
-                if not as_json:
-                    value = Flag(flag_id, value=value, target=target)
+                flag = Flag(flag_id, value=value, target=target)
+                if as_json:
+                    flag = flag.to_json()
                 if target:
                     flags[flag_id] = flags.get(flag_id, {})
                     if target_type:
                         flags[flag_id][target_type] = flags[flag_id].get(
                             target_type, {})
-                        flags[flag_id][target_type][target] = value
+                        flags[flag_id][target_type][target] = flag
                     else:
-                        flags[flag_id][target] = value
+                        flags[flag_id][target] = flag
                 else:
-                    flags[flag_id] = value
+                    flags[flag_id] = flag
         for flag, data in flags.items():
             if flag.startswith('5'):
                 for ttype in [TARGETS.CANDIDATE, TARGETS.PMI, TARGETS.TOI]:
@@ -115,12 +125,13 @@ class Flag:
         flags[FLAGS.DB_COVERAGE_ALL] = {}
         for ttype in [TARGETS.CANDIDATE, TARGETS.PMI, TARGETS.TOI]:
             # Create a null flag for missing targets to fall back on
-            flags[FLAGS.DB_COVERAGE_ALL][ttype] = {
-                'null': Flag(
-                    FLAGS.DB_COVERAGE_ALL,
-                    value=FLAGS.NA,
-                )
-            }
+            null_flag = Flag(
+                FLAGS.DB_COVERAGE_ALL,
+                value=FLAGS.NA,
+            )
+            if as_json:
+                null_flag = null_flag.to_json()
+            flags[FLAGS.DB_COVERAGE_ALL][ttype] = {'null': null_flag}
             if flags[FLAGS.DB_COVERAGE_TARGET][ttype]:
                 # Set flag 5 (max warning level) for each target taxon
                 for target in flags[FLAGS.DB_COVERAGE_TARGET][ttype]:
@@ -129,8 +140,8 @@ class Flag:
                         flags[FLAGS.DB_COVERAGE_RELATED][ttype][target],
                         flags[FLAGS.DB_COVERAGE_RELATED_COUNTRY][ttype][
                             target],
-                    ], key=lambda x: x.level)
-                    if max_flag.level:
+                    ], key=lambda x: get_level(x))
+                    if get_level(max_flag):
                         flags[FLAGS.DB_COVERAGE_ALL][ttype][target] = max_flag
 
         return flags

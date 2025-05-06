@@ -3,6 +3,7 @@ import logging
 import unittest
 from pathlib import Path
 from unittest.mock import patch
+
 from src.gbif.relatives import RelatedTaxaGBIF
 
 TEST_DATA_DIR = Path(__file__).parent / 'test-data'
@@ -19,7 +20,7 @@ class TestFetchRelatedSpecies(unittest.TestCase):
         mock_search.return_value = json.loads(
             GBIF_NAME_LOOKUP_RESPONSE.read_text())
         taxon = RelatedTaxaGBIF('Cheiloxena aitori')
-        self.assertEqual(len(taxon.relatives), 7)
+        self.assertEqual(len(taxon.relatives), 8)
         self.assertEqual(taxon.genus_key, 4732783)
         mock_search.assert_called_once()
 

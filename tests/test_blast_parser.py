@@ -2,28 +2,30 @@ import json
 import unittest
 from pathlib import Path
 from unittest.mock import MagicMock
+
 from scripts.src.blast.parse_xml import (
-    calculate_hit_score,
+    calculate_alignment_length,
+    calculate_hit_bitscore,
     calculate_hit_e_value,
     calculate_hit_identity,
     calculate_hit_query_coverage,
-    calculate_alignment_length,
     parse_blast_xml
 )
+
 DATA_DIR = Path(__file__).parent / 'test-data'
 BLAST_XML_PATH = DATA_DIR / "one_output.xml"
 EXPECTED_JSON = DATA_DIR / 'one_hit.json'
 EXPECTED_FASTA = DATA_DIR / 'one_hit.fasta'
 
 
-class TestParseMethods(unittest.TestCase):
-    def test_calculate_hit_score(self):
+class TestBlastParser(unittest.TestCase):
+    def test_calculate_hit_bitscore(self):
         hsp1 = MagicMock()
-        hsp1.score = 100
+        hsp1.bits = 100
         hsp2 = MagicMock()
-        hsp2.score = 150
-        expected_hsps = hsp1.score + hsp2.score
-        results = calculate_hit_score([hsp1, hsp2])
+        hsp2.bits = 150
+        expected_hsps = hsp1.bits + hsp2.bits
+        results = calculate_hit_bitscore([hsp1, hsp2])
         self.assertEqual(results, expected_hsps)
 
     def test_calculate_single_hit_e_value(self):
