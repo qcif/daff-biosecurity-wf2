@@ -37,6 +37,7 @@ import logging
 import os
 import subprocess
 import tempfile
+from dataclasses import dataclass
 from pathlib import Path
 
 from Bio import SeqIO
@@ -49,7 +50,16 @@ from src.utils.config import Config
 config = Config()
 logger = logging.getLogger(__name__)
 
-COX_PROFILE_PATH = Path(__file__).parent / "ref_data/pf00115.hmm"
+HMM_PROFILE_DIR = Path(__file__).parent / "ref_data/hmm"
+
+
+@dataclass
+class HMMSearchResult:
+    query_id: str
+    accession: str
+    query_name: str
+    query_accession: str
+    evalue: float
 
 
 def orientate(queries: list[SeqRecord]) -> list[SeqRecord]:
@@ -170,9 +180,27 @@ def search_cox_profile(seqlist: list[SeqRecord]) -> list[SeqRecord]:
         )
         for i, seq in enumerate(seqlist)
     ]
+
+    for profile in HMM_PROFILE_DIR.glob("*.hmm"):
+        filtered_seqids = {
+            s.id for s in filtered_seqs
+        }
+        hmm_matches = hmmsearch(reindexed_seqs, profile)
+        for match in hmm_matches:
+            query = seqlist[int(match.query_id)]
+            if query.id not in filtered_seqids:
+                filtered_seqs.append(query)
+
+    return filtered_seqs
+
+
+def hmmsearch(seqlist: list[SeqRecord], profile: Path) -> list[SeqRecord]:
+    """Run hmmsearch against the COX1 profile and return matching sequences.
+    The profile should be the path to a HMM profile file.
+    """
+    matches = []
     tmp_name = None
     tmp_out_name = None
-
     try:
         with (
             tempfile.NamedTemporaryFile(
@@ -190,7 +218,7 @@ def search_cox_profile(seqlist: list[SeqRecord]) -> list[SeqRecord]:
             ) as tmp_out
         ):
             tmp_name = tmp.name
-            SeqIO.write(reindexed_seqs, tmp, "fasta")
+            SeqIO.write(seqlist, tmp, "fasta")
             tmp.close()
             tmp_out_name = tmp_out.name
             subprocess.run([
@@ -198,7 +226,7 @@ def search_cox_profile(seqlist: list[SeqRecord]) -> list[SeqRecord]:
                     "--tblout",
                     tmp_out.name,
                     "--noali",
-                    COX_PROFILE_PATH,
+                    profile,
                     tmp_name,
                 ],
                 check=True,
@@ -210,12 +238,17 @@ def search_cox_profile(seqlist: list[SeqRecord]) -> list[SeqRecord]:
                 if line.startswith("#"):
                     continue
                 fields = line.split()
-                if (
-                    len(fields) > 0
-                    and float(fields[4]) < config.HMMSEARCH_MIN_EVALUE
-                ):
-                    seq_ix = int(fields[0])
-                    filtered_seqs.append(seqlist[seq_ix])
+                if not fields:
+                    continue
+                result = HMMSearchResult(
+                    query_id=fields[0],
+                    accession=fields[1],
+                    query_name=fields[2],
+                    query_accession=fields[3],
+                    evalue=float(fields[4]),
+                )
+                if result.evalue < config.HMMSEARCH_MIN_EVALUE:
+                    matches.append(result)
 
     except subprocess.CalledProcessError as e:
         logger.error(
@@ -229,7 +262,7 @@ def search_cox_profile(seqlist: list[SeqRecord]) -> list[SeqRecord]:
             if path and os.path.exists(path):
                 os.remove(path)
 
-    return filtered_seqs
+    return matches
 
 
 if __name__ == '__main__':
