@@ -98,6 +98,8 @@ class Config:
     ]
 
     class INPUTS:
+        FACILITY_NAME = os.getenv('FACILITY_NAME', "Not provided"),
+        ANALYST_NAME = os.getenv('ANALYST_NAME', "Not provided"),
         METADATA_CSV_HEADER = {
             "sample_id": "sample_id",
             "locus": "locus",
