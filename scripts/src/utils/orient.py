@@ -140,7 +140,9 @@ def orientate(queries: list[SeqRecord]) -> list[SeqRecord]:
 
 def translate(raw_seq: str) -> dict[str, list[str]]:
     """Translate a DNA sequence into six forward/reverse frames."""
-    seq = Seq(raw_seq.upper().replace("-", "").replace("\n", ""))
+    trim_nt = len(raw_seq) % 3
+    trimmed_seq = raw_seq[:-trim_nt] if trim_nt else raw_seq
+    seq = Seq(trimmed_seq.upper().replace("-", "").replace("\n", ""))
     strands = [
         seq,
         seq.reverse_complement(),
