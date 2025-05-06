@@ -71,6 +71,18 @@ def orientate(queries: list[SeqRecord]) -> list[SeqRecord]:
     and seq.annotations["reverse_complement"]=True to identify the reverse
     strand.
     """
+    def ix_to_frame(i: int) -> int:
+        """Convert translation frame index to frame number.
+        Forward frames: 1:3
+        Reverse frames : -3:-1
+        """
+        if i < 3:
+            return i + 1
+        elif i < 6:
+            return -(i - 2)
+        else:
+            raise ValueError("Invalid index for frame: {}".format(i))
+
     aa_frames = []
     oriented_seqs = []
     query_index = {
@@ -80,9 +92,7 @@ def orientate(queries: list[SeqRecord]) -> list[SeqRecord]:
     for seq in query_index.values():
         frames = translate(seq.seq)
         for i, s in enumerate(frames):
-            frame = i - 3
-            if frame >= 0:
-                frame += 1
+            frame = ix_to_frame(i)
             aa_frames.append(
                 SeqRecord(
                     s,

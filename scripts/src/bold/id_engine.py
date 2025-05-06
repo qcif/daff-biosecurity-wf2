@@ -176,12 +176,30 @@ class BoldSearch:
                 or sequence_hits
             ):
                 hits[sequence.id] = {
-                    'query_title': sequence.id + ' ' + sequence.description,
+                    'query_id': sequence.id,
+                    'query_title': sequence.description,
                     'query_length': len(sequence.seq),
+                    'query_frame': sequence.annotations.get("frame"),
+                    'query_strand': (
+                        '+'
+                        if sequence.annotations.get("forward", True)
+                        else '-'
+                    ),
+                    'query_sequence': str(sequence.seq),
+                    'query_orientation': (
+                        'HMMSearch'
+                        if sequence.annotations.get("oriented")
+                        else 'BOLD ID Engine'
+                    ),
                     'hits': sequence_hits,
                 }
 
-        return hits
+        ordered_hits = {
+            seq.id: hits[seq.id]
+            for seq in sequences
+        }
+
+        return ordered_hits
 
     def _fetch_hit_metadata(self, hits) -> dict[str, list]:
         """Fetch metadata by calling BOLD public API with accessions."""
