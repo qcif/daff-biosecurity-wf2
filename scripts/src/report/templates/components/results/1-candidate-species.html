@@ -53,7 +53,8 @@
 
   <div class="col">
     <p class="lead">
-      Candidate hits have then been classified as follows:
+      {% if bold %}BOLD{% else %}BLAST{% endif %}
+      hits have been classified as follows:
     </p>
     <table class="table tight font-small">
       <thead>
