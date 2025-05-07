@@ -5,16 +5,18 @@ import csv
 import json
 import logging
 import os
-from datetime import datetime
 import re
-from jinja2 import Environment, FileSystemLoader
+from datetime import datetime
 from pathlib import Path
+
+from jinja2 import Environment, FileSystemLoader
+
+from src.utils import config, serialize
+from src.utils.errors import ErrorLog
+from src.utils.flags import FLAGS, Flag, TARGETS
 
 from .filters.css_hash import css_hash
 from .outcomes import DetectedTaxon
-from src.utils import config, serialize
-from src.utils.errors import ErrorLog
-from src.utils.flags import Flag, FLAGS, TARGETS
 
 logger = logging.getLogger(__name__)
 config = config.Config()
@@ -117,8 +119,8 @@ def _get_report_context(query_ix, bold):
         'tois_detected': _read_toi_detected(query_ix),
         'aggregated_sources': _read_source_diversity(query_ix),
         'db_coverage': _read_db_coverage(query_ix),
-        # 'tree_nwk_str': (config.get_query_dir(query_ix)
-        #                  / config.TREE_NWK_FILENAME).read_text().strip(),
+        'tree_nwk_str': (config.get_query_dir(query_ix)
+                         / config.TREE_NWK_FILENAME).read_text().strip(),
         'error_log': ErrorLog(config.get_query_dir(query_ix)),
         'bold': bold,
     }
