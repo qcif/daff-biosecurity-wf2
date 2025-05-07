@@ -22,7 +22,7 @@ from .utils import path_safe_str
 logger = logging.getLogger(__name__)
 
 MAP_FILENAME_TEMPLATE = "map_{taxon_str}.png"
-REPORT_FILENAME = "report_{sample_id}_{timestamp}.html"
+REPORT_FILENAME = "report_{prefix}{sample_id}_{timestamp}.html"
 QUERY_DIR_PREFIX = 'query_'
 
 
@@ -323,12 +323,13 @@ class Config:
         """Read taxa of interest from TOI file."""
         return self._get_metadata_for_query(query, "taxa_of_interest")
 
-    def get_report_path(self, query):
+    def get_report_path(self, query, bold: bool = False) -> Path:
         query_ix = self.get_query_ix(query)
         return self.get_query_dir(query_ix) / path_safe_str(
             REPORT_FILENAME.format(
                 sample_id=self.get_sample_id(query_ix).replace('.', '_'),
                 timestamp='NOW',  # self.timestamp, # ! TODO
+                prefix='BOLD_' if bold else '',
             )
         )
 

@@ -46,7 +46,7 @@ def render(query, bold=False):
         rendered_html = re.sub(r"\bidentity\b", "similarity", rendered_html)
         rendered_html = re.sub(r"\bIdentity\b", "Similarity", rendered_html)
 
-    report_path = config.get_report_path(query_ix)
+    report_path = config.get_report_path(query_ix, bold=bold)
     with open(report_path, 'w', encoding="utf-8") as f:
         f.write(rendered_html)
     logger.info(f"HTML document written to {report_path}")
@@ -88,11 +88,17 @@ def _get_report_context(query_ix, bold):
     """Build the context for the report template."""
     query_fasta_str = config.read_query_fasta(query_ix).format('fasta')
     hits = config.read_hits_json(query_ix)['hits']
+    report_title = (
+        'BOLD - ' + config.REPORT.TITLE
+        if bold
+        else config.REPORT.TITLE
+
+    )
     return {
         'url_from_accession': config.url_from_accession,
-        'title': config.REPORT.TITLE,
-        'facility': "Hogwarts",  # ! TODO
-        'analyst_name': "John Doe",  # ! TODO
+        'title': report_title,
+        'facility': config.INPUTS.FACILITY_NAME,
+        'analyst_name': config.INPUTS.ANALYST_NAME,
         'start_time': config.start_time.strftime("%Y-%m-%d %H:%M:%S"),
         'end_time': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         'wall_time': _get_walltime(),
