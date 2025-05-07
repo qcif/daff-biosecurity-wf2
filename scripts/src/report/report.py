@@ -88,7 +88,7 @@ def _get_report_context(query_ix, bold):
     """Build the context for the report template."""
     query_fasta_str = config.read_query_fasta(query_ix).format('fasta')
     hits = config.read_hits_json(query_ix)['hits']
-    report_title = (
+    html_title = (
         'BOLD - ' + config.REPORT.TITLE
         if bold
         else config.REPORT.TITLE
@@ -96,7 +96,8 @@ def _get_report_context(query_ix, bold):
     )
     return {
         'url_from_accession': config.url_from_accession,
-        'title': report_title,
+        'title': config.REPORT.TITLE,
+        'html_title': html_title,
         'facility': config.INPUTS.FACILITY_NAME,
         'analyst_name': config.INPUTS.ANALYST_NAME,
         'start_time': config.start_time.strftime("%Y-%m-%d %H:%M:%S"),
