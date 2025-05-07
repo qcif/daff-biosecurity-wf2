@@ -91,8 +91,8 @@ def _get_report_context(query_ix, bold):
     return {
         'url_from_accession': config.url_from_accession,
         'title': config.REPORT.TITLE,
-        'facility': config.INPUTS.FACILITY_NAME,
-        'analyst_name': config.INPUTS.ANALYST_NAME,
+        'facility': "Hogwarts",  # ! TODO
+        'analyst_name': "John Doe",  # ! TODO
         'start_time': config.start_time.strftime("%Y-%m-%d %H:%M:%S"),
         'end_time': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         'wall_time': _get_walltime(),
@@ -110,8 +110,8 @@ def _get_report_context(query_ix, bold):
         'tois_detected': _read_toi_detected(query_ix),
         'aggregated_sources': _read_source_diversity(query_ix),
         'db_coverage': _read_db_coverage(query_ix),
-        # 'tree_nwk_str': (config.get_query_dir(query_ix)
-        #                  / config.TREE_NWK_FILENAME).read_text().strip(),
+        'tree_nwk_str': (config.get_query_dir(query_ix)
+                         / config.TREE_NWK_FILENAME).read_text().strip(),
         'error_log': ErrorLog(config.get_query_dir(query_ix)),
         'bold': bold,
     }
