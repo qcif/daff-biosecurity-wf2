@@ -5,15 +5,18 @@ import csv
 import json
 import logging
 import os
+import re
 from datetime import datetime
-from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
+
+from jinja2 import Environment, FileSystemLoader
+
+from src.utils import config, serialize
+from src.utils.errors import ErrorLog
+from src.utils.flags import FLAGS, Flag, TARGETS
 
 from .filters.css_hash import css_hash
 from .outcomes import DetectedTaxon
-from src.utils import config, serialize
-from src.utils.errors import ErrorLog
-from src.utils.flags import Flag, FLAGS, TARGETS
 
 logger = logging.getLogger(__name__)
 config = config.Config()
@@ -41,8 +44,11 @@ def render(query, bold=False):
     rendered_html = template.render(**context, **static_files)
 
     # TODO: If BOLD, replace 'identity' with 'similarity'
+    if bold:
+        rendered_html = re.sub(r"\bidentity\b", "similarity", rendered_html)
+        rendered_html = re.sub(r"\bIdentity\b", "Similarity", rendered_html)
 
-    report_path = config.get_report_path(query_ix)
+    report_path = config.get_report_path(query_ix, bold=bold)
     with open(report_path, 'w', encoding="utf-8") as f:
         f.write(rendered_html)
     logger.info(f"HTML document written to {report_path}")
@@ -84,9 +90,16 @@ def _get_report_context(query_ix, bold):
     """Build the context for the report template."""
     query_fasta_str = config.read_query_fasta(query_ix).format('fasta')
     hits = config.read_hits_json(query_ix)['hits']
+    html_title = (
+        'BOLD - ' + config.REPORT.TITLE
+        if bold
+        else config.REPORT.TITLE
+
+    )
     return {
         'url_from_accession': config.url_from_accession,
         'title': config.REPORT.TITLE,
+        'html_title': html_title,
         'facility': config.INPUTS.FACILITY_NAME,
         'analyst_name': config.INPUTS.ANALYST_NAME,
         'start_time': config.start_time.strftime("%Y-%m-%d %H:%M:%S"),
