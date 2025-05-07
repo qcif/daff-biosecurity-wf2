@@ -91,8 +91,8 @@ def _get_report_context(query_ix, bold):
     return {
         'url_from_accession': config.url_from_accession,
         'title': config.REPORT.TITLE,
-        'facility': "Hogwarts",  # ! TODO
-        'analyst_name': "John Doe",  # ! TODO
+        'facility': config.INPUTS.FACILITY_NAME,
+        'analyst_name': config.INPUTS.ANALYST_NAME,
         'start_time': config.start_time.strftime("%Y-%m-%d %H:%M:%S"),
         'end_time': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         'wall_time': _get_walltime(),
