@@ -81,8 +81,11 @@ class Throttle:
         window is clear.
         """
         while True:
-            with sqlite3.connect(self.db_path, isolation_level=None) as conn:
-                try:
+            try:
+                with sqlite3.connect(
+                    self.db_path,
+                    isolation_level=None,
+                ) as conn:
                     # Lock the database for writing
                     conn.execute("BEGIN IMMEDIATE")
 
@@ -112,9 +115,14 @@ class Throttle:
                     # Rollback if the request limit is exceeded
                     conn.rollback()
 
-                except sqlite3.OperationalError:
-                    # Handle potential lock contention gracefully
-                    pass
+            except sqlite3.OperationalError as exc:
+                if 'lock' in str(exc):
+                    logger.debug('sqlite3.OperationalError ignored while'
+                                 f' awaiting throttle release: {exc}')
+                else:
+                    logger.error('Fatal sqlite3.OperationalError while'
+                                 f' awaiting throttle release: {exc}')
+                    raise exc
 
             # Sleep for a random interval to reduce race conditions collisions
             time.sleep(round(random.uniform(0.01, 0.1), 3))
