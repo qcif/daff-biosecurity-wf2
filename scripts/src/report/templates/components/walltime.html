@@ -8,18 +8,20 @@
     <td>{{ analyst_name }}</td>
   </tr>
   <tr>
-    <td class="fw-bold">Analysis started</td>
-    <td>{{ start_time }}</td>
+    <td class="fw-bold">Analysis start</td>
+    <td><code>{{ start_time }}</code></td>
   </tr>
   <tr>
-    <td class="fw-bold">Analysis completed</td>
-    <td>{{ end_time }}</td>
+    <td class="fw-bold">Analysis end</td>
+    <td><code>{{ end_time }}</code></td>
   </tr>
   <tr>
     <td class="fw-bold">Wall time</td>
     <td>
-      {{ wall_time.hours }}:{{ wall_time.minutes }}:{{ wall_time.seconds}}
-      hours
+      <code>
+        {{ wall_time.hours }}:{{ wall_time.minutes }}:{{ wall_time.seconds}}
+        hours
+      </code>
     </td>
   </tr>
 </table>

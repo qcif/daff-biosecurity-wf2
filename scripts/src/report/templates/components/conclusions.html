@@ -6,8 +6,8 @@
 <div class="my-3">
   <div class="alert alert-{{ conclusions.flags['1'].bs_class }}">
     <p class="box-{{ conclusions.flags['1'].bs_class }} text-center font-xxl mb-3">
-      <span class="px-3">
-        {{ render_level_icon(conclusions.flags['1'].level) }}
+      <span class="px-3" style="position: relative; top: -0.1rem;">
+        {{ render_level_icon(conclusions.flags['1'].level, width=24) }}
       </span>
       {% if conclusions.summary.result.confirmed %}
       <em>
