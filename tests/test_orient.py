@@ -8,8 +8,8 @@ from Bio import SeqIO
 from scripts.src.utils.orient import orientate
 
 TEST_FASTA = Path(__file__).parent / "test-data" / "orient.fasta"
-TEST_FASTA_FWD_INDEXES = (1, 5)
-TEST_FASTA_REV_INDEXES = (0, 4)
+TEST_FASTA_FWD_INDEXES = (0, 4)
+TEST_FASTA_REV_INDEXES = (1, 5)
 TEST_FASTA_NO_COX1_INDEXES = (2, 3, 6)
 
 
