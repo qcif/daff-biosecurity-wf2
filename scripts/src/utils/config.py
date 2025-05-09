@@ -32,6 +32,8 @@ class Config:
     NCBI_API_KEY = os.getenv("NCBI_API_KEY")
     TAXONKIT_DATA = os.getenv("TAXONKIT_DATA",
                               Path('~/.taxonkit').expanduser())
+
+    # Outputs
     TIMESTAMP_FILENAME = os.getenv("TIMESTAMP_FILENAME", 'timestamp.txt')
     ACCESSIONS_FILENAME = os.getenv("ACCESSIONS_FILENAME", "accessions.txt")
     TAXONOMY_FILE = os.getenv("TAXONOMY_FILENAME", 'taxonomy.csv')
@@ -60,12 +62,12 @@ class Config:
                                   'candidates.nwk')
     DB_COVERAGE_JSON = os.getenv("DB_COVERAGE_JSON_FILENAME",
                                  'db_coverage.json')
-    DB_COVERAGE_TOI_LIMIT = int(os.getenv("DB_COVERAGE_TOI_LIMIT", 10))
 
     # BLAST-specific
     BLAST_MAX_TARGET_SEQS = int(os.getenv("BLAST_MAX_TARGET_SEQS", 2000))
 
     # BOLD-specific
+    BOLD_FLAG = 'BOLD'
     BOLD_TAXON_COUNT_JSON = os.getenv("BOLD_TAXON_COUNT_JSON",
                                       "bold_taxon_counts.json")
     BOLD_TAXON_COLLECTORS_JSON = os.getenv("BOLD_TAXON_COLLECTORS_JSON",
@@ -73,7 +75,15 @@ class Config:
     BOLD_TAXONOMY_JSON = os.getenv("BOLD_TAXONOMY_JSON",
                                    "bold_taxonomy.json")
 
-    BOLD_FLAG = 'BOLD'
+    # Other configuration
+    FLAG_DETAILS_CSV_PATH = (
+        Path(__file__).parent.parent.parent.parent / 'flags.csv')
+    ALLOWED_LOCI_FILE = Path(
+        os.getenv(
+            "ALLOWED_LOCI_FILE",
+            Path(__file__).parents[3]
+            / 'loci.json'))
+    DB_COVERAGE_TOI_LIMIT = int(os.getenv("DB_COVERAGE_TOI_LIMIT", 10))
     HMMSEARCH_MIN_EVALUE = 1e-5
     DB_COVERAGE_MAX_CANDIDATES = 3
     FLAG_FILE_TEMPLATE = '{identifier}.flag'
@@ -82,8 +92,6 @@ class Config:
         "GBIF_ACCEPTED_STATUS",
         'accepted,doubtful',
     ).upper().replace(' ', '').split(',')
-    FLAG_DETAILS_CSV_PATH = (
-        Path(__file__).parent.parent.parent.parent / 'flags.csv')
     LOG_FILENAME = 'run.log'
     QUERY_LOG_FILENAME = 'query.log'
     ENTREZ_CACHE_DIRNAME = 'entrez_cache'
@@ -110,6 +118,7 @@ class Config:
         }
         METADATA_CSV_REQUIRED_FIELDS = (
             "sample_id",
+            "locus",
             "preliminary_id",
         )
         FASTA_FILEPATH = Path(
@@ -229,17 +238,11 @@ class Config:
         return self.read_query_fasta(query_ix).id.split('.')[0]
 
     @property
-    def allowed_loci(self):
-        path = (
-            Path(os.getenv('ALLOWED_LOCI_PATH'))
-            if os.getenv('ALLOWED_LOCI_PATH') else None)
-        if not path:
-            return []
-        return [
-            x.strip()
-            for x in Path(path).read_text().split('\n')
-            if x.strip()
-        ]
+    def allowed_loci(self) -> list[list[str]]:
+        """Return a list of allowed loci synonyms.
+        Each list contains a series of synonyms for each locus.
+        """
+        return json.loads(self.ALLOWED_LOCI_FILE.read_text())
 
     @property
     def taxonomy_path(self):
@@ -308,7 +311,10 @@ class Config:
         ]
 
     def get_locus_for_query(self, query) -> str:
-        return self._get_metadata_for_query(query, "locus")
+        locus = self._get_metadata_for_query(query, "locus")
+        if locus.lower() == 'na':
+            return None
+        return locus
 
     def get_pmi_for_query(self, query) -> str:
         return self._get_metadata_for_query(query, "preliminary_id")

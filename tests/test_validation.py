@@ -1,7 +1,6 @@
 """Test input validation functions."""
 
 import logging
-import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -35,6 +34,8 @@ FASTA_INVALID_DUPLICATE_ID = (
 METADATA_VALID = TEST_DATA_DIR / 'metadata.csv'
 METADATA_INVALID_COLUMNS = (
     TEST_DATA_DIR / 'validation/metadata_invalid_columns.csv')
+METADATA_INVALID_LOCUS = (
+    TEST_DATA_DIR / 'validation/metadata_invalid_locus.csv')
 METADATA_MISSING_SAMPLE_ID = (
     TEST_DATA_DIR / 'validation/metadata_missing_sample_id.csv')
 METADATA_MISSING_SEQUENCE_ID = (
@@ -86,11 +87,15 @@ class ValidationTestCase(unittest.TestCase):
 
     def test_it_can_validate_metadata_locus(self):
         _validate_metadata_locus('COI')
-        os.environ['ALLOWED_LOCI_PATH'] = str(
-            TEST_DATA_DIR / 'allowed_loci.txt')
         _validate_metadata_locus('coi')
+        _validate_metadata_locus('cox')
+        _validate_metadata_locus('NA')
+        _validate_metadata_locus('', bold=True)
         with self.assertRaises(MetadataFormatError):
             _validate_metadata_locus('GGG')
+        with self.assertRaises(MetadataFormatError) as exc:
+            _validate_metadata_locus('')
+            self.assertIn('NA', str(exc.exception))
 
     def test_it_can_validate_metadata_preliminary_id(self):
         _validate_metadata_preliminary_id('Homo')

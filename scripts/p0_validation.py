@@ -33,7 +33,7 @@ def main():
     args = _parse_args()
     _validate_taxdbs(args.taxdb_dir)
     ids = _validate_fasta(args.query_fasta)
-    _validate_metadata(args.metadata_csv, ids)
+    _validate_metadata(args.metadata_csv, ids, bold=args.bold)
 
 
 def _parse_args():
@@ -57,6 +57,11 @@ def _parse_args():
         type=existing_path,
         help="Path to queries.fasta input file.",
         required=True,
+    )
+    parser.add_argument(
+        "--bold",
+        action="store_true",
+        help="Validate inputs for a BOLD analysis (accept blank locus field).",
     )
     return parser.parse_args()
 
@@ -126,7 +131,7 @@ def _validate_fasta(path: Path) -> list[str]:
     return seq_ids
 
 
-def _validate_metadata(path: Path, seq_ids: list[str]):
+def _validate_metadata(path: Path, seq_ids: list[str], bold=False):
     """Assert that input metadata CSV is valid.
 
     Each row['sample_id'] must match a sequence ID
@@ -157,12 +162,18 @@ def _validate_metadata(path: Path, seq_ids: list[str]):
                 col_id in config.INPUTS.METADATA_CSV_REQUIRED_FIELDS
                 and not row[colname].strip()
             ):
-                raise MetadataFormatError(
+                msg = (
                     f'a value is required for column "{colname}"'
                     f' (row {i + 1}).'
                 )
+                if col_id == 'locus':
+                    msg += (
+                        ' For samples with no locus (viruses and BOLD runs),'
+                        ' please enter "NA".'
+                    )
+                raise MetadataFormatError(msg)
         _validate_metadata_sample_id(row[columns['sample_id']])
-        _validate_metadata_locus(row[columns['locus']])
+        _validate_metadata_locus(row[columns['locus']], bold=bold)
         _validate_metadata_preliminary_id(row[columns['preliminary_id']])
         _validate_metadata_taxa_of_interest(row[columns['taxa_of_interest']])
         _validate_metadata_country(row[columns['country']])
@@ -190,18 +201,25 @@ def _validate_metadata_sample_id(value):
         )
 
 
-def _validate_metadata_locus(value):
+def _validate_metadata_locus(value, bold=False):
     """This must match the list of allowed loci, if provided."""
     if not config.allowed_loci:
         return
 
-    if value.lower() not in [
-        x.lower()
-        for x in config.allowed_loci
+    if bold and not value:
+        return
+
+    if value.lower() not in ['na'] + [
+        synonym.lower()
+        for locus in config.allowed_loci
+        for synonym in locus
     ]:
         raise MetadataFormatError(
-            f'Locus "{value}" is not in the list of permitted loci: '
-            ', '.join(config.allowed_loci)
+            f'Locus "{value.lower()}" is not in the list of permitted loci:\n'
+            + '- ' + '\n- '.join([
+                str(synonyms)
+                for synonyms in config.allowed_loci
+            ])
         )
 
 
