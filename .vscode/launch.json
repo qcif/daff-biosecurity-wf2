@@ -171,6 +171,8 @@
                 // "--output_dir", "output/issues/44",
             ],
             "env": {
+                "FACILITY_NAME": "Cairns Airport",
+                "ANALYST_NAME": "John Doe",
                 "INPUT_FASTA_FILEPATH": "tests/test-data/queries.fasta",
 
                 // For testing issue cases:
