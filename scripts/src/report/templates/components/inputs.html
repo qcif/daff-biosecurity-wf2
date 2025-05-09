@@ -4,7 +4,7 @@
   <tbody>
     {% for key, value in metadata.items() %}
     <tr>
-      <td class="fw-bold">{{ key | replace('_', ' ') | capitalize | replace('id', 'ID') }}</td>
+      <td class="fw-bold">{{ key | replace('_', ' ') | capitalize | replace(' id', ' ID') }}</td>
       <td>
         {% if 'interest' in key %}
         {% for val in value %}
