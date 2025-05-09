@@ -4,6 +4,8 @@
       <h1>{{ title }}</h1>
       <p class="lead">
         Sample ID: <code>{{ metadata.sample_id }}</code>
+        <br>
+        Database: <code>{% if bold %}BOLD{% else %}BLAST{% endif %}</code>
       </p>
     </div>
     <div class="col-3">
@@ -14,9 +16,6 @@
       />
     </div>
   </div>
-  <p class="lead">
-    Database: {% if bold %}BOLD{% else %}BLAST{% endif %}
-  </p>
   <p>
     Report generated from the
     <a href="https://github.com/qcif/daff-biosecurity-wf2" target="_blank">
