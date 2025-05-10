@@ -33,6 +33,16 @@
           For example, if your sample is from <em>Homo sapiens</em>, but there are no <em>Homo sapiens</em> DNA records in the reference database, the analysis will be unable to detect <em>Homo sapiens</em> as the correct taxonomic identity. In the latter case, the analysis will most likely try to assign the closest relative with existing reference data as the taxonomic identity.
         </p>
 
+        {% if not context.metadata.locus_provided %}
+        <p class="alert alert-warning">
+          <strong>Warning: no locus provided</strong>
+          <br>
+          Database coverage results are compromised, because a locus was not provided for this sample in <code>metadata.csv</code>. The coverage shown correspnds to the
+          <strong>entire genome</strong>
+          of the target taxon, and therefore provides weak evidence for database coverage at the locus of the sample sequence. Therefore, it is possible that the database has no representation of this taxon, which means that it cannot be confidently excluded as an identity for the sample based on sequence alignment alone.
+        </p>
+        {% endif %}
+
         <div class="border p-5">
 
           {% if flag %}
@@ -105,7 +115,16 @@
                 <p class="my-3">
                   There are {{ records_str }} sequences in the reference database for
                   <em>{{ context.target_taxon }}</em>
-                  at the given locus <strong>{{ context.metadata.locus }}</strong>.
+                  <span
+                    {% if not context.metadata.locus_provided %}
+                    class="strikethrough"
+                    title="No locus was provided for this sample in metadata.csv"
+                    data-bs-toggle="tooltip"
+                    data-bs-placement="bottom"
+                    {% endif %}
+                  >
+                    at the given locus <strong>{{ context.metadata.locus }}</strong>.
+                  </span>
                 </p>
 
                 <!-- If toi and toi not detected, and data.target, show warning message -->
@@ -146,7 +165,7 @@
             </div>
           </div>
 
-          {% if flag.value not in [None, 'NA'] %}
+          {% if flag.value not in [none, 'NA'] %}
 
           <hr>
 
@@ -166,7 +185,7 @@
                   <span class="relatedHasReference-{{ context.target_id }}"></span>/<span class="relatedCount-{{ context.target_id }}"></span>
                   (<span class="relatedCoveragePercent-{{ context.target_id }}"></span>%)
                 </span>
-                 of sequence records were found in the reference database for:
+                 of species have sequence records in the reference database for:
               </p>
 
                <ul>
@@ -174,7 +193,16 @@
                   Species in the genus <em>{{ context.target_taxon.split(' ')[0] }}</em>
                 </li>
                 <li>
-                  At the target locus <strong>{{ context.metadata.locus }}</strong>
+                  <span
+                    {% if not context.metadata.locus_provided %}
+                    class="strikethrough"
+                    title="No locus was provided for this sample in metadata.csv"
+                    data-bs-toggle="tooltip"
+                    data-bs-placement="bottom"
+                    {% endif %}
+                  >
+                    At the target locus <strong>{{ context.metadata.locus }}</strong>
+                </span>
                 </li>
                </ul>
             </div>
@@ -201,7 +229,17 @@
                 >
                   <div class="accordion-body">
                     <p class="mb-0 text-center">
-                      Number of GenBank records at locus <strong>{{ context.metadata.locus }}</strong>
+                      Number of GenBank records
+                      <span
+                        {% if not context.metadata.locus_provided %}
+                        class="strikethrough"
+                        title="No locus was provided for this sample in metadata.csv"
+                        data-bs-toggle="tooltip"
+                        data-bs-placement="bottom"
+                        {% endif %}
+                      >
+                        at locus <strong>{{ context.metadata.locus }}</strong>
+                      </span>
                     </p>
 
                     <div class="verticalScrollChart" id="dbcov-plot-related-{{ context.target_id }}"></div>
@@ -270,7 +308,7 @@
                   <span class="relatedCountryHasReference-{{ context.target_id }}"></span>/<span class="relatedCountryCount-{{ context.target_id }}"></span>
                   (<span class="relatedCountryCoveragePercent-{{ context.target_id }}"></span>%)
                 </span>
-                 of sequence records were found in the reference database for:
+                 of species have sequence records in the reference database for:
               </p>
 
                <ul>
@@ -278,7 +316,16 @@
                   Species in the genus <em>{{ context.target_taxon.split(' ')[0] }}</em>
                 </li>
                 <li>
-                  At the target locus <strong>{{ context.metadata.locus }}</strong>
+                  <span
+                    {% if not context.metadata.locus_provided %}
+                    class="strikethrough"
+                    title="No locus was provided for this sample in metadata.csv"
+                    data-bs-toggle="tooltip"
+                    data-bs-placement="bottom"
+                    {% endif %}
+                  >
+                    At the target locus <strong>{{ context.metadata.locus }}</strong>
+                </span>
                 </li>
                 <li>
                   In the sample country of origin <strong>{{ context.metadata.country }}</strong>
@@ -308,8 +355,17 @@
                 >
                   <div class="accordion-body">
                     <p class="mb-0 text-center">
-                      Number of GenBank records at locus
-                      <strong>{{ context.metadata.locus }}</strong>
+                      Number of GenBank records
+                      <span
+                        {% if not context.metadata.locus_provided %}
+                        class="strikethrough"
+                        title="No locus was provided for this sample in metadata.csv"
+                        data-bs-toggle="tooltip"
+                        data-bs-placement="bottom"
+                        {% endif %}
+                      >
+                        at locus <strong>{{ context.metadata.locus }}</strong>
+                      </span>
                     </p>
 
                     <div class="verticalScrollChart" id="dbcov-plot-relatedCountry-{{ context.target_id }}"></div>

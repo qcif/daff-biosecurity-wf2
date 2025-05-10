@@ -47,7 +47,7 @@ CANDIDATE_CSV_HEADER = [
 def main():
     args = _parse_args()
     config.set_output_dir(args.output_dir)
-    config.configure_query_logger(args.query_dir)
+    config.set_query(args.query_dir)
     result = config.read_hits_json(args.query_dir)
     if args.is_bold:
         candidate_hits, candidate_hits_strict = _filter_candidates_bold(

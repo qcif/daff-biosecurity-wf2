@@ -106,8 +106,8 @@ class Config:
     ]
 
     class INPUTS:
-        FACILITY_NAME = os.getenv('FACILITY_NAME', "Not provided"),
-        ANALYST_NAME = os.getenv('ANALYST_NAME', "Not provided"),
+        FACILITY_NAME = os.getenv('FACILITY_NAME', "Not provided")
+        ANALYST_NAME = os.getenv('ANALYST_NAME', "Not provided")
         METADATA_CSV_HEADER = {
             "sample_id": "sample_id",
             "locus": "locus",
@@ -202,7 +202,8 @@ class Config:
             logger.info(f"Query title written to {query_title_path}")
         return query_dir
 
-    def configure_query_logger(self, query_dir):
+    def set_query(self, query_dir):
+        os.environ["QUERY_DIR"] = str(query_dir)
         conf = get_logging_config(query_dir / self.QUERY_LOG_FILENAME)
         dictConfig(conf)
 
@@ -215,8 +216,13 @@ class Config:
             return int(query_dir.name.split("_")[1]) - 1
         return ix_or_dir
 
-    def get_query_dir(self, ix_or_dir):
+    def get_query_dir(self, ix_or_dir=None):
         """Resolve query index/dir to query dir Path."""
+        if not ix_or_dir:
+            d = os.getenv("QUERY_DIR")
+            if d:
+                return Path(d)
+            return None
         if (
             isinstance(ix_or_dir, str) and QUERY_DIR_PREFIX in ix_or_dir
         ) or isinstance(ix_or_dir, Path):
@@ -315,6 +321,15 @@ class Config:
         if locus.lower() == 'na':
             return None
         return locus
+
+    def locus_was_provided_for(self, query) -> bool:
+        """Determine whether a locus was provided."""
+        locus = self.get_locus_for_query(query)
+        if self.is_bold:
+            return True
+        if not locus:
+            return False
+        return True
 
     def get_pmi_for_query(self, query) -> str:
         return self._get_metadata_for_query(query, "preliminary_id")

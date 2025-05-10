@@ -27,6 +27,10 @@ code {
 .font-xxl {
   font-size: 2rem;
 }
+.strikethrough {
+  color: var(--bs-danger);
+  text-decoration: line-through;
+}
 .modal-xxl {
   max-width: 1400px;
 }

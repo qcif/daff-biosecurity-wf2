@@ -247,13 +247,23 @@ def fetch_gb_records(
     If count, returns a count of matching records, otherwise returns a list
     of matching accessions IDs.
     '''
-    if locus.lower() in LOCI:
-        gene_names = LOCI[locus.lower()]
-    else:
-        gene_names = [locus]
-    query = ' OR '.join(
-        [f'"{term}"[Gene name]' for term in gene_names])
-    query += f' AND txid{taxid}[Organism])'
+    query = ''
+    if locus and not config.is_bold:
+        gene_names = None
+        for synonyms in config.allowed_loci:
+            if locus in synonyms:
+                gene_names = synonyms
+                break
+        if gene_names is None:
+            raise ValueError(
+                f"Unrecognized locus encountered: '{locus}' (this should have"
+                " been raised in p0_validation.py)."
+                f" Allowed loci are: {config.allowed_loci}"
+            )
+        query += ' OR '.join(
+            [f'"{term}"[Gene name]' for term in gene_names])
+        query += ' AND '
+    query += f'txid{taxid}[Organism])'
     max_results = 1 if count else 100
     logger.debug(f"Submitting Entrez query: <<{query}>>")
     results = fetch_entrez(

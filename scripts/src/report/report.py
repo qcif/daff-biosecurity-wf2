@@ -94,7 +94,6 @@ def _get_report_context(query_ix, bold):
         'BOLD - ' + config.REPORT.TITLE
         if bold
         else config.REPORT.TITLE
-
     )
     return {
         'url_from_accession': config.url_from_accession,
@@ -106,6 +105,7 @@ def _get_report_context(query_ix, bold):
         'end_time': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         'wall_time': _get_walltime(),
         'metadata': _get_metadata(query_ix),
+        'locus_provided': config.locus_was_provided_for(query_ix),
         'config': config,
         'input_fasta': query_fasta_str,
         'conclusions': _draw_conclusions(query_ix),
@@ -146,6 +146,7 @@ def _get_metadata(query_ix):
     return {
         **config.metadata[sample_id],
         'sample_id': sample_id,
+        'locus_provided': config.locus_was_provided_for(query_ix),
     }
 
 

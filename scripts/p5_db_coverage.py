@@ -28,7 +28,7 @@ MODULE_NAME = "Database Coverage"
 def main():
     args = parse_args()
     config.configure(args.output_dir)
-    config.configure_query_logger(args.query_dir)
+    config.set_query(args.query_dir)
     results, error_detected = assess_coverage(
         args.query_dir,
         is_bold=args.bold,

@@ -13,7 +13,7 @@ def main():
     """Build the workflow report."""
     args = _parse_args()
     config.configure(args.output_dir)
-    config.configure_query_logger(args.query_dir)
+    config.set_query(args.query_dir)
     report.render(args.query_dir, args.bold)
 
 

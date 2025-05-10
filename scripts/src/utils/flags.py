@@ -5,6 +5,11 @@ import logging
 from .config import Config
 
 PATH_SUB_STR = '(~)'
+FLAG_DETAILS_LOCUS_PHRASES = (
+    " given locus for this",
+    " at the given locus",
+    " for this locus",
+)
 
 logger = logging.getLogger(__name__)
 config = Config()
@@ -48,17 +53,32 @@ class Flag:
 
         return data
 
+    def _filter_locus_msg(self, msg):
+        """Filter the message to remove mention of a locus."""
+        query_dir = config.get_query_dir()
+        locus_provided = config.locus_was_provided_for(query_dir)
+        if not locus_provided:
+            for phrase in FLAG_DETAILS_LOCUS_PHRASES:
+                # Remove text that says "for given locus" if no locus was
+                # provided
+                msg = msg.replace(phrase, '')
+        return msg
+
     @property
     def name(self):
         return FLAG_DETAILS[self.flag_id]["name"]
 
     @property
     def explanation(self):
-        return FLAG_DETAILS[self.flag_id]["explanation"][self.value]
+        return self._filter_locus_msg(
+            FLAG_DETAILS[self.flag_id]["explanation"][self.value]
+        )
 
     @property
     def outcome(self):
-        return FLAG_DETAILS[self.flag_id]["outcome"][self.value]
+        return self._filter_locus_msg(
+            FLAG_DETAILS[self.flag_id]["outcome"][self.value]
+        )
 
     @property
     def level(self):
@@ -141,7 +161,19 @@ class Flag:
                         flags[FLAGS.DB_COVERAGE_RELATED_COUNTRY][ttype][
                             target],
                     ], key=lambda x: get_level(x))
-                    if get_level(max_flag):
+                    if level := get_level(max_flag):
+                        if (
+                            level < 2
+                            and not config.locus_was_provided_for(query)
+                        ):
+                            # If no locus provided, level should be 2
+                            # (warning) or higher, so provided a special flag
+                            max_flag = Flag(
+                                FLAGS.DB_COVERAGE_ALL,
+                                value=FLAGS.B,
+                                target=target,
+                                target_type=ttype,
+                            )
                         flags[FLAGS.DB_COVERAGE_ALL][ttype][target] = max_flag
 
         return flags
