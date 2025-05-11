@@ -54,7 +54,9 @@ class Flag:
         return data
 
     def _filter_locus_msg(self, msg):
-        """Filter the message to remove mention of a locus."""
+        """Filter the message to remove mention of a locus.
+        For samples where no locus was provided.
+        """
         query_dir = config.get_query_dir()
         locus_provided = config.locus_was_provided_for(query_dir)
         if not locus_provided:

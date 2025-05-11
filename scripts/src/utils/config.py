@@ -166,9 +166,11 @@ class Config:
     class REPORT:
         TITLE = "Taxonomic identification report"
 
-    def configure(self, output_dir=None, bold=False):
+    def configure(self, output_dir=None, query_dir=None, bold=False):
         if output_dir:
             self.set_output_dir(output_dir)
+        if query_dir:
+            self.set_query_dir(query_dir)
         conf = get_logging_config(self.output_dir / self.LOG_FILENAME)
         dictConfig(conf)
         if bold:
@@ -189,9 +191,16 @@ class Config:
         return Path(os.getenv("OUTPUT_DIR", 'output'))
 
     def set_output_dir(self, output_dir):
+        """Set directory in env to be used throughout the current process."""
         output_dir = Path(output_dir)
         output_dir.mkdir(exist_ok=True, parents=True)
         os.environ["OUTPUT_DIR"] = str(output_dir)
+
+    def set_query_dir(self, query_dir):
+        """Set directory in env to be used throughout the current process."""
+        os.environ["QUERY_DIR"] = str(query_dir)
+        conf = get_logging_config(query_dir / self.QUERY_LOG_FILENAME)
+        dictConfig(conf)
 
     def create_query_dir(self, query_ix, query_title):
         """Create a directory for this query and write query title file."""
@@ -201,11 +210,6 @@ class Config:
             f.write(query_title)
             logger.info(f"Query title written to {query_title_path}")
         return query_dir
-
-    def set_query(self, query_dir):
-        os.environ["QUERY_DIR"] = str(query_dir)
-        conf = get_logging_config(query_dir / self.QUERY_LOG_FILENAME)
-        dictConfig(conf)
 
     def get_query_ix(self, ix_or_dir):
         """Resolve query index/dir to query index."""

@@ -24,8 +24,7 @@ config = Config()
 
 def main():
     args = _parse_args()
-    config.set_output_dir(args.output_dir)
-    config.set_query(args.query_dir)
+    config.configure(args.output_dir, query_dir=args.query_dir)
     species, hits = _read_candidate_hits(args.query_dir)
     species, hits, aggregated_sources = _collect_sources_per_species(
         species, hits)
