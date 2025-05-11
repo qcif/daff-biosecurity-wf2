@@ -10,15 +10,15 @@ assignees: 'neoformit'
 ---
 
 ### Describe the bug
-A clear and concise description of what the bug is.
+A clear and concise description of what the bug is. If appropriate, describe the observed behaviour and expected behaviour. If there is an error message, please paste it here.
 
 ### Error context
-- Please attach a ZIP archive of the NextFlow output directory, and your input
-data so that we can reproduce this issue easily.
+So that we can reproduce this issue easily, please attach, if possible: 
+- a ZIP archive of the output directory
+- your input files (`metadata.csv` and `queries.fasta`)
 
 ### Screenshots
-Only if the bug can be described by something visual, please provide a
-screenshot.
+If the bug can be described by something visual (typically the HTML report), please provide a screenshot.
 
 ### Environment (please complete the following information):
 **OS**
