@@ -19,7 +19,7 @@ PERFORMANCE = 2
 CONCURRENCY_TEST = RESPECT_RATE_LIMIT
 
 DATA_DIR = Path(__file__).parent / 'test-data'
-EXPECTED_RECORD_COUNT = 1686
+EXPECTED_RECORD_COUNT = 62258
 EXPECT_RECORDS_JSON = DATA_DIR / 'genbank_expect_ids.json'
 EXPECT_SINGLE_SOURCE_JSON = DATA_DIR / 'genbank_single_source.json'
 EXPECT_MULTIPLE_SOURCES_JSON = DATA_DIR / 'genbank_multiple_sources.json'

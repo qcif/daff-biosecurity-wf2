@@ -197,7 +197,10 @@ class Config:
         os.environ["OUTPUT_DIR"] = str(output_dir)
 
     def set_query_dir(self, query_dir):
-        """Set directory in env to be used throughout the current process."""
+        """Set directory in env to be used throughout the current process.
+        Note that this is not currently used, but could allow us to stop
+        passing 'query' around everywhere.
+        """
         os.environ["QUERY_DIR"] = str(query_dir)
         conf = get_logging_config(query_dir / self.QUERY_LOG_FILENAME)
         dictConfig(conf)
@@ -252,7 +255,12 @@ class Config:
         """Return a list of allowed loci synonyms.
         Each list contains a series of synonyms for each locus.
         """
-        return json.loads(self.ALLOWED_LOCI_FILE.read_text())
+        return [
+            [
+                synonym.lower() for synonym in locus
+            ]
+            for locus in json.loads(self.ALLOWED_LOCI_FILE.read_text())
+        ]
 
     @property
     def taxonomy_path(self):

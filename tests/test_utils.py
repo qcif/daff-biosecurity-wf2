@@ -12,7 +12,7 @@ class TestUtils(unittest.TestCase):
     TEST_TARGET_TYPE = 'candidate'
 
     def setUp(self):
-        self.query_dir = Path(tempfile.mkdtemp())
+        self.query_dir = Path(tempfile.mkdtemp(prefix='query_001_'))
 
     def tearDown(self):
         shutil.rmtree(self.query_dir)

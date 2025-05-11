@@ -248,6 +248,7 @@ def fetch_gb_records(
     of matching accessions IDs.
     '''
     query = ''
+    locus = locus.lower() if locus else None
     if locus and not config.is_bold:
         gene_names = None
         for synonyms in config.allowed_loci:

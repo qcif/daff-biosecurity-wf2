@@ -209,16 +209,16 @@ def _validate_metadata_locus(value, bold=False):
     if bold and not value:
         return
 
-    if value.lower() not in ['na'] + [
-        synonym.lower()
+    value_lower = value.lower()
+    if value_lower not in ['na'] + [
+        synonym
         for locus in config.allowed_loci
         for synonym in locus
     ]:
         raise MetadataFormatError(
-            f'Locus "{value.lower()}" is not in the list of permitted loci:\n'
+            f'Locus "{value_lower}" is not in the list of permitted loci:\n'
             + '- ' + '\n- '.join([
-                str(synonyms)
-                for synonyms in config.allowed_loci
+                str(synonyms) for synonyms in config.allowed_loci
             ])
         )
 

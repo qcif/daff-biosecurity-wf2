@@ -1,6 +1,7 @@
 """Describe how flags are used to record outcomes."""
 
 import logging
+from typing import Union
 
 from .config import Config
 
@@ -28,11 +29,13 @@ class Flag:
         value: str = None,
         target: str = None,
         target_type: str = None,
+        query: Union[int, str] = None,
     ):
         self.flag_id = flag_id
         self.value = value
         self.target = target
         self.target_type = target_type
+        self.query = query
 
     def __str__(self):
         return f"{self.flag_id}{self.value}"
@@ -57,7 +60,7 @@ class Flag:
         """Filter the message to remove mention of a locus.
         For samples where no locus was provided.
         """
-        query_dir = config.get_query_dir()
+        query_dir = config.get_query_dir(self.query)
         locus_provided = config.locus_was_provided_for(query_dir)
         if not locus_provided:
             for phrase in FLAG_DETAILS_LOCUS_PHRASES:
@@ -121,7 +124,7 @@ class Flag:
             if path.is_file():
                 flag_id, target, target_type = cls._parse_flag_filename(path)
                 value = path.read_text().strip()
-                flag = Flag(flag_id, value=value, target=target)
+                flag = Flag(flag_id, value=value, target=target, query=query)
                 if as_json:
                     flag = flag.to_json()
                 if target:
@@ -150,6 +153,7 @@ class Flag:
             null_flag = Flag(
                 FLAGS.DB_COVERAGE_ALL,
                 value=FLAGS.NA,
+                query=query,
             )
             if as_json:
                 null_flag = null_flag.to_json()
@@ -175,6 +179,7 @@ class Flag:
                                 value=FLAGS.B,
                                 target=target,
                                 target_type=ttype,
+                                query=query,
                             )
                         flags[FLAGS.DB_COVERAGE_ALL][ttype][target] = max_flag
 
