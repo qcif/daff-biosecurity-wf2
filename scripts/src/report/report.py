@@ -33,17 +33,14 @@ def render(query, bold=False):
     template = j2.get_template('index.html')
     context = _get_report_context(query_ix, bold)
 
-    # ! TODO: Remove this eventually
     path = config.output_dir / 'report_context.json'
     with path.open('w') as f:
         print(f"Writing report context to {path}")
         json.dump(context, f, default=serialize, indent=2)
-    # ! ~~~
 
     static_files = _get_static_file_contents()
     rendered_html = template.render(**context, **static_files)
 
-    # TODO: If BOLD, replace 'identity' with 'similarity'
     if bold:
         rendered_html = re.sub(r"\bidentity\b", "similarity", rendered_html)
         rendered_html = re.sub(r"\bIdentity\b", "Similarity", rendered_html)
