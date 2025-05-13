@@ -39,24 +39,6 @@ class IntegrationTest(unittest.TestCase):
             cls.project_root / "tests" / "test-data"
             / "integration")
 
-        # Preload script modules
-        cls.modules = {
-            "p0_validation": importlib.import_module(
-                "scripts.p0_validation"),
-            "p1_parse_blast": importlib.import_module(
-                "scripts.p1_parse_blast"),
-            "p2_extract_taxonomy": importlib.import_module(
-                "scripts.p2_extract_taxonomy"),
-            "p3_assign_taxonomy": importlib.import_module(
-                "scripts.p3_assign_taxonomy"),
-            "p4_source_diversity": importlib.import_module(
-                "scripts.p4_source_diversity"),
-            "p5_db_coverage": importlib.import_module(
-                "scripts.p5_db_coverage"),
-            "p6_report": importlib.import_module(
-                "scripts.p6_report"),
-        }
-
     def setUp(self):
         """Clean up old temp dirs and create a new one."""
         tmp_root = Path(tempfile.gettempdir())
@@ -67,11 +49,17 @@ class IntegrationTest(unittest.TestCase):
 
     def tearDown(self):
         exc_info = sys.exc_info()
-        if exc_info == (None, None, None):
-            print(f"Test passed. Cleaning up: {self.wdir_root}")
-            shutil.rmtree(self.wdir_root, ignore_errors=True)
-        else:
+        if exc_info != (None, None, None):
             print(f"Test failed. Wdir has been retained: {self.wdir_root}")
+            return
+
+        print("Test passed.")
+        if os.getenv("KEEP_OUTPUTS") == "1":
+            print("KEEP_OUTPUTS=1; output dirs have been retained at:"
+                  f" {self.wdir_root}")
+        else:
+            print(f"Cleaning up: {self.wdir_root}")
+            shutil.rmtree(self.wdir_root, ignore_errors=True)
 
     def prepare_working_dir(self, test_case: Path) -> Path:
         """Copy test case files into a fresh working directory"""
@@ -81,7 +69,7 @@ class IntegrationTest(unittest.TestCase):
 
     def patch_and_run(self, module_name, patched_args):
         mock_args = Namespace(**patched_args)
-        module = self.modules[module_name]
+        module = importlib.import_module(f"scripts.{module_name}")
         with patch.object(
             module,
             "_parse_args",
@@ -120,7 +108,7 @@ class IntegrationTest(unittest.TestCase):
                         "bold": False,
                     },
                 )
-                print_green(f"Test case {test_case.name}: P0 PASS")
+                print_green(f"\nTest case {test_case.name}: P0 PASS\n")
 
                 self.patch_and_run(
                     "p1_parse_blast",
@@ -129,7 +117,7 @@ class IntegrationTest(unittest.TestCase):
                         "output_dir": wdir,
                     },
                 )
-                print_green(f"Test case {test_case.name}: P1 PASS")
+                print_green(f"\nTest case {test_case.name}: P1 PASS\n")
 
                 self.patch_and_run(
                     "p2_extract_taxonomy",
@@ -138,7 +126,7 @@ class IntegrationTest(unittest.TestCase):
                         "output_dir": wdir,
                     },
                 )
-                print_green(f"Test case {test_case.name}: P2 PASS")
+                print_green(f"\nTest case {test_case.name}: P2 PASS\n")
 
                 query_dir = next(wdir.glob("query_001*"))
 
@@ -150,7 +138,7 @@ class IntegrationTest(unittest.TestCase):
                         "bold": False,
                     },
                 )
-                print_green(f"Test case {test_case.name}: P3 PASS")
+                print_green(f"\nTest case {test_case.name}: P3 PASS\n")
 
                 candidates_count_file = next(
                     query_dir.glob("candidates_count.txt"))
@@ -165,7 +153,7 @@ class IntegrationTest(unittest.TestCase):
                             "output_dir": wdir,
                         },
                     )
-                print_green(f"Test case {test_case.name}: P4 PASS")
+                print_green(f"\nTest case {test_case.name}: P4 PASS\n")
 
                 self.patch_and_run(
                     "p5_db_coverage",
@@ -175,7 +163,7 @@ class IntegrationTest(unittest.TestCase):
                         "bold": False,
                     },
                 )
-                print_green(f"Test case {test_case.name}: P4 PASS")
+                print_green(f"\nTest case {test_case.name}: P4 PASS\n")
 
                 # Copy newick tree into query dir
                 nwk_file = next(wdir.glob("*.nwk"))
@@ -189,7 +177,7 @@ class IntegrationTest(unittest.TestCase):
                         "bold": False,
                     },
                 )
-                print_green(f"Test case {test_case.name}: P6 PASS")
+                print_green(f"\nTest case {test_case.name}: P6 PASS\n")
 
 
 if __name__ == "__main__":
