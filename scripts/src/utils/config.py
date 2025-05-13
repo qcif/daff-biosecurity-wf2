@@ -225,11 +225,13 @@ class Config:
 
     def get_query_dir(self, ix_or_dir=None):
         """Resolve query index/dir to query dir Path."""
-        if not ix_or_dir:
+        if ix_or_dir is None:
             d = os.getenv("QUERY_DIR")
             if d:
                 return Path(d)
-            return None
+            raise ValueError(
+                "Cannot get a query_dir - no query dir provided and no"
+                " QUERY_DIR env var set.")
         if (
             isinstance(ix_or_dir, str) and QUERY_DIR_PREFIX in ix_or_dir
         ) or isinstance(ix_or_dir, Path):
