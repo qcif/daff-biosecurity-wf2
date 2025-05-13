@@ -20,6 +20,26 @@
             "justMyCode": true
         },
         {
+            "name": "Integration tests",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "unittest",
+            "args": [
+                "discover",
+                "-s", "tests/integration",
+                "-p", "test_integration.py",
+                "-f",  // fail fast
+                "-v",  // show stdout instead of dots
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/scripts",
+                "TAXONKIT_DATA": "${env:HOME}/.taxonkit",
+                // "RUN_TEST_CASE": "A",  // Optional, run a specific test case
+            },
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
             "type": "debugpy",
             "request": "launch",
             "name": "P1 BLAST Parser",

@@ -1,0 +1,196 @@
+#!/usr/bin/env python3
+
+import importlib
+import os
+import shutil
+import sys
+import tempfile
+import unittest
+from argparse import Namespace
+from pathlib import Path
+from unittest.mock import patch
+
+TEMPDIR_PREFIX = "integration_test_"
+
+
+def print_green(text: str):
+    print(f"\033[32m{text}\033[0m")
+
+
+class IntegrationTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        for var in (
+            'USER_EMAIL',
+            'NCBI_API_KEY',
+            'TAXONKIT_DATA',
+        ):
+            if var not in os.environ:
+                raise EnvironmentError(
+                    f"Environment variable {var} is not set. "
+                    "Please set it before running integration tests. You may"
+                    " wish to set this in a venv/bin/activate script or in"
+                    " your shell profile.")
+        cls.project_root = Path(__file__).parents[2]
+        cls.scripts_root = cls.project_root / "scripts"
+        cls.python = cls.project_root / "venv" / "bin" / "python"
+        cls.taxdump_dir = Path.home() / ".taxonkit"
+        cls.test_case_root = (
+            cls.project_root / "tests" / "test-data"
+            / "integration")
+
+        # Preload script modules
+        cls.modules = {
+            "p0_validation": importlib.import_module(
+                "scripts.p0_validation"),
+            "p1_parse_blast": importlib.import_module(
+                "scripts.p1_parse_blast"),
+            "p2_extract_taxonomy": importlib.import_module(
+                "scripts.p2_extract_taxonomy"),
+            "p3_assign_taxonomy": importlib.import_module(
+                "scripts.p3_assign_taxonomy"),
+            "p4_source_diversity": importlib.import_module(
+                "scripts.p4_source_diversity"),
+            "p5_db_coverage": importlib.import_module(
+                "scripts.p5_db_coverage"),
+            "p6_report": importlib.import_module(
+                "scripts.p6_report"),
+        }
+
+    def setUp(self):
+        """Clean up old temp dirs and create a new one."""
+        tmp_root = Path(tempfile.gettempdir())
+        for old_wdir in tmp_root.glob(f"{TEMPDIR_PREFIX}*"):
+            if old_wdir.is_dir():
+                shutil.rmtree(old_wdir, ignore_errors=True)
+        self.wdir_root = Path(tempfile.mkdtemp(prefix=TEMPDIR_PREFIX))
+
+    def tearDown(self):
+        exc_info = sys.exc_info()
+        if exc_info == (None, None, None):
+            print(f"Test passed. Cleaning up: {self.wdir_root}")
+            shutil.rmtree(self.wdir_root, ignore_errors=True)
+        else:
+            print(f"Test failed. Wdir has been retained: {self.wdir_root}")
+
+    def prepare_working_dir(self, test_case: Path) -> Path:
+        """Copy test case files into a fresh working directory"""
+        wdir = self.wdir_root / test_case.name
+        shutil.copytree(test_case, wdir)
+        return wdir
+
+    def patch_and_run(self, module_name, patched_args):
+        mock_args = Namespace(**patched_args)
+        module = self.modules[module_name]
+        with patch.object(
+            module,
+            "_parse_args",
+            return_value=mock_args,
+        ):
+            module.main()
+
+    def test_integration_cases(self):
+        for test_case in sorted(self.test_case_root.iterdir()):
+            if not test_case.is_dir():
+                continue
+            limit_test_case = os.getenv("RUN_TEST_CASE")
+            if (
+                limit_test_case
+                and limit_test_case != test_case.name
+            ):
+                print(
+                    f"Skipping test case '{test_case.name}' - env var "
+                    f" RUN_TEST_CASE={limit_test_case} has been set.")
+                continue
+
+            with self.subTest(test_case=test_case.name):
+                query_dir = None
+                wdir = self.prepare_working_dir(test_case)
+                os.environ['INPUT_FASTA_FILEPATH'] = str(
+                    wdir / "query.fasta")
+                os.environ['INPUT_METADATA_CSV_FILEPATH'] = str(
+                    wdir / "metadata.csv")
+
+                self.patch_and_run(
+                    "p0_validation",
+                    {
+                        "metadata_csv": wdir / "metadata.csv",
+                        "query_fasta": wdir / "query.fasta",
+                        "taxdb_dir": self.taxdump_dir,
+                        "bold": False,
+                    },
+                )
+                print_green(f"Test case {test_case.name}: P0 PASS")
+
+                self.patch_and_run(
+                    "p1_parse_blast",
+                    {
+                        "blast_xml_path": wdir / "blast_result.xml",
+                        "output_dir": wdir,
+                    },
+                )
+                print_green(f"Test case {test_case.name}: P1 PASS")
+
+                self.patch_and_run(
+                    "p2_extract_taxonomy",
+                    {
+                        "taxids_csv": wdir / "taxids.csv",
+                        "output_dir": wdir,
+                    },
+                )
+                print_green(f"Test case {test_case.name}: P2 PASS")
+
+                query_dir = next(wdir.glob("query_001*"))
+
+                self.patch_and_run(
+                    "p3_assign_taxonomy",
+                    {
+                        "query_dir": query_dir,
+                        "output_dir": wdir,
+                        "bold": False,
+                    },
+                )
+                print_green(f"Test case {test_case.name}: P3 PASS")
+
+                candidates_count_file = next(
+                    query_dir.glob("candidates_count.txt"))
+                with open(candidates_count_file) as f:
+                    candidates_count = int(f.read().strip())
+
+                if candidates_count < 4:
+                    self.patch_and_run(
+                        "p4_source_diversity",
+                        {
+                            "query_dir": query_dir,
+                            "output_dir": wdir,
+                        },
+                    )
+                print_green(f"Test case {test_case.name}: P4 PASS")
+
+                self.patch_and_run(
+                    "p5_db_coverage",
+                    {
+                        "query_dir": query_dir,
+                        "output_dir": wdir,
+                        "bold": False,
+                    },
+                )
+                print_green(f"Test case {test_case.name}: P4 PASS")
+
+                # Copy newick tree into query dir
+                nwk_file = next(wdir.glob("*.nwk"))
+                shutil.copy2(nwk_file, query_dir)
+
+                self.patch_and_run(
+                    "p6_report",
+                    {
+                        "query_dir": query_dir,
+                        "output_dir": wdir,
+                        "bold": False,
+                    },
+                )
+                print_green(f"Test case {test_case.name}: P6 PASS")
+
+
+if __name__ == "__main__":
+    unittest.main()

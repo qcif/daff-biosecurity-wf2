@@ -15,9 +15,9 @@ import json
 import logging
 import sys
 
-from src.utils import existing_path, errors
-from src.utils.config import Config
 from src.coverage import assess_coverage
+from src.utils import errors, existing_path
+from src.utils.config import Config
 
 logger = logging.getLogger(__name__)
 config = Config()
@@ -26,7 +26,7 @@ MODULE_NAME = "Database Coverage"
 
 
 def main():
-    args = parse_args()
+    args = _parse_args()
     config.configure(args.output_dir, query_dir=args.query_dir)
     results, error_detected = assess_coverage(
         args.query_dir,
@@ -51,7 +51,7 @@ def main():
         )
 
 
-def parse_args():
+def _parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "query_dir", type=existing_path, help="Path to query output directory")

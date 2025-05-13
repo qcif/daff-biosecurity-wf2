@@ -48,7 +48,7 @@ def main():
     args = _parse_args()
     config.configure(args.output_dir, query_dir=args.query_dir)
     result = config.read_hits_json(args.query_dir)
-    if args.is_bold:
+    if args.bold:
         candidate_hits, candidate_hits_strict = _filter_candidates_bold(
             result['hits'])
     else:
@@ -58,7 +58,7 @@ def main():
         args.query_dir,
         candidate_hits,
         candidate_hits_strict,
-        bold=args.is_bold,
+        bold=args.bold,
     )
     _detect_taxa_of_interest(candidate_species, args.query_dir)
 
@@ -74,7 +74,6 @@ def _parse_args():
         help=f"Path to output directory. Defaults to {config.output_dir}.")
     parser.add_argument(
         "--bold",
-        dest="is_bold",
         action="store_true",
         help="Outputs are from BOLD query.")
     return parser.parse_args()
