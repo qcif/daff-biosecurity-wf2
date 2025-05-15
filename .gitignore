@@ -1,7 +1,8 @@
 # Project files
 data/
 output/
-tests/integration/working/
+tests/test-data/integration/*/query_*
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
