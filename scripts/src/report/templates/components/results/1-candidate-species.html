@@ -140,6 +140,17 @@
         <td>{{ candidate.e_value }}</td>
         {% endif %}
         <td class="text-center">
+          {% if candidate.species | length > config.CRITERIA.MAX_CANDIDATES_FOR_ANALYSIS %}
+          <span
+            class="badge bg-secondary px-2"
+            data-bs-toggle="tooltip"
+            data-bs-placement="bottom"
+            title="Too many candidates to perform database coverage analysis"
+          >
+            NA
+          </span>
+          {% else %}
+
           {% set target_id = 'candidate-' + taxon | css_hash %}
           {% set flag = flags['5']['candidate'].get(taxon, flags['5']['candidate'].null) %}
 
@@ -170,6 +181,7 @@
           {{ render_target_modal(modal_context) }}
 
         </td>
+        {% endif %}
       </tr>
       {% endfor %}
     </table>
