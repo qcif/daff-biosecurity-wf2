@@ -5,6 +5,7 @@ API Docs: https://v4.boldsystems.org/index.php/resources/api
 
 import csv
 import logging
+import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from xml.etree import ElementTree
@@ -105,13 +106,14 @@ class BoldSearch:
         hits = {}
         throttle = Throttle(ENDPOINTS.BOLD)
         sequences = self._read_sequence_from_fasta(fasta_file)
-        oriented_seqs = orientate(sequences)
+        if not os.getenv('SKIP_ORIENTATION'):
+            sequences = orientate(sequences)
         logger.debug(
-            f"Submitting {len(oriented_seqs)} sequences to BOLD ID Engine..."
+            f"Submitting {len(sequences)} sequences to BOLD ID Engine..."
         )
-        for i, sequence in enumerate(oriented_seqs):
+        for i, sequence in enumerate(sequences):
             logger.debug(
-                f"Submitting sequence {i + 1}/{len(oriented_seqs)}"
+                f"Submitting sequence {i + 1}/{len(sequences)}"
                 f": {sequence.id}"
             )
             params = {
