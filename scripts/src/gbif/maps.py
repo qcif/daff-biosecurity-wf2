@@ -30,7 +30,7 @@ def draw_occurrence_map(taxon_key: str, path: Path):
             if 'decimalLongitude' in record]
 
     if not lats:
-        logger.info(f"[{MODULE_NAME}] No occurrence data found for taxon"
+        logger.info(f"No occurrence data found for taxon"
                     f" '{taxon_key}' - no map can be drawn.")
         return
 

@@ -41,7 +41,7 @@ def assess_coverage(query_dir, is_bold) -> dict[str, dict[str, dict]]:
     targets = candidate_list + toi_list + [pmi]
     if not targets:
         logger.info(
-            f"[{MODULE_NAME}]: Skipping analysis - no target taxon"
+            f"Skipping analysis - no target taxon"
             " identified for database coverage assessment."
         )
         return None
@@ -54,17 +54,17 @@ def assess_coverage(query_dir, is_bold) -> dict[str, dict[str, dict]]:
     }
 
     logger.info(
-        f"[{MODULE_NAME}]: Assessing database coverage for {len(targets)}"
+        f"Assessing database coverage for {len(targets)}"
         f" taxon at locus '{locus}' in country '{country}'."
     )
     logger.debug(
-        f"[{MODULE_NAME}]: collected targets:\n"
+        f"collected targets:\n"
         f"  - Candidates: {candidate_list}\n"
         f"  - Taxa of interest: {toi_list}\n"
         f"  - PMI: {pmi}"
     )
     logger.debug(
-        f"[{MODULE_NAME}]: Taxids for targets (extracted by taxonkit):\n"
+        f"Taxids for targets (extracted by taxonkit):\n"
         + pformat(target_taxids, indent=2)
     )
 
@@ -152,13 +152,13 @@ def _draw_occurrence_maps(
     for target, gbif_target in taxa.items():
         if not gbif_target.key:
             logger.warning(
-                f"[{MODULE_NAME}]: No GBIF taxon key found for target"
+                f"No GBIF taxon key found for target"
                 f" '{target}'. Occurrence map will not be generated for this"
                 " target.")
             continue
         path = query_dir / config.get_map_filename_for_target(target)
         logger.info(
-            f"[{MODULE_NAME}]: Writing occurrence map for"
+            f"Writing occurrence map for"
             f" '{target}' (taxon key: {gbif_target.key}) to file"
             f" '{path}'..."
         )
@@ -183,7 +183,7 @@ def _set_flags(db_coverage, query_dir, higher_taxon_targets):
             flag_value = FLAGS.NA
         elif not isinstance(count, int):
             raise ValueError(
-                f"[{MODULE_NAME}]: Unexpected count value for target"
+                f"Unexpected count value for target"
                 f" ({target_type}) '{target}': {count}.")
         elif count > config.CRITERIA.DB_COV_TARGET_MIN_A:
             flag_value = FLAGS.A
@@ -215,7 +215,7 @@ def _set_flags(db_coverage, query_dir, higher_taxon_targets):
             flag_value = FLAGS.NA
         elif isinstance(species_counts, str):
             raise ValueError(
-                f"[{MODULE_NAME}]: Unexpected str count value for related"
+                f"Unexpected str count value for related"
                 f" species ({target_type}) '{target}': {species_counts}.")
         else:
             total_species = len(species_counts)

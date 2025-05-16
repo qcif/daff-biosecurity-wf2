@@ -26,7 +26,7 @@ def get_targets(query_dir):
     candidates = _read_candidate_species(query_dir)
     if len(candidates) > config.DB_COVERAGE_MAX_CANDIDATES:
         logger.info(
-            f"[{MODULE_NAME}]: Skipping database coverage assessment for"
+            f"Skipping database coverage assessment for"
             f" candidates: more than {config.DB_COVERAGE_MAX_CANDIDATES}"
             f" candidates species have been identified ({len(candidates)})."
         )
@@ -41,11 +41,10 @@ def get_targets(query_dir):
             f" will be evaluated. The following taxa of interest will be"
             f" excluded: {', '.join(excluded_tois)}. This limit can be raised"
             f" by setting the 'DB_COVERAGE_TOI_LIMIT' environment variable.")
-        logger.warning(f"[{MODULE_NAME}]: {msg}")
+        logger.warning(f"{msg}")
         errors.write(
             errors.LOCATIONS.DATABASE_COVERAGE,
             msg,
-            None,
             query_dir=query_dir,
         )
     return candidates, toi_list, pmi
@@ -53,23 +52,24 @@ def get_targets(query_dir):
 
 def get_taxids(targets, query_dir):
     target_taxids = extract.taxids(targets)
-    if len(target_taxids) != len(targets):
+    if not all(target_taxids.values()):
         msg = (
-            "Taxonkit failed to produce taxids for some target taxa."
-            " Database coverage for these taxa is assumed to be zero, since"
-            " this likely means they are not represented in the reference"
+            "Taxonkit failed to produce taxids for this taxon."
+            " Database coverage for this taxon is assumed to be zero, since"
+            " this likely means it is not represented in the reference"
             " database.")
-        logger.warning(
-            f"[{MODULE_NAME}]: {msg}")
-        errors.write(
-            errors.LOCATIONS.DATABASE_COVERAGE_NO_TAXID,
-            msg,
-            None,
-            query_dir=query_dir,
-            context={
-                "targets": [k for k, v in target_taxids.items() if not v],
-            },
-        )
+        for target in [
+            k for k, v in target_taxids.items()
+            if v is None
+        ]:
+            logger.warning(
+                f"{msg} ({target})")
+            errors.write(
+                errors.LOCATIONS.DATABASE_COVERAGE_TAXONKIT_ERROR,
+                msg,
+                query_dir=query_dir,
+                context={"target": target},
+            )
     return target_taxids
 
 
@@ -83,11 +83,11 @@ def fetch_target_taxa(targets, query_dir):
             msg = (f"No GBIF record found for target taxon '{target}'."
                    " This target could not be evaluated.")
             logger.warning(
-                f"[{MODULE_NAME}]: {msg}")
+                f"{msg}")
             errors.write(
                 errors.LOCATIONS.DATABASE_COVERAGE_NO_GBIF_RECORD,
                 msg,
-                exc,
+                exc=exc,
                 query_dir=query_dir,
                 context={"target": target},
             )
@@ -99,11 +99,11 @@ def fetch_target_taxa(targets, query_dir):
             target_gbif_taxa[target] = gbif_target
 
     logger.debug(
-        f"[{MODULE_NAME}]: Targets identified at rank genus or lower:\n"
+        f"Targets identified at rank genus or lower:\n"
         + pformat(list(target_gbif_taxa.keys()), indent=2)
     )
     logger.debug(
-        f"[{MODULE_NAME}]: Targets identified at rank family or higher:\n"
+        f"Targets identified at rank family or higher:\n"
         + pformat(list(higher_taxon_targets.keys()), indent=2)
     )
 

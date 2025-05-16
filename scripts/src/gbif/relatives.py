@@ -100,7 +100,7 @@ class RelatedTaxaGBIF:
         )
         for record in res:
             if self._is_accepted(record):
-                logger.info(f"[{MODULE_NAME}] Record found for taxon"
+                logger.info(f"Record found for taxon"
                             f" '{taxon}' - rank:{record['rank']}"
                             f" genusKey:{record.get('genusKey')}")
                 return record

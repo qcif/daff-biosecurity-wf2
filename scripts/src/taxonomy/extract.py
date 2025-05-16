@@ -3,7 +3,8 @@ import os
 import subprocess
 import tempfile
 
-from ..utils.config import Config
+from src.utils import errors
+from src.utils.config import Config
 
 logger = logging.getLogger(__name__)
 config = Config()
@@ -45,7 +46,7 @@ def taxonomies(taxids: list[str]) -> dict[str, dict[str, str]]:
         )
     except subprocess.CalledProcessError as exc:
         logger.error(
-            "[extract.taxonomies] taxonkit lineage failed with error:\n"
+            "Taxonkit lineage failed with error:\n"
             + exc.stderr
         )
         raise exc
@@ -59,12 +60,12 @@ def taxonomies(taxids: list[str]) -> dict[str, dict[str, str]]:
             )
 
     logger.debug(
-        "[extract.taxonomies] taxonkit name2taxid stdout:\n"
+        "Taxonkit name2taxid stdout:\n"
         + result.stdout
     )
     if result.stderr.strip():
         logger.warning(
-            "[extract.taxonomies] taxonkit name2taxid stderr:\n"
+            "Taxonkit name2taxid stderr:\n"
             + result.stderr
         )
 
@@ -83,7 +84,7 @@ def taxonomies(taxids: list[str]) -> dict[str, dict[str, str]]:
             taxonomy_data[taxid] = taxonomy
         else:
             logger.warning(
-                "[extract.taxonomies] Warning: Unexpected format in taxonkit"
+                "Unexpected format in taxonkit"
                 " stdout. This may result in missing taxonomy information")
     return taxonomy_data
 
@@ -95,7 +96,7 @@ def taxids(species_list: list[str]) -> dict[str, str]:
     even have a taxid if they are unsequenced/rare/new species.
     """
     logger.debug(
-        "[extract.taxids] Extracting taxids for species using taxonkit"
+        "Extracting taxids for species using taxonkit"
         f" name2taxid with {len(species_list)} species:\n"
         + "\n".join(species_list[:3] + ['...'])
     )
@@ -120,7 +121,7 @@ def taxids(species_list: list[str]) -> dict[str, str]:
         )
     except subprocess.CalledProcessError as exc:
         logger.error(
-            "[extract.taxids] taxonkit name2taxid failed with error:\n"
+            "taxonkit name2taxid failed with error:\n"
             + exc.stderr
         )
         raise exc
@@ -134,37 +135,53 @@ def taxids(species_list: list[str]) -> dict[str, str]:
             )
 
     logger.debug(
-        "[extract.taxids] taxonkit name2taxid stdout:\n"
+        "taxonkit name2taxid stdout:\n"
         + result.stdout
     )
     if result.stderr.strip():
         logger.warning(
-            "[extract.taxids] taxonkit name2taxid stderr:\n"
+            "taxonkit name2taxid stderr:\n"
             + result.stderr
         )
 
     taxid_data = {}
-    for line in result.stdout.strip().split('\n'):
-        if not line.strip():
-            continue
+    duplicate_taxids = {}
+    lines = [
+        x for x in result.stdout.strip().split('\n')
+        if x.strip()
+    ]
+
+    for line in lines:
         fields = line.split('\t')
         if len(fields) == 2:
             species, taxid = fields
-        elif (field := fields[0].strip()) and len(fields) == 1:
-            species = field
+        elif fields[0].strip() and len(fields) == 1:
+            species = fields[0].strip()
             taxid = None
         else:
             logger.warning(
-                "[extract.taxids] Warning: Unexpected format in taxonkit"
+                "Unexpected format in taxonkit"
                 " stdout. This may result in missing taxid information:\n"
                 + line)
-        if species in taxid_data:
-            logger.warning(
-                "[extract.taxids] Warning: Duplicate species found in"
-                " taxonkit name2taxid output. The first taxid returned will"
-                " be used. This may result in incorrect taxid information:\n"
-                + line
-            )
+        if taxid_data.get(species):
+            duplicate_taxids[species] = duplicate_taxids.get(
+                species, []) + [taxid]
         else:
             taxid_data[species] = taxid or None
+
+    for species, taxids in duplicate_taxids.items():
+        msg = (
+            f'Duplicate taxid(s) {taxids} found for taxon "{species}" in'
+            " taxonkit name2taxid output. The first taxid returned"
+            f" ({taxid_data[species]})"
+            " has been used. This may result in incorrect taxid information."
+        )
+        logger.warning(msg)
+        errors.write(
+            errors.LOCATIONS.DATABASE_COVERAGE_TAXONKIT_ERROR,
+            msg,
+            query_dir=config.get_query_dir(),
+            context={'target': species},
+        )
+
     return taxid_data

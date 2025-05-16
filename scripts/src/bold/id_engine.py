@@ -132,7 +132,7 @@ class BoldSearch:
                 errors.write(
                     errors.LOCATIONS.BOLD_ID_ENGINE,
                     msg,
-                    response.text,
+                    exc=response.text,
                     context={
                         "query_ix": i,
                     },
@@ -338,12 +338,12 @@ class BoldSearch:
         if response.status_code <= MIN_HTTP_CODE_ERROR:
             lines = response.text.splitlines()
             if not lines:  # Check if 'lines' is empty
+                # TODO: this should probably be a fatal error
                 msg = "Empty response received from BOLD API"
                 logger.error(msg)
                 errors.write(
                     errors.LOCATIONS.BOLD_TAXA,
                     msg,
-                    None,
                     context={"taxa": taxa},
                 )
                 return records
@@ -356,14 +356,16 @@ class BoldSearch:
                 f"Records fetched successfully: {len(records)} records."
             )
         else:
+            # TODO: this should probably be a fatal error
             msg = (
-                f"Error HTTP {response.status_code}: {response.text}"
+                f"Error HTTP {response.status_code} from the BOLD API when"
+                f" running ID Engine: {response.text}"
             )
             logger.error(msg)
             errors.write(
                 errors.LOCATIONS.BOLD_TAXA,
                 msg,
-                response.text,
+                exc=response.text,
                 context={
                     "taxa": taxa,
                 },

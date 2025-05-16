@@ -22,7 +22,7 @@ def get_target_coverage(taxid, gbif_target, locus, is_bold):
     # TODO: potential for caching gb count result here
     db_name = 'BOLD' if is_bold else 'Entrez'
     logger.info(
-        f"[{MODULE_NAME}]: Fetching {db_name} records for target taxid:"
+        f"Fetching {db_name} records for target taxid:"
         f"{taxid}, locus: '{locus}'..."
     )
     if is_bold:
@@ -45,7 +45,7 @@ def get_related_coverage(gbif_target, locus, query_dir, is_bold):
     if not species_names:
         return {}
     logger.info(
-        f"[{MODULE_NAME}]: Fetching {db_name} records for target"
+        f"Fetching {db_name} records for target"
         f" '{gbif_target.taxon}' (locus: '{locus}') - {len(species_names)}"
         f" related species..."
     )
@@ -65,9 +65,10 @@ def get_related_coverage(gbif_target, locus, query_dir, is_bold):
             errors.write(
                 errors.LOCATIONS.DB_COVERAGE_RELATED,
                 msg,
-                exc,
+                exc=exc,
                 query_dir=query_dir,
-                target=species)
+                context={'target': species},
+            )
     return results
 
 
@@ -89,7 +90,7 @@ def get_related_country_coverage(
         return {}
     # TODO: potential for caching GBIF related/country taxa here
     logger.info(
-        f"[{MODULE_NAME}]: Fetching {db_name} records for target"
+        f"Fetching {db_name} records for target"
         f" '{gbif_target.taxon}' (locus: '{locus}'; country: '{country}')"
         f" - {len(species_names)} related species"
     )
@@ -109,7 +110,7 @@ def get_related_country_coverage(
             errors.write(
                 errors.LOCATIONS.DB_COVERAGE_RELATED_COUNTRY,
                 msg,
-                exc,
+                exc=exc,
                 query_dir=query_dir,
                 context={'target': species},
             )
@@ -150,7 +151,7 @@ def _fetch_gb_records_for_species(species_names, locus):
             results[taxid] = future.result()
         except Exception as exc:
             logger.error(
-                f"[{MODULE_NAME}]: Error processing fetch_gb_records for"
+                f"Error processing fetch_gb_records for"
                 f" taxid {taxid}:\n{exc}")
             errors.append((taxid_to_species[taxid], exc))
 
@@ -183,7 +184,7 @@ def _fetch_bold_records_for_species(taxa, rank):
                 results[taxon] = future.result()
             except Exception as exc:
                 logger.error(
-                    f"[{MODULE_NAME}]: Error processing"
+                    f"Error processing"
                     f" fetch_bold_records_count for taxon '{taxon}':\n{exc}")
                 results[taxon] = None
                 errors.append((taxon, exc))

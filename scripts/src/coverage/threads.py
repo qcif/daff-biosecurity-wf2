@@ -38,7 +38,7 @@ def parallel_process_tasks(
             get_related_country_coverage.__name__: {},
         }
         logger.debug(
-            f"[{MODULE_NAME}]: Threading {len(tasks)} tasks..."
+            f"Threading {len(tasks)} tasks..."
         )
         future_to_task = {
             executor.submit(*task): task
@@ -66,11 +66,11 @@ def parallel_process_tasks(
                     f" '{species_name}' ({target_source}). This target could"
                     f" not be evaluated."
                     f" Exception: {type(exc).__name__}: {exc}")
-                logger.error(f"[{MODULE_NAME}]: {msg}")
+                logger.error(f"{msg}")
                 errors.write(
                     errors.LOCATIONS.DATABASE_COVERAGE,
                     msg,
-                    exc,
+                    exc=exc,
                     query_dir=query_dir,
                     context={'target': species_name})
                 if isinstance(exc, urllib.error.URLError):

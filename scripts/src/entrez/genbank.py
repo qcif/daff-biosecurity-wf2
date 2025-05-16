@@ -203,12 +203,13 @@ def fetch_sources(accessions: list, **kwargs) -> dict[str, GbRecordSource]:
 
     missing_accessions = set(accessions) - set(accession_sources.keys())
     if missing_accessions:
-        logger.warning("[Fetch sources] no data was returned for the"
+        logger.warning("No data was returned for the"
                        " following accessions. They cannot be included in"
                        " source diversity analysis:"
                        f" {missing_accessions}")
         for accession in missing_accessions:
             accession_sources[accession] = GbRecordSource(accession)
+            # TODO: error.write here?
 
     return accession_sources
 

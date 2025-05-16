@@ -16,7 +16,7 @@ import logging
 import sys
 
 from src.coverage import assess_coverage
-from src.utils import errors, existing_path
+from src.utils import existing_path
 from src.utils.config import Config
 
 logger = logging.getLogger(__name__)
@@ -35,19 +35,12 @@ def main():
     write_db_coverage(args.query_dir, results)
     config.cleanup()
     if error_detected:
-        error_file_path = args.query_dir / 'error.p5.log'
         sys.stderr.write(
             f'[Query {args.query_dir.name}] An error occurred during database'
             ' coverage assessment that'
             ' prevented one or more target species from being assessed.'
-            ' For further details, please consult the workflow report or error'
-            f' file: {error_file_path}\n'
-        )
-        errors.write(
-            error_file_path,
-            query_dir=args.query_dir,
-            location_min=errors.LOCATIONS.DATABASE_COVERAGE,
-            location_max=errors.LOCATIONS.DB_COVERAGE_RELATED_COUNTRY,
+            ' For further details, please consult the error files in'
+            f' {args.query_dir}/errors/*.json, or view the workflow report.\n'
         )
 
 
@@ -72,7 +65,7 @@ def write_db_coverage(query_dir, results):
     with path.open("w") as f:
         json.dump(results, f, indent=2)
     logger.info(
-        f"[{MODULE_NAME}]: Database coverage data written to {path}")
+        f"Database coverage data written to {path}")
     return path
 
 
