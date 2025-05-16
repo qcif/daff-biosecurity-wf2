@@ -43,7 +43,7 @@ def main():
             ' For further details, please consult the workflow report or error'
             f' file: {error_file_path}\n'
         )
-        errors.report(
+        errors.write(
             error_file_path,
             query_dir=args.query_dir,
             location_min=errors.LOCATIONS.DATABASE_COVERAGE,
