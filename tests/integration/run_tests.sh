@@ -9,8 +9,9 @@ fi
 
 export PYTHONPATH="$PWD/scripts"
 export TAXONKIT_DATA="$HOME/.taxonkit"
-export KEEP_OUTPUTS="1"  # Always retain outputs for debugging
-export RUN_TEST_CASE="A"  # Optional, run a specific test case
+export KEEP_OUTPUTS=1   # Always retain outputs for debugging
+export RUN_TEST_CASE=A  # Optional, run a specific test case
+export LOGGING_DEBUG=1
 
 python -m unittest discover -f -v \
     -s tests/integration \
