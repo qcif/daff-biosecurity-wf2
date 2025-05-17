@@ -303,23 +303,33 @@ class Config:
     @property
     def metadata(self) -> dict[str, dict]:
         """Read metadata from CSV file."""
+        def _get_value_for_key(key, row, colname):
+            value = row[colname].strip()
+            if 'interest' in key.lower():
+                return [
+                    x.strip()
+                    for x in value.split('|')
+                    if x.strip()
+                ]
+            if key.lower() == 'locus':
+                if self.is_bold:
+                    return 'COI'
+                if value.lower() == 'na':
+                    return None
+
+            return value
+
         if getattr(self, '_metadata', None):
             return self._metadata
         self._metadata = {}
         with self.INPUTS.METADATA_PATH.open() as f:
             header = self.INPUTS.METADATA_CSV_HEADER
             for row in csv.DictReader(f):
-                sample_id = row.pop(header["sample_id"]).split('.')[0]
+                sample_id = row.pop(
+                    header["sample_id"]
+                ).split('.')[0].split(' ')[0]
                 self._metadata[sample_id] = {
-                    key: (
-                        [
-                            x.strip()
-                            for x in row[colname].strip().split('|')
-                            if x.strip()
-                        ]
-                        if 'interest' in key.lower()
-                        else row[colname].strip()
-                    )
+                    key: _get_value_for_key(key, row, colname)
                     for key, colname in header.items()
                     if key != "sample_id"
                 }
