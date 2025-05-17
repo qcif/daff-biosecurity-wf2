@@ -41,7 +41,7 @@ def assess_coverage(query_dir, is_bold) -> dict[str, dict[str, dict]]:
     targets = candidate_list + toi_list + [pmi]
     if not targets:
         logger.info(
-            f"Skipping analysis - no target taxon"
+            "Skipping analysis - no target taxon"
             " identified for database coverage assessment."
         )
         return None
@@ -64,7 +64,7 @@ def assess_coverage(query_dir, is_bold) -> dict[str, dict[str, dict]]:
         f"  - PMI: {pmi}"
     )
     logger.debug(
-        f"Taxids for targets (extracted by taxonkit):\n"
+        "Taxids for targets (extracted by taxonkit):\n"
         + pformat(target_taxids, indent=2)
     )
 
@@ -103,7 +103,7 @@ def assess_coverage(query_dir, is_bold) -> dict[str, dict[str, dict]]:
     ]
 
     tasks += [
-        (get_target_coverage, taxid, locus)
+        (get_target_coverage, taxid, target, locus, is_bold)
         for target, taxid in target_taxids.items()
         if target in higher_taxon_targets
     ]
