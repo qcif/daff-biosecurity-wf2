@@ -111,7 +111,9 @@ class BoldSearch:
         logger.debug(
             f"Submitting {len(sequences)} sequences to BOLD ID Engine..."
         )
-        for i, sequence in enumerate(sequences):
+
+        def submit_sequence(sequence, i):
+        # for i, sequence in enumerate(sequences):
             logger.debug(
                 f"Submitting sequence {i + 1}/{len(sequences)}"
                 f": {sequence.id}"
@@ -137,8 +139,9 @@ class BoldSearch:
                         "query_ix": i,
                     },
                 )
-                hits[sequence.id] = []
-                continue
+                # hits[sequence.id] = []
+                # continue
+                return sequence.id, []
 
             root = ElementTree.fromstring(response.text)
             sequence_hits = []
@@ -170,38 +173,55 @@ class BoldSearch:
                         float(longitude_str) if longitude_str else None),
                 }
                 sequence_hits.append(result)
+            return sequence.id, sequence_hits
 
             # If multiple seq IDs, only keep the one with hits
             # (the correct orientation)
-            if (
-                sequence.id not in hits
-                or sequence_hits
-            ):
-                hits[sequence.id] = {
-                    'query_id': sequence.id,
-                    'query_title': sequence.description,
-                    'query_length': len(sequence.seq),
-                    'query_frame': sequence.annotations.get("frame"),
-                    'query_strand': (
-                        '+'
-                        if sequence.annotations.get("forward", True)
-                        else '-'
-                    ),
-                    'query_sequence': str(sequence.seq),
-                    'query_orientation': (
-                        'HMMSearch'
-                        if sequence.annotations.get("oriented")
-                        else 'BOLD ID Engine'
-                    ),
-                    'hits': sequence_hits,
-                }
+        # Submit all sequences concurrently
+        with ThreadPoolExecutor(max_workers=50) as executor:
+            future_to_seq = {
+                executor.submit(submit_sequence, sequence, i): sequence
+                for i, sequence in enumerate(sequences)
+            }
 
-        ordered_hits = {
-            seq.id: hits[seq.id]
-            for seq in sequences
-        }
+            # Collect results as they complete
+            for future in as_completed(future_to_seq):
+                sequence_id, sequence_hits = future.result()
+                if (
+                    sequence_id not in hits
+                    or sequence_hits
+                ):
+                    hits[sequence_id] = {
+                        'query_id': sequence_id,
+                        'query_title': future_to_seq[future].description,
+                        'query_length': len(future_to_seq[future].seq),
+                        'query_frame': future_to_seq[future].annotations.get(
+                            "frame"
+                        ),
+                        'query_strand': (
+                            '+'
+                            if future_to_seq[future].annotations.get(
+                                "forward", True
+                            )
+                            else '-'
+                        ),
+                        'query_sequence': str(future_to_seq[future].seq),
+                        'query_orientation': (
+                            'HMMSearch'
+                            if future_to_seq[future].annotations.get(
+                                "oriented"
+                            )
+                            else 'BOLD ID Engine'
+                        ),
+                        'hits': sequence_hits,
+                    }
 
-        return ordered_hits
+            ordered_hits = {
+                seq.id: hits[seq.id]
+                for seq in sequences
+            }
+
+            return ordered_hits
 
     def _fetch_hit_metadata(self, hits) -> dict[str, list]:
         """Fetch metadata by calling BOLD public API with accessions."""
