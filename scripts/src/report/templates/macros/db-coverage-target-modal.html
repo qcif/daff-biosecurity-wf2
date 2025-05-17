@@ -64,6 +64,7 @@
                   Coverage of <em>{{ context.target_taxon }}</em>
                 </td>
               </tr>
+
               <tr
                 onclick="document.getElementById('dbCovRelated-{{ context.target_id }}').scrollIntoView({ behavior: 'smooth' });"
                 style="cursor: pointer;"
@@ -75,6 +76,7 @@
                   Coverage of species in genus <em>{{ context.target_taxon.split(' ')[0] }}</em>
                 </td>
               </tr>
+
               <tr
                 onclick="document.getElementById('dbCovCountry-{{ context.target_id }}').scrollIntoView({ behavior: 'smooth' });"
                 style="cursor: pointer;"
@@ -169,8 +171,6 @@
             </div>
           </div>
 
-          {% if flag.value not in [none, 'NA'] %}
-
           <hr>
 
           <div class="my-5" id="dbCovRelated-{{ context.target_id }}">
@@ -183,6 +183,7 @@
               <strong>Reasoning:</strong> {{ flag_5_2.explanation }}
             </p>
 
+            {% if context.data.related is not none %}
             <div class="my-5">
               <p>
                 <span class="small-number alert-{{ flag_5_2.bs_class }}">
@@ -287,6 +288,8 @@
                 </div>
               </div>
             </div>
+            {% endif %}
+
           </div>
 
           <hr>
@@ -306,6 +309,7 @@
               <strong>Reasoning:</strong> {{ flag_5_3.explanation }}
             </p>
 
+            {% if context.data.country is not none %}
             <div class="my-5">
               <p>
                 <span class="small-number alert-{{ flag_5_3.bs_class }}">
@@ -413,6 +417,7 @@
                 </div>
               </div>
             </div>
+            {% endif %}
 
             {% else %}
             <p class="alert alert-info">
@@ -421,7 +426,6 @@
             {% endif %}
 
           </div>
-          {% endif %}
 
           {% else %}
 
