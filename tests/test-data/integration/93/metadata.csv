@@ -1,0 +1,17 @@
+sample_id,locus,preliminary_id,taxa_of_interest,host,country
+barcode_79_AR21a_1_1_1,28s,Pulvinaria,Pulvinaria,NA,NA
+barcode_80_AR8_1_1,28s,Pulvinaria,Pulvinaria,NA,NA
+barcode_81_AR21a_1_1_1_KAPA,CO1,Pulvinaria,Pulvinaria,NA,NA
+barcode_82_AR8_1_1_KAPA,CO1,Pulvinaria,Pulvinaria,NA,NA
+barcode_83_AR21a_1_1_1_MyFi,CO1,Pulvinaria,Pulvinaria,NA,NA
+barcode_84_AR8-1_1_MyFi,CO1,Pulvinaria,Pulvinaria,NA,NA
+barcode_85_MG250214_4_1_1_KAPA,CO1,Lepidoptera,Lepidoptera,NA,NA
+barcode_86_ICS192-1_1_1_KAPA,CO1,Gracillariidae,Gracillariidae,NA,NA
+barcode_87_MG250214_4_1_1_MyFi,CO1,Lepidoptera,Lepidoptera,NA,NA
+barcode_88_ICS192_1_1_1_MyFi,CO1,Gracillariidae,Gracillariidae,NA,NA
+barcode_89_RID8931_1_1_MJ,Virus,potyvirus,potyvirus,NA,NA
+barcode_90_RID8931_1_1_Ci,Virus,potyvirus,potyvirus,NA,NA
+barcode_91_RID8931_1_1_NLB,Virus,potyvirus,potyvirus,NA,NA
+barcode_93_MG250402_3_2_KAPA,CO1,Luthrodes pandava,Luthrodes pandava,NA,NA
+barcode_94_MG250402_3_1_KAPA,CO1,Luthrodes pandava,Luthrodes pandava,NA,NA
+barcode_95_MG250402_3_2_MyFi,CO1,Luthrodes pandava,Luthrodes pandava,NA,NA
