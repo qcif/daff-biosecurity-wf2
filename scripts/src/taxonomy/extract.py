@@ -59,6 +59,11 @@ def taxonomies(taxids: list[str]) -> dict[str, dict[str, str]]:
                 f"Temporary file {temp_file_name} deleted successfully."
             )
 
+    logger.debug(
+        "taxonkit name2taxid stdout:\n"
+        + result.stdout[:1000]  # Limit to first 1000 characters
+        + " [ ... ]"
+    )
     if result.stderr.strip():
         logger.warning(
             "Taxonkit name2taxid stderr:\n"
@@ -130,6 +135,11 @@ def taxids(species_list: list[str]) -> dict[str, str]:
                 f"Temporary file {temp_file_name} deleted successfully."
             )
 
+    logger.debug(
+        "taxonkit name2taxid stdout:\n"
+        + result.stdout[:1000]  # Limit to first 1000 characters
+        + " [ ... ]"
+    )
     if result.stderr.strip():
         logger.warning(
             "taxonkit name2taxid stderr:\n"
