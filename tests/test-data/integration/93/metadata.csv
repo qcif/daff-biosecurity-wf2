@@ -9,9 +9,9 @@ barcode_85_MG250214_4_1_1_KAPA,CO1,Lepidoptera,Lepidoptera,NA,NA
 barcode_86_ICS192-1_1_1_KAPA,CO1,Gracillariidae,Gracillariidae,NA,NA
 barcode_87_MG250214_4_1_1_MyFi,CO1,Lepidoptera,Lepidoptera,NA,NA
 barcode_88_ICS192_1_1_1_MyFi,CO1,Gracillariidae,Gracillariidae,NA,NA
-barcode_89_RID8931_1_1_MJ,Virus,potyvirus,potyvirus,NA,NA
-barcode_90_RID8931_1_1_Ci,Virus,potyvirus,potyvirus,NA,NA
-barcode_91_RID8931_1_1_NLB,Virus,potyvirus,potyvirus,NA,NA
+barcode_89_RID8931_1_1_MJ,NA,potyvirus,potyvirus,NA,NA
+barcode_90_RID8931_1_1_Ci,NA,potyvirus,potyvirus,NA,NA
+barcode_91_RID8931_1_1_NLB,NA,potyvirus,potyvirus,NA,NA
 barcode_93_MG250402_3_2_KAPA,CO1,Luthrodes pandava,Luthrodes pandava,NA,NA
 barcode_94_MG250402_3_1_KAPA,CO1,Luthrodes pandava,Luthrodes pandava,NA,NA
 barcode_95_MG250402_3_2_MyFi,CO1,Luthrodes pandava,Luthrodes pandava,NA,NA
