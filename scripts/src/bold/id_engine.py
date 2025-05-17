@@ -113,7 +113,6 @@ class BoldSearch:
         )
 
         def submit_sequence(sequence, i):
-        # for i, sequence in enumerate(sequences):
             logger.debug(
                 f"Submitting sequence {i + 1}/{len(sequences)}"
                 f": {sequence.id}"
@@ -139,8 +138,6 @@ class BoldSearch:
                         "query_ix": i,
                     },
                 )
-                # hits[sequence.id] = []
-                # continue
                 return sequence.id, []
 
             root = ElementTree.fromstring(response.text)
