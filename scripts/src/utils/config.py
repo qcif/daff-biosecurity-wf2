@@ -332,6 +332,8 @@ class Config:
         ]
 
     def get_locus_for_query(self, query) -> str:
+        if self.is_bold:
+            return 'COI'
         locus = self._get_metadata_for_query(query, "locus")
         if locus.lower() == 'na':
             return None
