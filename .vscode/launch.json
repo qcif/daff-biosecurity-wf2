@@ -35,7 +35,7 @@
                 "PYTHONPATH": "${workspaceFolder}/scripts",
                 "TAXONKIT_DATA": "${env:HOME}/.taxonkit",
                 "KEEP_OUTPUTS": "1",  // Always retain outputs for debugging
-                "RUN_TEST_CASE": "A",  // Optional, run a specific test case
+                // "RUN_TEST_CASE": "A",  // Optional, run a specific test case
             },
             "console": "integratedTerminal",
             "justMyCode": true
