@@ -301,6 +301,11 @@ class Config:
         return now
 
     @property
+    def timestamp(self) -> str:
+        """Return the timestamp as a string."""
+        return self.start_time.strftime("%Y%m%d_%H%M%S")
+
+    @property
     def metadata(self) -> dict[str, dict]:
         """Read metadata from CSV file."""
         def _get_value_for_key(key, row, colname):
