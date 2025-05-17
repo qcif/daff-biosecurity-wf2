@@ -1,10 +1,21 @@
 
 const FULL_DATA_PATH = window.location.pathname.split("/").slice(0, -1).join("/") + "/"
 
-async function saveCurrentPage() {
+async function saveReport(readonly = false) {
+
+  $('#saveModal').modal('hide');
+  $('body').removeClass('modal-open')
+  $('body')[0].style = null
+  $('.modal-backdrop').remove();
 
   // Clone the current document's HTML
   const clone = document.documentElement.cloneNode(true);
+  if (readonly) {
+    const saveModal = clone.querySelector('#saveModal');
+    if (saveModal) saveModal.remove();
+    const saveButton = clone.querySelector('#saveButton');
+    if (saveButton) saveButton.remove();
+  }
 
   // Update all input and textarea values
   const inputs = clone.querySelectorAll('input, textarea');
@@ -19,6 +30,9 @@ async function saveCurrentPage() {
       } else {
         input.removeAttribute('checked');
       }
+    }
+    if (readonly) {
+      input.readOnly = true;
     }
   });
 
@@ -44,17 +58,24 @@ async function saveCurrentPage() {
   } catch (err) {
     console.error('Save canceled or failed:', err);
   }
+
 }
 
 function createSaveButton() {
-  const saveButton = document.createElement('button');
-  saveButton.classList.add('btn', 'btn-primary');
-  saveButton.textContent = 'Save report';
-  saveButton.style.position = 'fixed';
-  saveButton.style.top = '1.5rem';
-  saveButton.style.right = '1.5rem';
-  saveButton.onclick = saveCurrentPage;
-  document.body.appendChild(saveButton);
+  // Don't show the save button if the "save" modal is not present (readonly)
+  if ($('#saveModal').length) {
+    const saveButton = document.createElement('a');
+    saveButton.classList.add('btn', 'btn-primary');
+    saveButton.textContent = 'Save report';
+    saveButton.style.position = 'fixed';
+    saveButton.style.top = '1.5rem';
+    saveButton.style.right = '1.5rem';
+    saveButton.href = '#';
+    saveButton.id = 'saveButton';
+    saveButton.setAttribute('data-bs-toggle', 'modal');
+    saveButton.setAttribute('data-bs-target', '#saveModal');
+    document.body.appendChild(saveButton);
+  }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -62,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('keydown', (event) => {
     if (event.ctrlKey && event.key === 's') {
       event.preventDefault();
-      saveCurrentPage();
+      $('#saveModal').modal('show');
     }
   });
 });
