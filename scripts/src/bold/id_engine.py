@@ -175,8 +175,8 @@ class BoldSearch:
                 sequence_hits.append(result)
             return sequence.id, sequence_hits
 
-            # If multiple seq IDs, only keep the one with hits
-            # (the correct orientation)
+        # If multiple seq IDs, only keep the one with hits
+        # (the correct orientation)
         # Submit all sequences concurrently
         with ThreadPoolExecutor(max_workers=50) as executor:
             future_to_seq = {
