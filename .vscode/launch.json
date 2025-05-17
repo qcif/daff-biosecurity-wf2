@@ -192,6 +192,7 @@
                 // "--output_dir", "output/issues/44",
             ],
             "env": {
+                "REPORT_DEBUG": "1",
                 "FACILITY_NAME": "Cairns Airport",
                 "ANALYST_NAME": "John Doe",
                 "INPUT_FASTA_FILEPATH": "tests/test-data/queries.fasta",

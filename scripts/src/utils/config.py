@@ -165,6 +165,7 @@ class Config:
 
     class REPORT:
         TITLE = "Taxonomic identification report"
+        DEBUG = os.getenv("REPORT_DEBUG") not in (None, "0", "false")
 
     def configure(self, output_dir=None, query_dir=None, bold=False):
         if output_dir:
@@ -365,7 +366,7 @@ class Config:
         return self.get_query_dir(query_ix) / path_safe_str(
             REPORT_FILENAME.format(
                 sample_id=self.get_sample_id(query_ix).replace('.', '_'),
-                timestamp='NOW',  # self.timestamp, # ! TODO
+                timestamp='DEBUG' if self.REPORT.DEBUG else self.timestamp,
                 prefix='BOLD_' if bold else '',
             )
         )
