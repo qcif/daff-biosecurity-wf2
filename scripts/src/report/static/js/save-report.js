@@ -27,8 +27,9 @@ async function saveCurrentPage() {
   const htmlContent = doctype + '\n' + clone.outerHTML;
 
   try {
+    const today = new Date().toISOString().split('T')[0];
     const handle = await window.showSaveFilePicker({
-      suggestedName: 'report.html',
+      suggestedName: `report_${SAMPLE_ID}_${today}.html`,
       types: [
         {
           description: 'HTML Files',
