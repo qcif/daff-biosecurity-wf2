@@ -163,7 +163,9 @@ def taxids(species_list: list[str]) -> dict[str, str]:
                 "Unexpected format in taxonkit"
                 " stdout. This may result in missing taxid information:\n"
                 + line)
-        if taxid_data.get(species):
+
+        existing_taxid = taxid_data.get(species)
+        if existing_taxid and existing_taxid != taxid:
             duplicate_taxids[species] = duplicate_taxids.get(
                 species, []) + [taxid]
         else:
