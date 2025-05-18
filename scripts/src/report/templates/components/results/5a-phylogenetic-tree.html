@@ -72,32 +72,51 @@
   </small>
 </div>
 
-
+<script src="https://unpkg.com/@phylocanvas/phylocanvas.gl@latest/dist/bundle.min.js"></script>
 <script>
+  // Hit subject, accession on hover?
   const newickString = "{{ tree_nwk_str }}";
+  const colors = [
+    "blue", "#00FF00", "#0000FF", "#FFFF00", "#FF00FF", "#00FFFF",
+    "#800000", "#008000", "#000080", "#808000", "#800080", "#008080",
+    "#C0C0C0", "#808080", "#FFA500", "#A52A2A", "#D2691E", "#8B4513",
+    "#5F9EA0", "#4682B4", "#7FFF00", "#D2691E",
+  ];
+  const speciesColors = {
+    {% for hit in candidates.species %}
+      "{{ hit.species }}": colors[{{ loop.index0 }}] || "black",
+    {% endfor %}
+  }
   const leafNames = {
     {% for hit in candidates.hits %}
       "{{ hit.accession }}": {
-        species: "{{ hit.species }}",
-        definition: "{{ hit.hit_subject }}",
+        label: "{{ hit.species }}",
+        fillColour: speciesColors["{{ hit.species }}"] || "black",
       },
     {% endfor %}
   };
-</script>
-
-<script src="https://unpkg.com/@phylocanvas/phylocanvas.gl@latest/dist/bundle.min.js"></script>
-<script>
+  const leafStyles = {
+    QUERY: {
+      fillColour: "red",
+      shape: phylocanvas.Shapes.Star,
+      nodeSize: 25,  // This is ignored
+    },
+    ...leafNames,
+  }
   const parent = document.querySelector("#phylotree");
   const tree = new phylocanvas.PhylocanvasGL(
     parent,
     {
       size: { width: parent.offsetWidth, height: 500 },
+      nodeSize: 10,
       showLabels: true,
       showLeafLabels: true,
+      selectedIds: ["QUERY"],
       interactive: true,
       source: newickString,
       type: phylocanvas.TreeTypes.Rectangular,
       zoom: -0.5,
+      styles: leafStyles,
     },
   );
 </script>
