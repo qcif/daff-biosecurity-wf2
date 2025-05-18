@@ -41,10 +41,11 @@ class IntegrationTest(unittest.TestCase):
 
     def setUp(self):
         """Clean up old temp dirs and create a new one."""
-        tmp_root = Path(tempfile.gettempdir())
-        for old_wdir in tmp_root.glob(f"{TEMPDIR_PREFIX}*"):
-            if old_wdir.is_dir():
-                shutil.rmtree(old_wdir, ignore_errors=True)
+        if not os.getenv("KEEP_OUTPUTS") == "1":
+            tmp_root = Path(tempfile.gettempdir())
+            for old_wdir in tmp_root.glob(f"{TEMPDIR_PREFIX}*"):
+                if old_wdir.is_dir():
+                    shutil.rmtree(old_wdir, ignore_errors=True)
         self.wdir_root = Path(tempfile.mkdtemp(prefix=TEMPDIR_PREFIX))
 
     def tearDown(self):
