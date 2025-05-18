@@ -327,10 +327,13 @@ class Config:
                     if x.strip()
                 ]
             if key.lower() == 'locus':
+                value = value.lower()
                 if self.is_bold:
                     return 'COI'
-                if value.lower() == 'na':
+                if value == 'na':
                     return None
+                if value.endswith(' gene'):
+                    return value.rsplit(' ', 1)[0]
 
             return value
 
