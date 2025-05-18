@@ -14,25 +14,25 @@
         <div class="mb-5" style="max-height: 35vh; overflow-y: auto;">
           <table class="table tight font-small freeze-header sortable">
             <thead>
-              <th class="text-center">#</th>
+              <th class="text-center" data-sort-method="number">#</th>
               <th>Accession</th>
               <th>Hit subject</th>
-              <th class="text-center">Align length</th>
-              <th class="text-center">Query coverage</th>
-              <th class="text-center">Bitscore</th>
-              <th class="text-center" style="white-space: nowrap;">E-value</th>
-              <th class="text-center">Identity</th>
+              <th class="text-center" data-sort-method="number">Align length</th>
+              <th class="text-center" data-sort-method="number">Query coverage</th>
+              <th class="text-center" data-sort-method="number">Bitscore</th>
+              <th class="text-center" data-sort-method="number" style="white-space: nowrap;">E-value</th>
+              <th class="text-center" data-sort-method="number">Identity</th>
             </thead>
             {% for hit in hits %}
             <tr class="interactive" onclick="showBlastHit({{ loop.index0 }});">
-              <td class="text-center">{{ "%03d" % loop.index }}</td>
+              <td class="text-center">{{ loop.index }}</td>
               <td>{{ hit.accession }}</td>
               <td>{{ hit.hit_subject }}</td>
-              <td class="text-center">{{ hit.alignment_length }}</td>
-              <td class="text-center">{{ (hit.query_coverage * 100) | round(1) }}%</td>
-              <td class="text-center">{{ hit.bitscore }}</td>
-              <td class="text-center">{{ "% .2e" | format(hit.e_value) }}</td>
-              <td class="text-center">{{ (hit.identity * 100) | round(1) }}%</td>
+              <td class="text-center" data-sort="{{ hit.alignment_length }}">{{ hit.alignment_length }}</td>
+              <td class="text-center" data-sort="{{ hit.query_coverage }}">{{ (hit.query_coverage * 100) | round(1) }}%</td>
+              <td class="text-center" data-sort="{{ hit.bitscore }}">{{ hit.bitscore }}</td>
+              <td class="text-center" data-sort="{{ hit.e_value }}">{{ "% .2e" | format(hit.e_value) }}</td>
+              <td class="text-center" data-sort="{{ hit.identity }}">{{ (hit.identity * 100) | round(1) }}%</td>
             </tr>
             {% endfor %}
           </table>

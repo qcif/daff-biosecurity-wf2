@@ -51,16 +51,18 @@ table.freeze-header th {
 }
 table.sortable th {
   cursor: pointer;
-  position: relative;
-  padding-left: 1.5em; /* space for icon */
 }
-table.sortable th::after {
-  content: "⇅"; /* neutral sort icon */
-  position: absolute;
-  left: 0.5em;
-  font-size: 0.8em;
+table.sortable th::before {
+  content: "⇅";
   opacity: 0.6;
+  padding-right: 1rem;
   pointer-events: none;
+}
+table.sortable th[aria-sort="ascending"]::before {
+  content: "⇑";
+}
+table.sortable th[aria-sort="descending"]::before {
+  content: "⇓";
 }
 .source {
   background: #f9f9f9;
@@ -140,22 +142,6 @@ tr.interactive.active {
 }
 
 /* Database coverage */
-#dbcov-tabs-buttons {
-  position: relative;
-  top: 40px;
-}
-#dbcov-tabs-buttons .btn {
-  margin-left: 1rem;
-}
-.button-group-label {
-  padding: .5rem .5rem .5rem 1rem;
-  text-align: center;
-  margin-bottom: 0;
-  background: #dee2e6;
-}
-.button-group-label:not(:first-child) {
-  margin-top: 1rem;
-}
 .occurrence-map {
   display: inline-block;
   position: relative;

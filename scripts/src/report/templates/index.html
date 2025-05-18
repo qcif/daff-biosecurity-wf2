@@ -75,8 +75,10 @@
   </script>
 
   <script>
-    document.querySelectorAll("table.sortable").forEach(function(table) {
-      new Tablesort(table);
+    $(document).ready(function() {
+      document.querySelectorAll("table.sortable").forEach(function(table) {
+        new Tablesort(table);
+      });
     });
   </script>
 

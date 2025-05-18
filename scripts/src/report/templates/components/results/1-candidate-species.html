@@ -117,12 +117,12 @@
 
       <thead>
         <th>Species</th>
-        <th>Hits</th>
-        <th>Identity</th>
+        <th class="text-center">Hits</th>
+        <th class="text-center" data-sort-method="number">Identity</th>
         {% if bold %}
-          <th>BOLD Record</th>
+          <th class="text-center">BOLD Record</th>
         {% else %}
-          <th>E-value</th>
+          <th class="text-center">E-value</th>
         {% endif %}
         <th class="text-center">Database coverage</th>
       </thead>
@@ -130,14 +130,14 @@
       {% set taxon = candidate.species %}
       <tr>
         <td><em>{{ taxon }}</em></td>
-        <td>{{ candidate.hit_count }}</td>
-        <td>{{ (candidate.identity * 100) | round(2)}}%</td>
+        <td class="text-center">{{ candidate.hit_count }}</td>
+        <td class="text-center" data-sort="{{ candidate.identity }}">{{ (candidate.identity * 100) | round(2)}}%</td>
         {% if bold %}
-        <td>
+        <td class="text-center">
           <a href="{{ candidate.url }}" target="_blank">{{ candidate.hit_id }}</a>
         </td>
         {% else %}
-        <td>{{ candidate.e_value }}</td>
+        <td class="text-center">{{ candidate.e_value }}</td>
         {% endif %}
         <td class="text-center">
           {% if candidate.species | length > config.CRITERIA.MAX_CANDIDATES_FOR_ANALYSIS %}
