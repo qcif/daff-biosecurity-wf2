@@ -169,7 +169,8 @@
                     Global occurrence records for <em>{{ context.target_taxon }}</em>.
                     <br>
                     <small class="hide-small">
-                      Note that the occurrence data are not exhaustive, and it is possible for this species to occur in regions not shown on the map.
+                      Note that the occurrence data are not exhaustive, since the data fetched are limited to {{ context.config.GBIF_MAX_OCCURRENCE_RECORDS }} occurrence records.
+                      It is therefore possible for this species to occur in regions not shown on the map.
                     </small>
                   </p>
                 </div>

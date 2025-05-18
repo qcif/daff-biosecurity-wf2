@@ -88,6 +88,8 @@ class Config:
     DB_COVERAGE_MAX_CANDIDATES = 3
     FLAG_FILE_TEMPLATE = '{identifier}.flag'
     GBIF_LIMIT_RECORDS = int(os.getenv("GBIF_LIMIT_RECORDS", 500))
+    GBIF_MAX_OCCURRENCE_RECORDS = int(
+        os.getenv("GBIF_MAX_OCCURRENCE_RECORDS", 5000))
     GBIF_ACCEPTED_STATUS = os.getenv(
         "GBIF_ACCEPTED_STATUS",
         'accepted,doubtful',

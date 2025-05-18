@@ -12,8 +12,10 @@ from matplotlib import pyplot as plt  # noqa:E402
 from matplotlib.colors import LogNorm  # noqa:E402
 from pygbif import occurrences  # noqa:E402
 
+from src.utils.config import Config  # noqa:E402
+
+config = Config()
 logger = logging.getLogger(__name__)
-MODULE_NAME = 'GBIF MAPS'
 
 NATURALEARTH_LOWRES_URL = (
     Path(__file__).parent / 'base_maps/ne_110m_admin_0_countries.zip')
@@ -21,12 +23,25 @@ NATURALEARTH_LOWRES_URL = (
 
 def draw_occurrence_map(taxon_key: str, path: Path):
     '''Fetch GBIF API to get species world map by using taxonomy ID. '''
-    res = occurrences.search(taxonKey=taxon_key, limit=5000)
+    all_results = []
+    offset = 0
+    while True:
+        res = occurrences.search(taxonKey=taxon_key, offset=offset)
+        all_results.extend(res.get('results', []))
+        if res.get('endOfRecords', True):
+            break
+        offset += res['limit']
+        if offset >= config.GBIF_MAX_OCCURRENCE_RECORDS:
+            logger.warning(
+                "Maximum number of records reached:"
+                f" {config.GBIF_MAX_OCCURRENCE_RECORDS}")
+            break
+
     lats = [record['decimalLatitude']
-            for record in res['results']
+            for record in all_results
             if 'decimalLatitude' in record]
     lons = [record['decimalLongitude']
-            for record in res['results']
+            for record in all_results
             if 'decimalLongitude' in record]
 
     if not lats:
