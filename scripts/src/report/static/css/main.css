@@ -51,17 +51,31 @@ table.freeze-header th {
 }
 table.sortable th {
   cursor: pointer;
+  position: relative;
+  padding-left: 1.5rem;
+  vertical-align: middle;
 }
 table.sortable th::before {
   content: "⇅";
-  opacity: 0.6;
+  opacity: 0;
+  position: absolute;
+  left: 0.5em;
+  bottom: calc(50% - 0.5rem);
   padding-right: 1rem;
   pointer-events: none;
 }
+table.sortable th:hover {
+  background-color: #ddd;
+}
+table.sortable th:hover::before {
+  opacity: 0.6;
+}
 table.sortable th[aria-sort="ascending"]::before {
+  opacity: 0.6;
   content: "⇑";
 }
 table.sortable th[aria-sort="descending"]::before {
+  opacity: 0.6;
   content: "⇓";
 }
 .source {
