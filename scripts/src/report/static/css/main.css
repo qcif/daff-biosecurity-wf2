@@ -49,6 +49,19 @@ table.freeze-header th {
   position: sticky;
   top: 0;
 }
+table.sortable th {
+  cursor: pointer;
+  position: relative;
+  padding-left: 1.5em; /* space for icon */
+}
+table.sortable th::after {
+  content: "⇅"; /* neutral sort icon */
+  position: absolute;
+  left: 0.5em;
+  font-size: 0.8em;
+  opacity: 0.6;
+  pointer-events: none;
+}
 .source {
   background: #f9f9f9;
   border-radius: .5rem;

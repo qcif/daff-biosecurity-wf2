@@ -12,7 +12,7 @@
       </div>
       <div class="modal-body">
         <div class="mb-5" style="max-height: 35vh; overflow-y: auto;">
-          <table class="table tight font-small freeze-header">
+          <table class="table tight font-small freeze-header sortable">
             <thead>
               <th class="text-center">#</th>
               <th>Hit ID</th>
@@ -23,7 +23,7 @@
             </thead>
             {% for hit in hits %}
             <tr class="interactive" onclick="showBoldHit({{ loop.index0 }});">
-              <td class="text-center">{{ loop.index }}</td>
+              <td class="text-center">{{ "%03d" % loop.index }}</td>
               <td>{{ hit.hit_id }}</td>
               <td>{{ hit.accession }}</td>
               <td>{{ hit.taxonomic_identification }}</td>
