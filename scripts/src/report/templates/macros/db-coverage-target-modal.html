@@ -49,9 +49,16 @@
           {{ render_error_message(errors) }}
           {% endif %}
 
+          <p class="text-center">
+            <span class="badge bg-secondary font-large">
+              Reference database:
+              <code class="px-3 text-light fw-light">{{ context.config.database_name }}</code>
+            </span>
+          </p>
+
           {% if context.data.target is not none %}
 
-          <table style="margin: 0 auto 2rem auto;">
+          <table style="margin: 2rem auto;">
             <tbody>
               <tr
                 onclick="document.getElementById('dbCovTarget-{{ context.target_id }}').scrollIntoView({ behavior: 'smooth' });"

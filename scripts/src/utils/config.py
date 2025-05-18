@@ -166,6 +166,7 @@ class Config:
     class REPORT:
         TITLE = "Taxonomic identification report"
         DEBUG = os.getenv("REPORT_DEBUG") not in (None, "0", "false")
+        DATABASE_NAME = os.getenv("BLAST_DATABASE_NAME", "NCBI Core Nt")
 
     def configure(self, output_dir=None, query_dir=None, bold=False):
         if output_dir:
@@ -176,16 +177,6 @@ class Config:
         dictConfig(conf)
         if bold:
             self.bold_flag_file.write_text('1')
-
-    @property
-    def bold_flag_file(self):
-        """Path to the BOLD flag file."""
-        return self.output_dir / self.BOLD_FLAG
-
-    @property
-    def is_bold(self):
-        """Check if this is a BOLD run."""
-        return self.bold_flag_file.exists()
 
     @property
     def output_dir(self):
@@ -252,6 +243,23 @@ class Config:
         """Resolve query index/dir to sample ID."""
         query_ix = self.get_query_ix(query)
         return self.read_query_fasta(query_ix).id.split('.')[0]
+
+    @property
+    def bold_flag_file(self):
+        """Path to the BOLD flag file."""
+        return self.output_dir / self.BOLD_FLAG
+
+    @property
+    def is_bold(self):
+        """Check if this is a BOLD run."""
+        return self.bold_flag_file.exists()
+
+    @property
+    def database_name(self):
+        """Return the name of the reference database."""
+        if self.is_bold:
+            return 'BOLD'
+        return self.REPORT.DATABASE_NAME
 
     @property
     def allowed_loci(self) -> list[list[str]]:
