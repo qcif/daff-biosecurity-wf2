@@ -21,10 +21,6 @@
 
       {% include "components/heading.html" %}
 
-      <div>
-        {% include "components/walltime.html" %}
-      </div>
-
       <section id="overview">
         {% include "components/overview.html" %}
         {{ render_subjective_input(1) }}
@@ -53,6 +49,7 @@
     </div>
 
     {% include "components/save-modal.html" %}
+    {% include "components/flags-modal.html" %}
 
   </body>
 

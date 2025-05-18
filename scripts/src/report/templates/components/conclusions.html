@@ -1,5 +1,6 @@
 {% from "macros/alert-level-icon.html" import render_level_icon %}
 {% from "macros/db-coverage-target-modal.html" import render_target_modal %}
+{% from "macros/flag-badge.html" import render_flag %}
 
 <h3>Result overview</h3>
 
@@ -17,20 +18,20 @@
       <strong>Inconclusive</strong>
       {% endif %}
     </p>
-    <p class="font-large mb-1">
-      <strong>Outcome</strong>: {{ conclusions.flags['1'].outcome }}.
-    </p>
-    <p class="font-large mb-1">
-      <strong>Reasoning:</strong>
-      [Flag 1{{ conclusions.flags['1'].value }}]
-      {{ conclusions.flags['1'].explanation }}.
-    </p>
+    {{ render_flag(conclusions.flags['1']) }}
   </div>
 </div>
 
 <table class="table border alert-{{ conclusions.summary.pmi['bs-class'] }}">
   <tr>
-    <td>Preliminary morphology ID confirmed?</td>
+    <td>
+      <strong>
+        Preliminary morphology ID
+        <em>{{ metadata.preliminary_id }}</em>
+        confirmed?
+      </strong>
+    </td>
+
     <td style="width: 75px;">
       {% if conclusions.summary.result.confirmed %}
       <strong class="text-{{ conclusions.summary.pmi['bs-class'] }}">
@@ -41,15 +42,14 @@
       {% endif %}
     </td>
   </tr>
+
   <tr>
     <td>
       <small>
-        <p class="alert mb-1 p-2">
-          {{ conclusions.summary.pmi.explanation | safe }}
-          <em>{{ metadata.preliminary_id }}</em>.
-        </p>
+        {{ render_flag(conclusions.flags['7']) }}
       </small>
     </td>
+
     <td style="width: 75px;">
       {% set flags = conclusions.flags %}
       {% set taxon = metadata.preliminary_id %}
@@ -94,7 +94,7 @@
   style="background: #eee;"
 >
   <tr class="alert-{{ conclusions.summary.toi['bs-class'] }}">
-    <td>Taxa of interest detected?</td>
+    <td><strong>Taxa of interest detected?</strong></td>
     <td style="width: 75px;">
       <strong class="text-{% if conclusions.summary.toi.detected %}success{% else %}danger{% endif %}">
         {{ 'True' if conclusions.summary.toi.detected else 'False' }}
@@ -104,10 +104,10 @@
   <tr>
     <td colspan="2">
       <small>
-        {% for item in conclusions.summary.toi.criteria %}
-        <p class="alert alert-{{ item['bs-class'] }} mb-1 p-2">
-          {{ item.message | safe }}
-        </p>
+        {% for flag in conclusions.summary.toi.flags %}
+        <div class="alert alert-{{ flag.bs_class }} mb-1 p-2">
+          {{ render_flag(flag) }}
+        </div>
         {% endfor %}
       </small>
     </td>
