@@ -8,24 +8,4 @@
 
 {{ render_subjective_input(5) }}
 
-<div class="my-5 phylotree">
-
-
-<div class="my-5 phylotree">
-
-  {% include "components/results/5a-phylogenetic-tree.html" %}
-
-  <p class="my-3 px-5">
-    <small>
-      The phylogetic tree was constructed with
-      <a href="http://www.atgc-montpellier.fr/fastme/" target="_blank">
-        FastME
-      </a>
-      using the Neighbor-Joining method. Multiple-sequence alignment of the candidate reference sequences was performed using
-      <a href="https://mafft.cbrc.jp/alignment/server/index.html" target="_blank">MAFFT</a>.
-
-      The visualization is rendered with
-      <a href="" target="_blank"></a>.
-    </small>
-  </p>
-</div>
+{% include "components/results/5a-phylogenetic-tree.html" %}
