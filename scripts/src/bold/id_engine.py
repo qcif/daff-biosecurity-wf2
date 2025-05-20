@@ -93,6 +93,39 @@ class BoldSearch:
             sequences.append(record)
         return sequences
 
+    def _parse_bold_xml(self, xml_string):
+        root = ElementTree.fromstring(xml_string.text)
+        hits = []
+        for match in root.findall("match"):
+            similarity_str = match.find("similarity").text
+            latitude_str = match.find(
+                "specimen/collectionlocation/coord/lat").text
+            longitude_str = match.find(
+                "specimen/collectionlocation/coord/lon").text
+            result = {
+                "hit_id": match.find("ID").text,
+                "sequence_description": (
+                    match.find("sequencedescription").text
+                ),
+                "database": match.find("database").text,
+                "citation": match.find("citation").text,
+                "taxonomic_identification": (
+                    match.find("taxonomicidentification").text
+                ),
+                "similarity": (
+                    float(similarity_str) if similarity_str else None),
+                "specimen": match.find("specimen").text,
+                "url": match.find("specimen/url").text,
+                "country": (
+                    match.find("specimen/collectionlocation/country").text
+                ),
+                "latitude": float(latitude_str) if latitude_str else None,
+                "longitude": (
+                    float(longitude_str) if longitude_str else None),
+            }
+            hits.append(result)
+        return hits
+
     def _bold_sequence_search(
         self,
         fasta_file: Path,
@@ -103,18 +136,10 @@ class BoldSearch:
         cannot be oriented, both forward and reverse sequences are submitted
         and the sequence which returns BOLD hits is used.
         """
-        hits = {}
-        throttle = Throttle(ENDPOINTS.BOLD)
-        sequences = self._read_sequence_from_fasta(fasta_file)
-        if not os.getenv('SKIP_ORIENTATION'):
-            sequences = orientate(sequences)
-        logger.debug(
-            f"Submitting {len(sequences)} sequences to BOLD ID Engine..."
-        )
-
-        def submit_sequence(sequence, i):
+        def submit_sequence(sequence, i, n_sequences: int):
+            throttle = Throttle(ENDPOINTS.BOLD)
             logger.debug(
-                f"Submitting sequence {i + 1}/{len(sequences)}"
+                f"Submitting sequence {i + 1}/{n_sequences}"
                 f": {sequence.id}"
             )
             params = {
@@ -125,64 +150,37 @@ class BoldSearch:
                 requests.get,
                 args=[ID_ENGINE_URL],
                 kwargs={"params": params})
-            if response.status_code >= MIN_HTTP_CODE_ERROR:
-                msg = (
-                    f"Error for sequence {i + 1}: HTTP {response.status_code}"
-                )
-                logger.error(msg)
-                errors.write(
-                    errors.LOCATIONS.BOLD_ID_ENGINE,
-                    msg,
-                    response.text,
-                    context={
-                        "query_ix": i,
-                    },
-                )
-                return sequence.id, []
+            response.raise_for_status()
 
-            root = ElementTree.fromstring(response.text)
-            sequence_hits = []
-            for match in root.findall("match"):
-                similarity_str = match.find("similarity").text
-                latitude_str = match.find(
-                    "specimen/collectionlocation/coord/lat").text
-                longitude_str = match.find(
-                    "specimen/collectionlocation/coord/lon").text
-                result = {
-                    "hit_id": match.find("ID").text,
-                    "sequence_description": (
-                        match.find("sequencedescription").text
-                    ),
-                    "database": match.find("database").text,
-                    "citation": match.find("citation").text,
-                    "taxonomic_identification": (
-                        match.find("taxonomicidentification").text
-                    ),
-                    "similarity": (
-                        float(similarity_str) if similarity_str else None),
-                    "specimen": match.find("specimen").text,
-                    "url": match.find("specimen/url").text,
-                    "country": (
-                        match.find("specimen/collectionlocation/country").text
-                    ),
-                    "latitude": float(latitude_str) if latitude_str else None,
-                    "longitude": (
-                        float(longitude_str) if longitude_str else None),
-                }
-                sequence_hits.append(result)
+            sequence_hits = self._parse_bold_xml(response)
             return sequence.id, sequence_hits
+
+        hits = {}
+        sequences = self._read_sequence_from_fasta(fasta_file)
+        n_sequences = len(sequences)
+        if not os.getenv('SKIP_ORIENTATION'):
+            sequences = orientate(sequences)
+        logger.debug(
+            f"Submitting {n_sequences} sequences to BOLD ID Engine..."
+        )
 
         # If multiple seq IDs, only keep the one with hits
         # (the correct orientation)
         # Submit all sequences concurrently
         with ThreadPoolExecutor(max_workers=50) as executor:
             future_to_seq = {
-                executor.submit(submit_sequence, sequence, i): sequence
+                executor.submit(
+                    submit_sequence,
+                    sequence,
+                    i,
+                    n_sequences
+                ): sequence
                 for i, sequence in enumerate(sequences)
             }
 
             # Collect results as they complete
             for future in as_completed(future_to_seq):
+                sequence = future_to_seq[future]
                 sequence_id, sequence_hits = future.result()
                 if (
                     sequence_id not in hits
@@ -190,22 +188,22 @@ class BoldSearch:
                 ):
                     hits[sequence_id] = {
                         'query_id': sequence_id,
-                        'query_title': future_to_seq[future].description,
-                        'query_length': len(future_to_seq[future].seq),
-                        'query_frame': future_to_seq[future].annotations.get(
+                        'query_title': sequence.description,
+                        'query_length': len(sequence.seq),
+                        'query_frame': sequence.annotations.get(
                             "frame"
                         ),
                         'query_strand': (
                             '+'
-                            if future_to_seq[future].annotations.get(
+                            if sequence.annotations.get(
                                 "forward", True
                             )
                             else '-'
                         ),
-                        'query_sequence': str(future_to_seq[future].seq),
+                        'query_sequence': str(sequence.seq),
                         'query_orientation': (
                             'HMMSearch'
-                            if future_to_seq[future].annotations.get(
+                            if sequence.annotations.get(
                                 "oriented"
                             )
                             else 'BOLD ID Engine'
