@@ -1,0 +1,28 @@
+{% macro render_flag(flag) %}
+
+<div class="row align-items-center">
+  <div class="col-auto pe-2">
+    <a
+      class="font-large"
+      href="#"
+      data-bs-toggle="modal"
+      data-bs-target="#flagsModal"
+    >
+      <span
+        class="badge bg-{{ flag.bs_class }} {% if flag.level == 2 %}text-dark{% else %}text-light{% endif %}"
+      >
+        Flag {{ flag.flag_id }}{{ flag.value }}
+      </span>
+    </a>
+  </div>
+
+  <div class="col">
+    <strong>Outcome:</strong>
+    {{ flag.outcome }}.
+    <br>
+    <strong>Reasoning:</strong>
+    {{ flag.explanation }}.
+  </div>
+</div>
+
+{% endmacro %}

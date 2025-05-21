@@ -36,7 +36,7 @@ class LOCATIONS:
     BOLD_TAXA = 1.11
     DATABASE_COVERAGE = 5.0
     DATABASE_COVERAGE_NO_GBIF_RECORD = 5.01
-    DATABASE_COVERAGE_NO_TAXID = 5.02
+    DATABASE_COVERAGE_TAXONKIT_ERROR = 5.02
     DB_COVERAGE_TARGET = 5.1
     DB_COVERAGE_RELATED = 5.2
     DB_COVERAGE_RELATED_COUNTRY = 5.3
@@ -45,7 +45,7 @@ class LOCATIONS:
 def write(
     location: float,
     msg: str,
-    exc: Exception,
+    exc: Exception = None,
     query_dir: Path = None,
     context: dict = None,
 ):
@@ -73,7 +73,7 @@ def write(
         json.dump({
             "location": location,
             "message": msg,
-            "exception": str(exc),
+            "exception": str(exc) if exc else None,
             "context": context,
         }, f, indent=2)
 
@@ -106,9 +106,10 @@ class ErrorLog:
 
     def filter(
         self,
-        location: int = None,
-        location_min: int = 0,
-        location_max: int = 999,
+        location: float = None,
+        location_not: float = None,
+        location_min: float = 0.0,
+        location_max: float = 999.9,
         context: dict = None,
     ) -> 'ErrorLog':
         """List requested errors from the error log."""
@@ -117,6 +118,11 @@ class ErrorLog:
             errors = [
                 x for x in errors
                 if x['location'] == location
+            ]
+        if location_not:
+            errors = [
+                x for x in errors
+                if x['location'] != location_not
             ]
         if location_min is not None:
             errors = [
@@ -129,10 +135,13 @@ class ErrorLog:
                 if x['location'] <= location_max
             ]
         if context:
+            # Exclude errors that have the context key and do not match
+            # the given value
             errors = [
                 x for x in errors
                 if all(
-                    x.get('context', {}).get(k) == v
+                    k not in x.get('context', {})
+                    or x.get('context', {}).get(k) == v
                     for k, v in context.items()
                 )
             ]

@@ -16,6 +16,16 @@ logger = logging.getLogger(__name__)
 config = Config()
 
 
+def level_to_bs_class(level):
+    if level == 0:
+        return "secondary"
+    if level == 1:
+        return "success"
+    if level == 2:
+        return "warning"
+    return "danger"
+
+
 class Flag:
     """A flag to record discrete analytical outcomes.
 
@@ -94,13 +104,7 @@ class Flag:
     def bs_class(self):
         """Return the bootstrap css class for self.level."""
         level = self.level
-        if level == 0:
-            return "secondary"
-        if level == 1:
-            return "success"
-        if level == 2:
-            return "warning"
-        return "danger"
+        return level_to_bs_class(level)
 
     @classmethod
     def read(cls, query, as_json=False):

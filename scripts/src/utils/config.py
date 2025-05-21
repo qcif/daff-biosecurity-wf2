@@ -88,6 +88,8 @@ class Config:
     DB_COVERAGE_MAX_CANDIDATES = 3
     FLAG_FILE_TEMPLATE = '{identifier}.flag'
     GBIF_LIMIT_RECORDS = int(os.getenv("GBIF_LIMIT_RECORDS", 500))
+    GBIF_MAX_OCCURRENCE_RECORDS = int(
+        os.getenv("GBIF_MAX_OCCURRENCE_RECORDS", 5000))
     GBIF_ACCEPTED_STATUS = os.getenv(
         "GBIF_ACCEPTED_STATUS",
         'accepted,doubtful',
@@ -165,6 +167,8 @@ class Config:
 
     class REPORT:
         TITLE = "Taxonomic identification report"
+        DEBUG = os.getenv("REPORT_DEBUG") not in (None, "0", "false")
+        DATABASE_NAME = os.getenv("BLAST_DATABASE_NAME", "NCBI Core Nt")
 
     def configure(self, output_dir=None, query_dir=None, bold=False):
         if output_dir:
@@ -175,16 +179,6 @@ class Config:
         dictConfig(conf)
         if bold:
             self.bold_flag_file.write_text('1')
-
-    @property
-    def bold_flag_file(self):
-        """Path to the BOLD flag file."""
-        return self.output_dir / self.BOLD_FLAG
-
-    @property
-    def is_bold(self):
-        """Check if this is a BOLD run."""
-        return self.bold_flag_file.exists()
 
     @property
     def output_dir(self):
@@ -253,6 +247,23 @@ class Config:
         return self.read_query_fasta(query_ix).id.split('.')[0]
 
     @property
+    def bold_flag_file(self):
+        """Path to the BOLD flag file."""
+        return self.output_dir / self.BOLD_FLAG
+
+    @property
+    def is_bold(self):
+        """Check if this is a BOLD run."""
+        return self.bold_flag_file.exists()
+
+    @property
+    def database_name(self):
+        """Return the name of the reference database."""
+        if self.is_bold:
+            return 'BOLD'
+        return self.REPORT.DATABASE_NAME
+
+    @property
     def allowed_loci(self) -> list[list[str]]:
         """Return a list of allowed loci synonyms.
         Each list contains a series of synonyms for each locus.
@@ -300,25 +311,43 @@ class Config:
         return now
 
     @property
+    def timestamp(self) -> str:
+        """Return the timestamp as a string."""
+        return self.start_time.strftime("%Y%m%d_%H%M%S")
+
+    @property
     def metadata(self) -> dict[str, dict]:
         """Read metadata from CSV file."""
+        def _get_value_for_key(key, row, colname):
+            value = row[colname].strip()
+            if 'interest' in key.lower():
+                return [
+                    x.strip()
+                    for x in value.split('|')
+                    if x.strip()
+                ]
+            if key.lower() == 'locus':
+                value = value.lower()
+                if self.is_bold:
+                    return 'COI'
+                if value == 'na':
+                    return None
+                if value.endswith(' gene'):
+                    return value.rsplit(' ', 1)[0]
+
+            return value
+
         if getattr(self, '_metadata', None):
             return self._metadata
         self._metadata = {}
         with self.INPUTS.METADATA_PATH.open() as f:
             header = self.INPUTS.METADATA_CSV_HEADER
             for row in csv.DictReader(f):
-                sample_id = row.pop(header["sample_id"]).split('.')[0]
+                sample_id = row.pop(
+                    header["sample_id"]
+                ).split('.')[0].split(' ')[0]
                 self._metadata[sample_id] = {
-                    key: (
-                        [
-                            x.strip()
-                            for x in row[colname].strip().split('|')
-                            if x.strip()
-                        ]
-                        if 'interest' in key.lower()
-                        else row[colname].strip()
-                    )
+                    key: _get_value_for_key(key, row, colname)
                     for key, colname in header.items()
                     if key != "sample_id"
                 }
@@ -331,10 +360,7 @@ class Config:
         ]
 
     def get_locus_for_query(self, query) -> str:
-        locus = self._get_metadata_for_query(query, "locus")
-        if locus.lower() == 'na':
-            return None
-        return locus
+        return self._get_metadata_for_query(query, "locus")
 
     def locus_was_provided_for(self, query) -> bool:
         """Determine whether a locus was provided."""
@@ -365,7 +391,7 @@ class Config:
         return self.get_query_dir(query_ix) / path_safe_str(
             REPORT_FILENAME.format(
                 sample_id=self.get_sample_id(query_ix).replace('.', '_'),
-                timestamp='NOW',  # self.timestamp, # ! TODO
+                timestamp='DEBUG' if self.REPORT.DEBUG else self.timestamp,
                 prefix='BOLD_' if bold else '',
             )
         )

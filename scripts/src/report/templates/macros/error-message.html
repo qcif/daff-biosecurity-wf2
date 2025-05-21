@@ -6,6 +6,7 @@
     {% for error in errorlist %}
     <li>
       {{ error.message }}
+      {% if error.exception %}
       <br>
       <small>
         <strong>Exception:</strong>
@@ -13,6 +14,7 @@
           {{ error.exception }}
         </code>
       </small>
+      {% endif %}
     </li>
     {% endfor %}
   </ul>

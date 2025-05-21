@@ -13,7 +13,7 @@ from jinja2 import Environment, FileSystemLoader
 
 from src.utils import config, serialize
 from src.utils.errors import ErrorLog
-from src.utils.flags import FLAGS, Flag, TARGETS
+from src.utils.flags import FLAGS, Flag, TARGETS, level_to_bs_class
 
 from .filters.css_hash import css_hash
 from .outcomes import DetectedTaxon
@@ -30,6 +30,7 @@ def render(query, bold=False):
     query_ix = config.get_query_ix(query)
     j2 = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
     j2.filters['css_hash'] = css_hash
+    j2.filters['bs_class'] = level_to_bs_class
     template = j2.get_template('index.html')
     context = _get_report_context(query_ix, bold)
 
@@ -104,6 +105,7 @@ def _get_report_context(query_ix, bold):
         'metadata': _get_metadata(query_ix),
         'locus_provided': config.locus_was_provided_for(query_ix),
         'config': config,
+        'flag_definitions': config.read_flag_details_csv(),
         'input_fasta': query_fasta_str,
         'conclusions': _draw_conclusions(query_ix),
         'hits': hits,
@@ -222,15 +224,8 @@ def _get_toi_result(query_ix, flags):
             if row.get(config.OUTPUTS.TOI_DETECTED_HEADER[1])
         ]
     flag_2 = flags[FLAGS.TOI]
-    criteria_2 = f"<strong>Flag {flag_2}</strong>: {flag_2.explanation}"
     ruled_out = flag_2.value == FLAGS.B
-    criteria = [
-        {
-            'message': criteria_2,
-            'level': flag_2.level,
-            'bs-class': flag_2.bs_class,
-        },
-    ]
+    criteria = [flag_2]
 
     if TARGETS.TOI in flags[FLAGS.DB_COVERAGE_TARGET]:
         flags_5_1_targets = flags[FLAGS.DB_COVERAGE_TARGET][TARGETS.TOI]
@@ -245,33 +240,16 @@ def _get_toi_result(query_ix, flags):
             # Rank NA values the lowest so they don't clobber proper results
             key=lambda x: x.value if x.value != 'NA' else '0',
         )
-        criteria_5_1 = (
-            f"<strong>Flag {flag_5_1_max}</strong>:"
-            f" {flag_5_1_max.explanation}")
-        criteria_5_2 = (
-            f"<strong>Flag {flag_5_2_max}</strong>:"
-            f" {flag_5_2_max.explanation}")
         ruled_out = (
             ruled_out
             and flag_5_1_max.value == FLAGS.A
             and flag_5_2_max.value == FLAGS.A
         )
-        criteria += [
-            {
-                'message': criteria_5_1,
-                'level': flag_5_1_max.level,
-                'bs-class': flag_5_1_max.bs_class,
-            },
-            {
-                'message': criteria_5_2,
-                'level': flag_5_2_max.level,
-                'bs-class': flag_5_2_max.bs_class,
-            },
-        ]
+        criteria += [flag_5_1_max, flag_5_2_max]
 
     return {
         'detected': detected_tois,
-        'criteria': criteria,
+        'flags': criteria,
         'ruled_out': ruled_out,
         'bs-class': 'success' if detected_tois else 'danger',
     }

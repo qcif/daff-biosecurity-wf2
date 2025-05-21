@@ -1,5 +1,6 @@
 {% from "macros/alert-level-icon.html" import render_level_icon %}
 {% from "macros/subjective.html" import render_subjective_input %}
+{% from "macros/flag-badge.html" import render_flag %}
 
 <h2>Publications supporting taxonomic association</h2>
 
@@ -57,15 +58,12 @@
         <div class="row">
           <div class="col">
             {% set flag = conclusions.flags['4'][species] %}
-            <p class="alert alert-{{ flag.bs_class }} p-3">
-              <strong>
-                Flag {{ flag.flag_id }}{{ flag.value }}:
-              </strong>
-              {{ flag.outcome }}
-              <br>
-              <strong>Reasoning:</strong> {{ flag.explanation }}
-              (found {{ src_groups|length }} sources)
-            </p>
+            <div class="alert alert-{{ flag.bs_class }} p-3">
+              {{ render_flag(flag) }}
+              <p class="text-center mb-0">
+                (Found {{ src_groups|length }} sources)
+              </p>
+            </div>
           </div>
           <div class="col">
             <p class="lead px-3 fw-bold">
@@ -175,5 +173,13 @@
 </script>
 
 {% else %}
-<p class="alert alert-secondary">No candidate species to report on.</p>
+  {% if candidates.species | length %}
+  <p class="alert alert-secondary">
+    Too many candidate species to report on
+    (found {{ candidates.species | length }} candidate species; maximum for this analysis is
+    {{ config.CRITERIA.MAX_CANDIDATES_FOR_ANALYSIS }}).
+  </p>
+  {% else %}
+  <p class="alert alert-secondary">No candidate species to report on.</p>
+  {% endif %}
 {% endif %}

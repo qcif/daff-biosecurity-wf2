@@ -35,7 +35,8 @@
                 "PYTHONPATH": "${workspaceFolder}/scripts",
                 "TAXONKIT_DATA": "${env:HOME}/.taxonkit",
                 "KEEP_OUTPUTS": "1",  // Always retain outputs for debugging
-                "RUN_TEST_CASE": "A",  // Optional, run a specific test case
+                "GBIF_MAX_OCCURRENCE_RECORDS": "200",
+                // "RUN_TEST_CASE": "A",  // Optional, run a specific test case
             },
             "console": "integratedTerminal",
             "justMyCode": true
@@ -158,6 +159,7 @@
             ],
             "env": {
                 "LOGGING_DEBUG": "1",
+                "GBIF_MAX_OCCURRENCE_RECORDS": "200",
                 // "INPUT_METADATA_CSV_FILEPATH": "output/issues/31/metadata.csv",
                 // "INPUT_FASTA_FILEPATH": "output/issues/31/queries.fasta",
             },
@@ -175,6 +177,7 @@
             ],
             "env": {
                 "LOGGING_DEBUG": "1",
+                "GBIF_MAX_OCCURRENCE_RECORDS": "200",
             },
             "preLaunchTask": "clear-log-files"
         },
@@ -193,6 +196,7 @@
                 // "--output_dir", "output/issues/44",
             ],
             "env": {
+                "REPORT_DEBUG": "1",
                 "FACILITY_NAME": "Cairns Airport",
                 "ANALYST_NAME": "John Doe",
                 "INPUT_FASTA_FILEPATH": "tests/test-data/queries.fasta",

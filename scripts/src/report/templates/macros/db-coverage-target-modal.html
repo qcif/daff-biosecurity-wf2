@@ -7,7 +7,7 @@
 {% set flag_5_2 = context.flags['5.2'][context.target_type][context.target_taxon] %}
 {% set flag_5_3 = context.flags['5.3'][context.target_type][context.target_taxon] %}
 {% set flag = context.flags['5'][context.target_type].get(context.target_taxon, none) %}
-{% set errors = context.error_log.filter(location_min=5.0, location_max=5.99) %}
+{% set errors = context.error_log.filter(location_min=5.0, location_max=5.99, context={'target': context.target_taxon}) %}
 
 <div class="modal fade" id="{{ context.target_id }}Modal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-xl">
@@ -45,9 +45,20 @@
 
         <div class="border p-5">
 
-          {% if flag %}
+          <p class="text-center">
+            <span class="badge bg-secondary font-large">
+              Reference database:
+              <code class="px-3 text-light fw-light">{{ context.config.database_name }}</code>
+            </span>
+          </p>
 
-          <table style="margin: 0 auto 2rem auto;">
+          {% if errors %}
+          {{ render_error_message(errors) }}
+          {% endif %}
+
+          {% if context.data.target is not none %}
+
+          <table style="margin: 2rem auto;">
             <tbody>
               <tr
                 onclick="document.getElementById('dbCovTarget-{{ context.target_id }}').scrollIntoView({ behavior: 'smooth' });"
@@ -60,6 +71,7 @@
                   Coverage of <em>{{ context.target_taxon }}</em>
                 </td>
               </tr>
+
               <tr
                 onclick="document.getElementById('dbCovRelated-{{ context.target_id }}').scrollIntoView({ behavior: 'smooth' });"
                 style="cursor: pointer;"
@@ -71,6 +83,7 @@
                   Coverage of species in genus <em>{{ context.target_taxon.split(' ')[0] }}</em>
                 </td>
               </tr>
+
               <tr
                 onclick="document.getElementById('dbCovCountry-{{ context.target_id }}').scrollIntoView({ behavior: 'smooth' });"
                 style="cursor: pointer;"
@@ -107,7 +120,7 @@
                 {{ render_error_message(p5_01_errors) }}
                 {% endif %}
 
-                {% if context.data.target is not none %}
+                {% if context.data.target is not in [none, 'NA'] %}
                 {% set records_str = "{:,}".format(context.data.target) %}
                 <div class="big-number alert-{{ flag_5_1.bs_class }}">
                   {{ records_str }} records
@@ -156,7 +169,8 @@
                     Global occurrence records for <em>{{ context.target_taxon }}</em>.
                     <br>
                     <small class="hide-small">
-                      Note that the occurrence data are not exhaustive, and it is possible for this species to occur in regions not shown on the map.
+                      Note that the occurrence data are not exhaustive, since the data fetched are limited to {{ context.config.GBIF_MAX_OCCURRENCE_RECORDS }} occurrence records.
+                      It is therefore possible for this species to occur in regions not shown on the map.
                     </small>
                   </p>
                 </div>
@@ -164,8 +178,6 @@
               {% endif%}
             </div>
           </div>
-
-          {% if flag.value not in [none, 'NA'] %}
 
           <hr>
 
@@ -179,6 +191,7 @@
               <strong>Reasoning:</strong> {{ flag_5_2.explanation }}
             </p>
 
+            {% if context.data.related is not none %}
             <div class="my-5">
               <p>
                 <span class="small-number alert-{{ flag_5_2.bs_class }}">
@@ -283,6 +296,8 @@
                 </div>
               </div>
             </div>
+            {% endif %}
+
           </div>
 
           <hr>
@@ -302,6 +317,7 @@
               <strong>Reasoning:</strong> {{ flag_5_3.explanation }}
             </p>
 
+            {% if context.data.country is not none %}
             <div class="my-5">
               <p>
                 <span class="small-number alert-{{ flag_5_3.bs_class }}">
@@ -409,6 +425,7 @@
                 </div>
               </div>
             </div>
+            {% endif %}
 
             {% else %}
             <p class="alert alert-info">
@@ -417,13 +434,8 @@
             {% endif %}
 
           </div>
-          {% endif %}
 
           {% else %}
-
-          {% if errors %}
-          {{ render_error_message(errors) }}
-          {% endif %}
 
           <p class="alert alert-info">
             No database coverage information is available for this taxon.

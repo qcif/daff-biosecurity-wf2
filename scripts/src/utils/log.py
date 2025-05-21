@@ -15,7 +15,8 @@ def get_logging_config(log_file):
         "disable_existing_loggers": False,
         "formatters": {
             "default": {
-                "format": "%(asctime)s - %(levelname)s - %(message)s",
+                "format": "%(asctime)s - %(module)s - %(levelname)s"
+                          " - %(message)s",
             },
         },
         "filters": {

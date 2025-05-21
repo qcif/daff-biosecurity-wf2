@@ -21,10 +21,6 @@
 
       {% include "components/heading.html" %}
 
-      <div>
-        {% include "components/walltime.html" %}
-      </div>
-
       <section id="overview">
         {% include "components/overview.html" %}
         {{ render_subjective_input(1) }}
@@ -51,9 +47,14 @@
         {% include "components/taxonomy-check.html" %}
       </section>
     </div>
+
+    {% include "components/save-modal.html" %}
+    {% include "components/flags-modal.html" %}
+
   </body>
 
   <script>
+    const SAMPLE_ID = "{{ metadata.sample_id }}";
     const DB_COVERAGE = {{ db_coverage | tojson }};
   </script>
 
@@ -68,6 +69,14 @@
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
       return new bootstrap.Tooltip(tooltipTriggerEl)
     })
+  </script>
+
+  <script>
+    $(document).ready(function() {
+      document.querySelectorAll("table.sortable").forEach(function(table) {
+        new Tablesort(table);
+      });
+    });
   </script>
 
 </html>
