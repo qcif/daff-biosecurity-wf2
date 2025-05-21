@@ -63,6 +63,7 @@
             "preLaunchTask": "clear-log-files",
             "env": {
                 "LOGGING_DEBUG": "1",
+                "SKIP_ORIENTATION": "1",
             }
         },
         {
