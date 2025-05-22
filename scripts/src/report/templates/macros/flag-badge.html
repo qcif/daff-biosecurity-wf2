@@ -10,6 +10,9 @@
     >
       <span
         class="badge bg-{{ flag.bs_class }} {% if flag.level == 2 %}text-dark{% else %}text-light{% endif %}"
+        title="Show flag definitions"
+        data-bs-toggle="tooltip"
+        data-bs-placement="bottom"
       >
         Flag {{ flag.flag_id }}{{ flag.value }}
       </span>
