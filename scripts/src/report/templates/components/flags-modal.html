@@ -17,11 +17,10 @@
         </p>
 
         <div style="max-height: 70vh; overflow-y: auto;">
-          <table class="table table-striped tight">
+          <table class="table tight freeze-header">
             <thead>
-              <th>ID</th>
-              <th>Name</th>
-              <th class="text-center">Value</th>
+              <th class="text-center">Flag</th>
+              <th>Analysis</th>
               <th>Explanation</th>
               <th>Outcome</th>
               <th class="text-center">Level</th>
@@ -36,9 +35,8 @@
                 style="border-top: 2px solid black;"
                 {% endif %}
               >
-                <td>{{ flag_id }}</td>
+                <td class="text-center">{{ flag_id }}{{ flag_value }}</td>
                 <td>{{ row.name }}</td>
-                <td class="text-center">{{ flag_value }}</td>
                 <td>{{ row.explanation[flag_value] }}</td>
                 <td>{{ row.outcome[flag_value] }}</td>
                 <td class="text-center">{{ row.level[flag_value] }}</td>

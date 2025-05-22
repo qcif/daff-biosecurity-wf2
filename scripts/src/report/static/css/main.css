@@ -48,6 +48,8 @@ table.freeze-header th {
   background: #eee;
   position: sticky;
   top: 0;
+  padding-top: .25rem;
+  padding-bottom: .25rem;
 }
 table.sortable th {
   cursor: pointer;
