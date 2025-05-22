@@ -212,6 +212,30 @@ tr.interactive.active {
   background: #f5f6f7;
   border-radius: .5rem;
 }
+#minimizeTreeBtn {
+  display: none;
+}
+.phylotree.fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 10;
+  background: white;
+  margin-top: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.phylotree.fullscreen #phylotree {
+  height: 100vh;
+}
+.phylotree.fullscreen .controls {
+  top: 2rem;
+  left: 2rem;
+}
 .phylotree {
   position: relative;
 }
