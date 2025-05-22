@@ -8,6 +8,9 @@
       <p class="mb-1">
         <code>Scroll</code> to zoom in/out
       </p>
+      <p class="mb-3">
+        <code>Click</code> a label to view NCBI record
+      </p>
       <p class="text-center mb-0">
         <button
           class="btn btn-sm btn-outline-secondary"
@@ -33,7 +36,10 @@
 
   <p class="my-3 px-5">
     <small>
-      The phylogetic tree was constructed with
+      This phylogenetic tree shows the genetic relationship between the query sequence
+      (labelled <code>QUERY</code>)
+      and matching reference sequences (labelled species/accession).
+      The tree was computed with
       <a href="http://www.atgc-montpellier.fr/fastme/" target="_blank">
         FastME
       </a>
@@ -41,15 +47,19 @@
       <a href="https://mafft.cbrc.jp/alignment/server/index.html" target="_blank">MAFFT</a>.
 
       The visualization is rendered with
-      <a href="" target="_blank"></a>.
+      <a href="https://www.phylocanvas.gl/" target="_blank">
+        Phylocanvas.GL
+      </a>.
     </small>
   </p>
 </div>
 
 <!-- https://www.phylocanvas.gl/docs/ -->
-<script src="https://unpkg.com/@phylocanvas/phylocanvas.gl@latest/dist/bundle.min.js"></script>
 <script>
-  // Hit subject, accession on hover?
+  let phyloTree;
+  let fullScreenTree;
+  let lastSelectedId = 'QUERY';
+  const NCBI_URL = "https://www.ncbi.nlm.nih.gov/nuccore";
   const newickString = "{{ tree_nwk_str }}";
   const colors = [
     "blue", "#00FF00", "#0000FF", "#FFFF00", "#FF00FF", "#00FFFF",
@@ -65,7 +75,7 @@
   const leafNames = {
     {% for hit in candidates.hits %}
       "{{ hit.accession }}": {
-        label: "{{ hit.species }}",
+        label: "{{ hit.species }} {{ hit.accession }}",
         fillColour: speciesColors["{{ hit.species }}"] || "black",
       },
     {% endfor %}
@@ -78,49 +88,61 @@
     },
     ...leafNames,
   }
-  const parent = document.querySelector("#phylotree");
-  const defaultTreeSize = {
-    width: parent.offsetWidth,
-    height: 500,
-  };
-  const tree = new phylocanvas.PhylocanvasGL(
-    parent,
-    {
-      size: defaultTreeSize,
-      nodeSize: 10,
-      showLabels: true,
-      showLeafLabels: true,
-      selectedIds: ["QUERY"],
-      interactive: true,
-      source: newickString,
-      type: phylocanvas.TreeTypes.Rectangular,
-      zoom: -0.5,
-      styles: leafStyles,
-    },
-  );
 
-  const fullScreenTree = (reset = 0) => {
-    const treeWrapper = $('.phylotree');
-    if (reset) {
-      treeWrapper.removeClass("fullscreen");
-      treeWrapper.addClass("my-5");
-      $('#minimizeTreeBtn').hide();
-      $('#maximizeTreeBtn').show();
-      tree.resize(defaultTreeSize.width, defaultTreeSize.height);
-    } else {
-      treeWrapper.addClass("fullscreen");
-      treeWrapper.removeClass("my-5");
-      console.log("treeWrapper:");
-      console.log(treeWrapper);
-      $('#minimizeTreeBtn').show();
-      $('#maximizeTreeBtn').hide();
-      tree.resize(
-        window.innerWidth,
-        window.innerHeight - 50,
-      );
+  $(document).ready(function() {
+    const parent = document.querySelector("#phylotree");
+    const defaultTreeSize = {
+      width: parent.offsetWidth,
+      height: 500,
+    };
+    phyloTree = new phylocanvas.PhylocanvasGL(
+      parent,
+      {
+        size: defaultTreeSize,
+        nodeSize: 10,
+        showLabels: true,
+        showLeafLabels: true,
+        selectedIds: ["QUERY"],
+        interactive: true,
+        source: newickString,
+        type: phylocanvas.TreeTypes.Rectangular,
+        zoom: -0.5,
+        styles: leafStyles,
+      },
+    );
+
+    phyloTree.handleClick = (target, event) => {
+      if (target.object.isLeaf) {
+        const accession = target.object.id;
+        console.log('Clicked leaf ID:', accession);
+        if (/^\w\w\d\d/.test(accession)) {
+          url = `${NCBI_URL}/${accession}`;
+          window.open(url, '_blank');
+        }
+      }
     }
-  }
 
-  // tree.handleClick(); ??
+    fullScreenTree = (reset = 0) => {
+      const treeWrapper = $('.phylotree');
+      if (reset) {
+        treeWrapper.removeClass("fullscreen");
+        treeWrapper.addClass("my-5");
+        $('#minimizeTreeBtn').hide();
+        $('#maximizeTreeBtn').show();
+        phyloTree.resize(defaultTreeSize.width, defaultTreeSize.height);
+      } else {
+        treeWrapper.addClass("fullscreen");
+        treeWrapper.removeClass("my-5");
+        console.log("treeWrapper:");
+        console.log(treeWrapper);
+        $('#minimizeTreeBtn').show();
+        $('#maximizeTreeBtn').hide();
+        phyloTree.resize(
+          window.innerWidth,
+          window.innerHeight - 50,
+        );
+      }
+    }
+  });
 
 </script>

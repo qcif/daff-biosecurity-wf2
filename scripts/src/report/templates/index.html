@@ -18,6 +18,13 @@
       const SAMPLE_ID = "{{ metadata.sample_id }}";
       const DB_COVERAGE = {{ db_coverage | tojson }};
     </script>
+
+    {% for script in static.js %}
+      <script>
+        {{ script }}
+      </script>
+    {% endfor %}
+
   </head>
 
   <body>
@@ -57,12 +64,6 @@
     {% include "components/flags-modal.html" %}
 
   </body>
-
-  {% for script in static.js %}
-    <script>
-      {{ script }}
-    </script>
-  {% endfor %}
 
   <script>
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
