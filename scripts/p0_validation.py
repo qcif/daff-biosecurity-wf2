@@ -210,7 +210,8 @@ def _validate_metadata_locus(value, bold=False):
         return
 
     value_lower = value.lower()
-    if value_lower not in ['na'] + [
+    value_stripped = re.sub(r' gene$', '', value_lower.strip())
+    if value_stripped not in ['na'] + [
         synonym
         for locus in config.allowed_loci
         for synonym in locus
