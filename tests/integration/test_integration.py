@@ -3,7 +3,6 @@
 import importlib
 import os
 import shutil
-import sys
 import tempfile
 import unittest
 from argparse import Namespace
@@ -47,10 +46,16 @@ class IntegrationTest(unittest.TestCase):
                 if old_wdir.is_dir():
                     shutil.rmtree(old_wdir, ignore_errors=True)
         self.wdir_root = Path(tempfile.mkdtemp(prefix=TEMPDIR_PREFIX))
+        self.test_cases = []
+        self.completed_tests = []
 
     def tearDown(self):
-        exc_info = sys.exc_info()
-        if exc_info != (None, None, None):
+        """Check if all tests passed and clean up."""
+        print("\nCompleted tests:")
+        for test_case in self.completed_tests:
+            print(f"  - {test_case.name}")
+
+        if len(self.completed_tests) != len(self.test_cases):
             print(f"Test failed. Wdir has been retained: {self.wdir_root}")
             return
 
@@ -79,9 +84,12 @@ class IntegrationTest(unittest.TestCase):
             module.main()
 
     def test_integration_cases(self):
-        for test_case in sorted(self.test_case_root.iterdir()):
-            if not test_case.is_dir():
-                continue
+        test_cases = [
+            path for path in sorted(self.test_case_root.iterdir())
+            if path.is_dir()
+        ]
+        self.test_cases = test_cases
+        for test_case in test_cases:
             limit_test_case = os.getenv("RUN_TEST_CASE")
             if (
                 limit_test_case
@@ -154,17 +162,23 @@ class IntegrationTest(unittest.TestCase):
                             "output_dir": wdir,
                         },
                     )
-                print_green(f"\nTest case {test_case.name}: P4 PASS\n")
+                    print_green(f"\nTest case {test_case.name}: P4 PASS\n")
 
-                self.patch_and_run(
-                    "p5_db_coverage",
-                    {
-                        "query_dir": query_dir,
-                        "output_dir": wdir,
-                        "bold": False,
-                    },
-                )
-                print_green(f"\nTest case {test_case.name}: P4 PASS\n")
+                    self.patch_and_run(
+                        "p5_db_coverage",
+                        {
+                            "query_dir": query_dir,
+                            "output_dir": wdir,
+                            "bold": False,
+                        },
+                    )
+                    print_green(f"\nTest case {test_case.name}: P4 PASS\n")
+
+                else:
+                    print_green(
+                        f"\nTest case {test_case.name}: P4/P5 SKIPPED - "
+                        f"{candidates_count=} > 3\n"
+                    )
 
                 # Copy newick tree into query dir
                 nwk_file = next(wdir.glob("*.nwk"))
@@ -179,6 +193,8 @@ class IntegrationTest(unittest.TestCase):
                     },
                 )
                 print_green(f"\nTest case {test_case.name}: P6 PASS\n")
+
+                self.completed_tests.append(test_case)
 
 
 if __name__ == "__main__":
