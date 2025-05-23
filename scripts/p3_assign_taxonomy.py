@@ -19,14 +19,15 @@ import json
 import logging
 from pathlib import Path
 
+
+from Bio import SeqIO
+
+from src.utils import deduplicate, existing_path
+from src.utils.config import Config
+from src.utils.flags import FLAGS, Flag
+
 logging.getLogger('matplotlib').setLevel(logging.WARNING)
-
-from Bio import SeqIO  # noqa:E402
 import matplotlib.pyplot as plt  # noqa:E402
-
-from src.utils import deduplicate, existing_path  # noqa:E402
-from src.utils.config import Config  # noqa:E402
-from src.utils.flags import FLAGS, Flag  # noqa:E402
 
 logger = logging.getLogger(__name__)
 config = Config()
@@ -128,7 +129,7 @@ def _assign_species_id(
     candidate_hits_strict,
     bold=False,
 ):
-    """Attempt species ID from BLAST hits.json data."""
+    """Attempt species ID from BLAST/BOLD hits.json data."""
     query_ix = config.get_query_ix(query_dir)
     candidate_species = deduplicate([
         hit for hit in candidate_hits
@@ -160,6 +161,7 @@ def _assign_species_id(
         query_dir,
         selected_hits,
         selected_species,
+        bold=bold,
     )
     if len(selected_species) > config.CRITERIA.MAX_CANDIDATES_FOR_ANALYSIS:
         _write_boxplot(query_dir, selected_hits, bold)
@@ -200,11 +202,12 @@ def _write_candidates(
     query_dir: Path,
     candidate_hits: list[dict],
     candidate_species: list[str],
+    bold: bool = False,
 ):
     """Write candidates hits and species to file."""
     _write_candidates_json(query_dir, candidate_hits, candidate_species)
     _write_candidates_csv(query_dir, candidate_hits)
-    _write_candidates_fasta(query_dir, candidate_hits)
+    _write_candidates_fasta(query_dir, candidate_hits, bold)
     _write_candidates_count(query_dir, candidate_species)
 
 
@@ -231,11 +234,12 @@ def _write_candidates_csv(query_dir, candidate_hits):
     logger.info(f"Written candidate species to {path}")
 
 
-def _write_candidates_fasta(query_dir, candidate_hits):
+def _write_candidates_fasta(query_dir, candidate_hits, bold=False):
     """Write FASTA sequences for each candidate species to file."""
+    hit_key = "hit_id" if bold else "accession"
     path = query_dir / config.CANDIDATES_FASTA
     fastas = config.read_hits_fasta(query_dir)
-    accessions = [hit["accession"] for hit in candidate_hits]
+    accessions = [hit[hit_key] for hit in candidate_hits]
     candidate_fastas = [
         fasta for fasta in fastas
         if fasta.id in accessions
