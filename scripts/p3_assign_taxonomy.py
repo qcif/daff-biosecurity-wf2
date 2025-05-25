@@ -43,6 +43,15 @@ CANDIDATE_CSV_HEADER = [
     "e_value",
     "bitscore",
 ]
+CANDIDATE_CSV_HEADER_BOLD = [
+    "species",
+    "hit_id",
+    "accession",
+    "sequence_description",
+    "similarity",
+    "bin_uri",
+    "url",
+]
 
 
 def main():
@@ -206,7 +215,7 @@ def _write_candidates(
 ):
     """Write candidates hits and species to file."""
     _write_candidates_json(query_dir, candidate_hits, candidate_species)
-    _write_candidates_csv(query_dir, candidate_hits)
+    _write_candidates_csv(query_dir, candidate_hits, bold)
     _write_candidates_fasta(query_dir, candidate_hits, bold)
     _write_candidates_count(query_dir, candidate_species)
 
@@ -221,15 +230,16 @@ def _write_candidates_json(query_dir, hits, species):
     logger.info(f"Written candidate hits/species to {path}")
 
 
-def _write_candidates_csv(query_dir, candidate_hits):
+def _write_candidates_csv(query_dir, candidate_hits, bold=False):
+    header = CANDIDATE_CSV_HEADER_BOLD if bold else CANDIDATE_CSV_HEADER
     path = query_dir / config.CANDIDATES_CSV
     with path.open("w") as f:
         writer = csv.writer(f)
-        writer.writerow(CANDIDATE_CSV_HEADER)
+        writer.writerow(header)
         for hit in candidate_hits:
             writer.writerow([
                 hit.get(key, "")
-                for key in CANDIDATE_CSV_HEADER
+                for key in header
             ])
     logger.info(f"Written candidate species to {path}")
 
