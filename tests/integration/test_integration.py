@@ -71,7 +71,8 @@ class IntegrationTest(unittest.TestCase):
                 print("No previously passed tests found, running all tests.")
         else:
             self.completed_tests = []
-            self.completed_tests_file.unlink()
+            if self.completed_tests_file.exists():
+                self.completed_tests_file.unlink()
 
     def tearDown(self):
         """Check if all tests passed and clean up."""
