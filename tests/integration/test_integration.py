@@ -1,6 +1,16 @@
 #!/usr/bin/env python3
 
+"""Run all modules against test cases in the test-data/integration directory.
+
+Set SKIP_PASSED_TESTS=1 to skip previously passed tests.
+Set KEEP_OUTPUTS=1 to retain output directories after the test run.
+
+Use the ./run_tests.sh script to run this easily with the required environment
+variables set.
+"""
+
 import importlib
+import json
 import os
 import shutil
 import tempfile
@@ -9,6 +19,7 @@ from argparse import Namespace
 from pathlib import Path
 from unittest.mock import patch
 
+COMPLETED_TESTS_FILE = "completed_tests.json"
 TEMPDIR_PREFIX = "integration_test_"
 
 
@@ -46,14 +57,28 @@ class IntegrationTest(unittest.TestCase):
                 if old_wdir.is_dir():
                     shutil.rmtree(old_wdir, ignore_errors=True)
         self.wdir_root = Path(tempfile.mkdtemp(prefix=TEMPDIR_PREFIX))
+        self.completed_tests_file = self.wdir_root / COMPLETED_TESTS_FILE
         self.test_cases = []
-        self.completed_tests = []
+        if os.getenv("SKIP_PASSED_TESTS") == "1":
+            self.completed_tests = self._read_completed_tests()
+            if self.completed_tests:
+                print("SKIP_PASSED_TESTS=1 has been set. Skipping previously"
+                      " passed tests:")
+                for test_case in self.completed_tests:
+                    print(f"  - {test_case.name}")
+            else:
+                print("No previously passed tests found, running all tests.")
+        else:
+            self.completed_tests = []
+            self.completed_tests_file.unlink()
 
     def tearDown(self):
         """Check if all tests passed and clean up."""
-        print("\nCompleted tests:")
-        for test_case in self.completed_tests:
-            print(f"  - {test_case.name}")
+        if self.completed_tests:
+            self._write_completed_tests()
+            print("\nCompleted tests:")
+            for test_case in self.completed_tests:
+                print(f"  - {test_case.name}")
 
         if len(self.completed_tests) != len(self.test_cases):
             print(f"Test failed. Wdir has been retained: {self.wdir_root}")
@@ -66,6 +91,28 @@ class IntegrationTest(unittest.TestCase):
         else:
             print(f"Cleaning up: {self.wdir_root}")
             shutil.rmtree(self.wdir_root, ignore_errors=True)
+
+    def _read_completed_tests(self):
+        """Read completed test cases from a file."""
+        if not self.completed_tests_file.exists():
+            return []
+
+        with open(self.completed_tests_file, 'r') as f:
+            case_names = json.load(f)
+        return [
+            self.test_case_root / name
+            for name in case_names
+        ]
+
+    def _write_completed_tests(self):
+        """Write completed test cases to a file."""
+        with open(self.completed_tests_file, 'w') as f:
+            case_names = [
+                test_case.name
+                for test_case in self.completed_tests
+            ]
+            json.dump(case_names, f, indent=2)
+        print(f"Completed tests written to: {self.completed_tests_file}")
 
     def prepare_working_dir(self, test_case: Path) -> Path:
         """Copy test case files into a fresh working directory"""
@@ -98,6 +145,11 @@ class IntegrationTest(unittest.TestCase):
                 print(
                     f"Skipping test case '{test_case.name}' - env var "
                     f" RUN_TEST_CASE={limit_test_case} has been set.")
+                continue
+
+            if test_case in self.completed_tests:
+                print_green(f"Skipping test case '{test_case.name}' - "
+                            "previously passed.")
                 continue
 
             with self.subTest(test_case=test_case.name):
