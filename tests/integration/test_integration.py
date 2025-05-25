@@ -51,13 +51,14 @@ class IntegrationTest(unittest.TestCase):
 
     def setUp(self):
         """Clean up old temp dirs and create a new one."""
-        if not os.getenv("KEEP_OUTPUTS") == "1":
-            tmp_root = Path(tempfile.gettempdir())
-            for old_wdir in tmp_root.glob(f"{TEMPDIR_PREFIX}*"):
-                if old_wdir.is_dir():
-                    shutil.rmtree(old_wdir, ignore_errors=True)
+        tmp_root = Path(tempfile.gettempdir())
+        for i, old_wdir in enumerate(tmp_root.glob(f"{TEMPDIR_PREFIX}*")):
+            if old_wdir.is_dir():
+                shutil.rmtree(old_wdir, ignore_errors=True)
+        print("Deleted {i + 1} old temp directories at"
+              f" {tmp_root}/{TEMPDIR_PREFIX}*")
         self.wdir_root = Path(tempfile.mkdtemp(prefix=TEMPDIR_PREFIX))
-        self.completed_tests_file = self.wdir_root / COMPLETED_TESTS_FILE
+        self.completed_tests_file = self.test_case_root / COMPLETED_TESTS_FILE
         self.test_cases = []
         if os.getenv("SKIP_PASSED_TESTS") == "1":
             self.completed_tests = self._read_completed_tests()
