@@ -31,7 +31,7 @@ def parallel_process_tasks(
     toi_list,
     pmi,
 ):
-    with ThreadPoolExecutor(max_workers=50) as executor:
+    with ThreadPoolExecutor(max_workers=15) as executor:
         results = {
             get_target_coverage.__name__: {},
             get_related_coverage.__name__: {},

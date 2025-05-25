@@ -137,7 +137,7 @@ def _fetch_gb_records_for_species(species_names, locus):
         if taxid is not None
     ]
 
-    with ThreadPoolExecutor(max_workers=50) as executor:
+    with ThreadPoolExecutor(max_workers=15) as executor:
         future_to_task = {
             executor.submit(genbank.fetch_gb_records, *task, count=True): task
             for task in tasks

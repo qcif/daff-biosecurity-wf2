@@ -189,7 +189,7 @@ def fetch_sources(accessions: list, **kwargs) -> dict[str, GbRecordSource]:
         return parse_metadata(metadata_xml)
 
     accession_sources = {}
-    with ThreadPoolExecutor(max_workers=50) as executor:
+    with ThreadPoolExecutor(max_workers=15) as executor:
         futures = [
             executor.submit(
                 fetch_and_parse,
