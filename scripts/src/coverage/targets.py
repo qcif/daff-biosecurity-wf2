@@ -99,11 +99,11 @@ def fetch_target_taxa(targets, query_dir):
             target_gbif_taxa[target] = gbif_target
 
     logger.debug(
-        f"Targets identified at rank genus or lower:\n"
+        "Targets identified at rank genus or lower:\n"
         + pformat(list(target_gbif_taxa.keys()), indent=2)
     )
     logger.debug(
-        f"Targets identified at rank family or higher:\n"
+        "Targets identified at rank family or higher:\n"
         + pformat(list(higher_taxon_targets.keys()), indent=2)
     )
 

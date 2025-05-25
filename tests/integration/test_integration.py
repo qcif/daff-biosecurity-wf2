@@ -215,22 +215,21 @@ class IntegrationTest(unittest.TestCase):
                         },
                     )
                     print_green(f"\nTest case {test_case.name}: P4 PASS\n")
-
-                    self.patch_and_run(
-                        "p5_db_coverage",
-                        {
-                            "query_dir": query_dir,
-                            "output_dir": wdir,
-                            "bold": False,
-                        },
-                    )
-                    print_green(f"\nTest case {test_case.name}: P4 PASS\n")
-
                 else:
                     print_green(
-                        f"\nTest case {test_case.name}: P4/P5 SKIPPED - "
+                        f"\nTest case {test_case.name}: P4 SKIPPED - "
                         f"{candidates_count=} > 3\n"
                     )
+
+                self.patch_and_run(
+                    "p5_db_coverage",
+                    {
+                        "query_dir": query_dir,
+                        "output_dir": wdir,
+                        "bold": False,
+                    },
+                )
+                print_green(f"\nTest case {test_case.name}: P5 PASS\n")
 
                 # Copy newick tree into query dir
                 nwk_file = next(wdir.glob("*.nwk"))
