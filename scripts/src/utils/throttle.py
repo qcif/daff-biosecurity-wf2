@@ -136,8 +136,8 @@ class Throttle:
                     str(e) + f"\nDB path: {self.db_path}"
                 )
 
-            # Sleep for a random interval to reduce race conditions collisions
-            time.sleep(round(random.uniform(0.01, 0.1), 3))
+            # Sleep for a random interval to reduce race conditions
+            time.sleep(round(random.uniform(0.1, 2), 3))
 
     def with_retry(self, func, args=[], kwargs={}):
         retries = config.MAX_API_RETRIES
