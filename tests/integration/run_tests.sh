@@ -7,11 +7,31 @@ if [[ ! -d "tests/integration" ]]; then
     exit 1
 fi
 
+
 export PYTHONPATH="$PWD/scripts"
 export TAXONKIT_DATA="$HOME/.taxonkit"
-export KEEP_OUTPUTS=1   # Always retain outputs for debugging
 export LOGGING_DEBUG=1
-# export RUN_TEST_CASE=A  # Optional, run a specific test case
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --keep)
+            export KEEP_OUTPUTS=1
+            shift
+            ;;
+        --continue)
+            export SKIP_PASSED_TESTS=1
+            shift
+            ;;
+        --test_case)
+            export RUN_TEST_CASE="$2"
+            shift 2
+            ;;
+        *)
+            echo "Unknown argument: $1"
+            exit 1
+            ;;
+    esac
+done
 
 python -m unittest discover -f -v \
     -s tests/integration \
