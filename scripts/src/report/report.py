@@ -77,6 +77,10 @@ def _get_static_file_contents():
 
 def _get_img_src(path):
     """Return the base64 encoded image source as an HTML img src property."""
+    if not path.exists():
+        logger.warning(f"Expected image {path} does not exist. Replacing with"
+                       " placeholder image.")
+        path = config.PLACEHOLDER_IMG_PATH
     ext = path.suffix[1:]
     return (
         f"data:image/{ext};base64,"
@@ -351,11 +355,8 @@ def _read_db_coverage(query_ix):
                 config.get_query_dir(query_ix)
                 / config.get_map_filename_for_target(target)
             )
-            data[target_type][target]['map_src_base64'] = (
-                _get_img_src(path)
-                if path.exists()
-                else None
-            )
+            data[target_type][target]['map_exists'] = path.exists()
+            data[target_type][target]['map_src_base64'] = _get_img_src(path)
     return data
 
 

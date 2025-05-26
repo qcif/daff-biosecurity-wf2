@@ -10,6 +10,7 @@ from pprint import pformat
 
 from src.gbif.maps import draw_occurrence_map
 from src.utils.config import Config
+from src.utils import errors
 from src.utils.flags import FLAGS, Flag
 
 from .fetch import (
@@ -162,7 +163,18 @@ def _draw_occurrence_maps(
             f" '{target}' (taxon key: {gbif_target.key}) to file"
             f" '{path}'..."
         )
-        draw_occurrence_map(gbif_target.key, path)
+        try:
+            draw_occurrence_map(gbif_target.key, path)
+        except Exception as e:
+            msg = ("Taxon distribution map could not be generated due to an"
+                   " error in the GBIF occurrence.")
+            logger.error(f'{msg} Target: "{target}" Exception: {e}')
+            errors.write(
+                errors.LOCATIONS.DATABASE_COVERAGE,
+                msg,
+                exc=e,
+                context={'target': target},
+            )
 
 
 def _set_flags(db_coverage, query_dir, higher_taxon_targets):

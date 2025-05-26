@@ -151,20 +151,22 @@
                 {% endif %}
               </div>
 
-              {% if context.data.map_src_base64 %}
               <div class="col" style="position: relative;">
                 <div
                   class="occurrence-map"
+                  {% if context.data.map_exists %}
                   onclick="this.classList.toggle('expanded')"
                   title="Click to expand/close"
                   data-bs-toggle="tooltip"
                   data-bs-placement="bottom"
+                  {% endif %}
                 >
                   <img
                     src="{{ context.data.map_src_base64 }}"
                     alt="Map of database coverage"
                     class="img-fluid"
                   >
+                  {% if context.data.map_exists %}
                   <p style="color: white; text-align: center;">
                     Global occurrence records for <em>{{ context.target_taxon }}</em>.
                     <br>
@@ -173,9 +175,16 @@
                       It is therefore possible for this species to occur in regions not shown on the map.
                     </small>
                   </p>
+                  {% else %}
+                  <p style="color: black; text-align: center;">
+                    <small>
+                      No map could be generated for this taxon, most likely due to an error in the GBIF Occurrence API.
+                      Please check for errors above.
+                    </small>
+                    {% endif %}
+                  </p>
                 </div>
               </div>
-              {% endif%}
             </div>
           </div>
 

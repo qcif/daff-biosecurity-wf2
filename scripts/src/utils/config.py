@@ -78,7 +78,7 @@ class Config:
 
     # Other configuration
     FLAG_DETAILS_CSV_PATH = (
-        Path(__file__).parent.parent.parent.parent / 'flags.csv')
+        Path(__file__).parents[3] / 'flags.csv')
     ALLOWED_LOCI_FILE = Path(
         os.getenv(
             "ALLOWED_LOCI_FILE",
@@ -99,6 +99,8 @@ class Config:
     QUERY_LOG_FILENAME = 'query.log'
     ENTREZ_CACHE_DIRNAME = 'entrez_cache'
     THROTTLE_SQLITE_FILE = 'throttle.sqlite'
+    PLACEHOLDER_IMG_PATH = (
+        Path(__file__).parents[1] / 'report/static/img/placeholder.png')
     MAX_API_RETRIES = 3
     ERRORS_DIR = 'errors'
     TEMP_DIR_NAME = 'biosecurity'
