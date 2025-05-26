@@ -7,8 +7,9 @@ from xml.etree import ElementTree as ET
 
 from Bio import Entrez
 
-from ..utils.config import Config
-from ..utils.throttle import ENDPOINTS, Throttle
+from src.utils.config import Config
+from src.utils.locus import Locus
+from src.utils.throttle import ENDPOINTS, Throttle
 
 config = Config()
 logger = logging.getLogger(__name__)
@@ -16,10 +17,6 @@ logger = logging.getLogger(__name__)
 DEBUG_REQUESTS = True
 EFETCH_BATCH_SIZE = 10
 AUTOMATED_ANNOTATION_TAG = '##Genome-Annotation-Data-START##'
-LOCI = {  # TODO: update with DAFF - maybe read from allowed_loci.txt file?
-  'coi': ['COI', 'COX', 'CO1', 'Cytochrome oxidase subunit 1'],
-  # others to be confirmed with DAFF
-}
 
 Entrez.email = config.USER_EMAIL
 if config.NCBI_API_KEY:
@@ -239,7 +236,7 @@ def parse_metadata(xml_str: str) -> dict[str, GbRecordSource]:
 
 
 def fetch_gb_records(
-    locus: str,
+    locus: Locus,
     taxid: int,
     count: bool = False,
 ) -> list[dict]:
@@ -248,24 +245,9 @@ def fetch_gb_records(
     If count, returns a count of matching records, otherwise returns a list
     of matching accessions IDs.
     '''
-    query = ''
-    locus = locus.lower() if locus else None
-    if locus and not config.is_bold:
-        gene_names = None
-        for synonyms in config.allowed_loci:
-            if locus in synonyms:
-                gene_names = synonyms
-                break
-        if gene_names is None:
-            raise ValueError(
-                f"Unrecognized locus encountered: '{locus}' (this should have"
-                " been raised in p0_validation.py)."
-                f" Allowed loci are: {config.allowed_loci}"
-            )
-        query += ' OR '.join(
-            [f'"{term}"[Gene name]' for term in gene_names])
-        query += ' AND '
-    query += f'txid{taxid}[Organism])'
+    query = f'txid{taxid}[Organism])'
+    if locus:
+        query += f' AND ({locus.genbank_query_str})'
     max_results = 1 if count else 100
     logger.debug(f"Submitting Entrez query: <<{query}>>")
     results = fetch_entrez(

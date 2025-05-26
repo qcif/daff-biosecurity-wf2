@@ -16,6 +16,7 @@ from pathlib import Path
 from Bio import SeqIO
 
 from . import countries
+from .locus import Locus
 from .log import get_logging_config
 from .utils import path_safe_str
 
@@ -264,15 +265,14 @@ class Config:
         return self.REPORT.DATABASE_NAME
 
     @property
-    def allowed_loci(self) -> list[list[str]]:
+    def allowed_loci(self) -> list[Locus]:
         """Return a list of allowed loci synonyms.
         Each list contains a series of synonyms for each locus.
         """
+        allowed_loci_data = json.loads(self.ALLOWED_LOCI_FILE.read_text())
         return [
-            [
-                synonym.lower() for synonym in locus
-            ]
-            for locus in json.loads(self.ALLOWED_LOCI_FILE.read_text())
+            Locus(name, data)
+            for name, data in allowed_loci_data.items()
         ]
 
     @property
@@ -326,15 +326,6 @@ class Config:
                     for x in value.split('|')
                     if x.strip()
                 ]
-            if key.lower() == 'locus':
-                value = value.lower()
-                if self.is_bold:
-                    return 'COI'
-                if value == 'na':
-                    return None
-                if value.endswith(' gene'):
-                    return value.rsplit(' ', 1)[0]
-
             return value
 
         if getattr(self, '_metadata', None):
@@ -359,15 +350,30 @@ class Config:
             self.INPUTS.METADATA_CSV_HEADER[field]
         ]
 
-    def get_locus_for_query(self, query) -> str:
-        return self._get_metadata_for_query(query, "locus")
+    def get_locus_for_query(self, query) -> Locus:
+        name = (
+            'COI'
+            if self.is_bold
+            else self._get_metadata_for_query(query, "locus")
+        )
+        if name.endswith(' gene'):
+            return name.rsplit(' ', 1)[0]
+        if name is None or name.lower().strip() == 'na':
+            return Locus('NA', {})
+        for locus in self.allowed_loci:
+            if name in locus:
+                return locus.rename(name)
+        raise ValueError(
+            f"Unrecognized locus '{name}' for query {query}. This should have"
+            " been raised in p0_validation.py. Allowed loci are:\n- "
+            f"{'\n- '.join([str(locus) for locus in self.allowed_loci])}"
+        )
 
     def locus_was_provided_for(self, query) -> bool:
         """Determine whether a locus was provided."""
-        locus = self.get_locus_for_query(query)
         if self.is_bold:
             return True
-        if not locus:
+        if not self.get_locus_for_query(query):
             return False
         return True
 

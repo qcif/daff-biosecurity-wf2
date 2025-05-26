@@ -52,11 +52,15 @@ class IntegrationTest(unittest.TestCase):
     def setUp(self):
         """Clean up old temp dirs and create a new one."""
         tmp_root = Path(tempfile.gettempdir())
-        for i, old_wdir in enumerate(tmp_root.glob(f"{TEMPDIR_PREFIX}*")):
+        n_deleted = None
+        for n_deleted, old_wdir in enumerate(
+            tmp_root.glob(f"{TEMPDIR_PREFIX}*")
+        ):
             if old_wdir.is_dir():
                 shutil.rmtree(old_wdir, ignore_errors=True)
-        print("Deleted {i + 1} old temp directories at"
-              f" {tmp_root}/{TEMPDIR_PREFIX}*")
+        if n_deleted:
+            print(f"Deleted {n_deleted + 1} old temp directories at"
+                  f" {tmp_root}/{TEMPDIR_PREFIX}*")
         self.wdir_root = Path(tempfile.mkdtemp(prefix=TEMPDIR_PREFIX))
         self.completed_tests_file = self.test_case_root / COMPLETED_TESTS_FILE
         self.test_cases = []
@@ -82,17 +86,26 @@ class IntegrationTest(unittest.TestCase):
             for test_case in self.completed_tests:
                 print(f"  - {test_case.name}")
 
-        if len(self.completed_tests) != len(self.test_cases):
-            print(f"Test failed. Wdir has been retained: {self.wdir_root}")
+        if self._has_failed_tests():
+            print(f"\nTest failed. Wdir has been retained: {self.wdir_root}")
             return
 
-        print("Test passed.")
+        print_green("\nTest passed.")
         if os.getenv("KEEP_OUTPUTS") == "1":
-            print("KEEP_OUTPUTS=1; output dirs have been retained at:"
+            print("\nKEEP_OUTPUTS=1; output dirs have been retained at:"
                   f" {self.wdir_root}")
         else:
-            print(f"Cleaning up: {self.wdir_root}")
+            print(f"\nCleaning up: {self.wdir_root}")
             shutil.rmtree(self.wdir_root, ignore_errors=True)
+
+    def _has_failed_tests(self):
+        n_test_cases = (
+            1 if os.getenv("RUN_TEST_CASE")
+            else len(self.test_cases)
+        )
+        if len(self.completed_tests) != n_test_cases:
+            return True
+        return False
 
     def _read_completed_tests(self):
         """Read completed test cases from a file."""

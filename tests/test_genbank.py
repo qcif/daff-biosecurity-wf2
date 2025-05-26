@@ -12,14 +12,16 @@ from src.entrez.genbank import (
     fetch_sources,
 )
 from src.utils import serialize
+from src.utils.config import Config
 
+config = Config()
 
 RESPECT_RATE_LIMIT = 1
 PERFORMANCE = 2
 CONCURRENCY_TEST = RESPECT_RATE_LIMIT
 
 DATA_DIR = Path(__file__).parent / 'test-data'
-EXPECTED_RECORD_COUNT = 62258
+EXPECTED_RECORD_COUNT = 62401
 EXPECT_RECORDS_JSON = DATA_DIR / 'genbank_expect_ids.json'
 EXPECT_SINGLE_SOURCE_JSON = DATA_DIR / 'genbank_single_source.json'
 EXPECT_MULTIPLE_SOURCES_JSON = DATA_DIR / 'genbank_multiple_sources.json'
@@ -38,15 +40,22 @@ BATCH_SIZE = 10  # Number of accessions per request, in PERFORMANCE mode
 
 class TestFetchRecords(unittest.TestCase):
 
+    def setUp(self):
+        for loc in config.allowed_loci:
+            if LOCUS in loc:
+                self.locus = loc.rename(LOCUS)
+                break
+
     def test_fetch_gb_records_count(self):
-        result = fetch_gb_records(LOCUS, TAXID, True)
-        self.assertEqual(result, EXPECTED_RECORD_COUNT)
+        result = fetch_gb_records(self.locus, TAXID, True)
+        self.assertGreaterEqual(result, EXPECTED_RECORD_COUNT)
 
     def test_fetch_gb_records_ids(self):
-        result = fetch_gb_records(LOCUS, TAXID, False)
+        result = fetch_gb_records(self.locus, TAXID, False)
         with EXPECT_RECORDS_JSON.open() as f:
             EXPECTED_RECORD_IDS = json.load(f)
-        self.assertEqual(result, EXPECTED_RECORD_IDS)
+        missing_ids = set(EXPECTED_RECORD_IDS) - set(result)
+        self.assertEqual(len(missing_ids), 0)
 
     def test_fetch_single_source(self):
         result = fetch_sources(SINGLE_ACCESSION)

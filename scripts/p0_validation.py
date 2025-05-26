@@ -202,23 +202,28 @@ def _validate_metadata_sample_id(value):
 
 
 def _validate_metadata_locus(value, bold=False):
-    """This must match the list of allowed loci, if provided."""
+    """This must match the list of allowed loci, if provided.
+    The suffic " gene" will be stripped from the provided value prior to
+    validation.
+    """
     if not config.allowed_loci:
         return
 
     if bold and not value:
         return
 
-    value_lower = value.lower()
-    value_stripped = re.sub(r' gene$', '', value_lower.strip())
-    if value_stripped not in ['na'] + [
+    permitted_synonyms = ['na'] + [
         synonym
         for locus in config.allowed_loci
-        for synonym in locus
-    ]:
+        for synonym in locus.synonyms
+    ]
+
+    value_lower = value.lower()
+    value_stripped = re.sub(r' gene$', '', value_lower.strip())
+    if value_stripped not in permitted_synonyms:
         raise MetadataFormatError(
-            f'Locus "{value_lower}" is not in the list of permitted loci:\n'
-            + '- ' + '\n- '.join([
+            f'Locus "{value_lower}" is not in the list of permitted loci:\n- '
+            + '\n- '.join([
                 str(synonyms) for synonyms in config.allowed_loci
             ])
         )
