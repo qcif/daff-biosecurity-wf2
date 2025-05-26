@@ -31,7 +31,26 @@
   </tbody>
 </table>
 
-<div class="modal" id="inputFastaModal" tabindex="-1">
+<div class="my-3">
+  <p>
+    <button
+      class="btn btn-primary btn-sm mx-2"
+      data-bs-toggle="modal"
+      data-bs-target="#inputParamsModal"
+    >
+      Workflow params
+    </button>
+    <button
+      class="btn btn-primary btn-sm mx-2"
+      data-bs-toggle="modal"
+      data-bs-target="#versionsModal"
+    >
+      Program versions
+    </button>
+  </p>
+</div>
+
+<div class="modal fade" id="inputFastaModal" tabindex="-1">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
@@ -45,6 +64,93 @@
       </div>
       <div class="modal-body">
         <pre>{{ input_fasta }}</pre>
+      </div>
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          data-bs-dismiss="modal"
+        >Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="inputParamsModal" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Workflow parameters</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <table class="table table-striped tight">
+          <tbody>
+            {% for key, value in workflow_params.items() %}
+            <tr>
+              <td class="fw-bold">
+                <code class="text-dark">
+                  {{ key }}
+                </code>
+              </td>
+              <td>
+                <code class="text-dark">
+                  {{ value }}
+                </code>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          data-bs-dismiss="modal"
+        >Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal fade" id="versionsModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Workflow program versions</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <table class="table table-striped tight">
+          <tbody>
+            {% for key, value in workflow_versions.items() %}
+            <tr>
+              <td class="fw-bold">
+                <code class="text-dark">
+                  {{ key }}
+                </code>
+              </td>
+              <td>
+                <code class="text-dark">
+                  {{ value }}
+                </code>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
       <div class="modal-footer">
         <button

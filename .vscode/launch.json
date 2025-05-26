@@ -196,6 +196,9 @@
                 // "output/query_002_ON075825",
                 // "output/query_003_PP466915"
 
+                "--versions_yml", "tests/test-data/versions.yml",
+                "--params_json", "tests/test-data/params.json",
+
                 // For testing issue cases:
                 // "output/issues/93/query_007_barcode_85_MG250214_4_1_1_KAPA",
                 // "--output_dir", "output/issues/93",
@@ -220,6 +223,8 @@
                 "output/bold/query_001_LC438549",
                 "--output_dir", "output/bold",
                 "--bold",
+                "--versions_yml", "tests/test-data/versions.yml",
+                "--params_json", "tests/test-data/params.json",
             ],
             "env": {
                 "INPUT_FASTA_FILEPATH": "tests/test-data/queries.fasta",
