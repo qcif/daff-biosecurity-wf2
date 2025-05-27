@@ -126,7 +126,7 @@
         <td class="text-center">{{ candidate.e_value }}</td>
         {% endif %}
         <td class="text-center">
-          {% if candidate.species | length > config.CRITERIA.MAX_CANDIDATES_FOR_ANALYSIS %}
+          {% if candidates.species | length > config.CRITERIA.MAX_CANDIDATES_FOR_ANALYSIS %}
           <span
             class="badge bg-secondary px-2"
             data-bs-toggle="tooltip"
