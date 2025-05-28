@@ -35,7 +35,7 @@ code {
   max-width: 1400px;
 }
 table.tight th, table.tight td {
-  padding: 0 3rem 0 1rem;
+  padding: 0 1rem 0 .5rem;
 }
 table.lined tr {
   border-bottom: 1px solid #e0e0e0;
@@ -62,7 +62,7 @@ table.sortable th::before {
   opacity: 0;
   position: absolute;
   left: 0.5em;
-  bottom: calc(50% - 0.5rem);
+  bottom: calc(50% - 0.6rem);
   padding-right: 1rem;
   pointer-events: none;
 }
@@ -79,6 +79,11 @@ table.sortable th[aria-sort="ascending"]::before {
 table.sortable th[aria-sort="descending"]::before {
   opacity: 0.6;
   content: "⇓";
+}
+.info-badge {
+  font-size: 80%;
+  margin: 0 .5em;
+  cursor: default;
 }
 .source {
   background: #f9f9f9;
@@ -133,11 +138,13 @@ table.sortable th[aria-sort="descending"]::before {
 .box-secondary {
   background-color: #eee;
 }
-
+thead.no-wrap th {
+  white-space: nowrap;
+}
 
 /* BLAST hits */
 #selectedHitAlignment {
-  max-height: 300px;
+  max-height: 260px;
   overflow-y: auto;
   font-size: x-small;
   padding: .5rem;

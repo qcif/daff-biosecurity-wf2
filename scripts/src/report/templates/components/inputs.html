@@ -1,4 +1,9 @@
-<h3>Sample metadata</h3>
+{% from "macros/info-badge.html" import info_badge %}
+
+<h3>
+  Sample metadata
+  {{ info_badge("These details are derived from your metadata.csv input file.") }}
+</h3>
 
 <table class="table table-striped my-3">
   <tbody>

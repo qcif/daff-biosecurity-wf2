@@ -200,8 +200,8 @@
                 "--params_json", "tests/test-data/params.json",
 
                 // For testing issue cases:
-                // "output/issues/93/query_007_barcode_85_MG250214_4_1_1_KAPA",
-                // "--output_dir", "output/issues/93",
+                // "output/issues/44/query_001_VE25-1406_COI",
+                // "--output_dir", "output/issues/44",
             ],
             "env": {
                 "REPORT_DEBUG": "1",
@@ -210,8 +210,8 @@
                 // "INPUT_FASTA_FILEPATH": "tests/test-data/queries.fasta",
 
                 // For testing issue cases:
-                // "INPUT_FASTA_FILEPATH": "output/issues/93/query.fasta",
-                // "INPUT_METADATA_CSV_FILEPATH": "output/issues/93/metadata.csv",
+                // "INPUT_FASTA_FILEPATH": "output/issues/44/query.fasta",
+                // "INPUT_METADATA_CSV_FILEPATH": "output/issues/44/metadata.csv",
             },
         },
         {
