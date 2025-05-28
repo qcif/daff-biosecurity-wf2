@@ -305,7 +305,6 @@ def _write_boxplot(query_dir, hits, bold=False):
         labels.append(genus)
         identities.append(values)
     plt.figure(figsize=(12, 3))
-    # plt.boxplot(identities, tick_labels=labels, patch_artist=True)
     plt.boxplot(identities, labels=labels, patch_artist=True)
     if len(genera) > 5:
         plt.xticks(rotation=80)
