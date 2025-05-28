@@ -126,7 +126,7 @@
                   {{ records_str }} records
                 </div>
                 <p class="my-3">
-                  There are {{ records_str }} sequences in the reference database for
+                  There are {{ records_str }} sequence records in the reference database for
                   <em>{{ context.target_taxon }}</em>
                   <span
                     {% if not context.metadata.locus_provided %}
@@ -136,7 +136,9 @@
                     data-bs-placement="bottom"
                     {% endif %}
                   >
-                    at the given locus <strong>{{ context.metadata.locus }}</strong>.
+                    that have been annotated with the given locus
+                    <strong>{{ context.metadata.locus }}</strong>.
+                    It is possible that more records exist for this taxon which were not correctly annotated with this locus.
                   </span>
                 </p>
 
