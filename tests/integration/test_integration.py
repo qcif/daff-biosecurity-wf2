@@ -19,6 +19,7 @@ from argparse import Namespace
 from pathlib import Path
 from unittest.mock import patch
 
+TEST_DATA_DIR = Path(__file__).parents[2] / "tests" / "test-data"
 COMPLETED_TESTS_FILE = "completed_tests.json"
 TEMPDIR_PREFIX = "integration_test_"
 
@@ -256,6 +257,8 @@ class IntegrationTest(unittest.TestCase):
                         "query_dir": query_dir,
                         "output_dir": wdir,
                         "bold": False,
+                        "params_json": TEST_DATA_DIR / "params.json",
+                        "versions_yml": TEST_DATA_DIR / "versions.yml",
                     },
                 )
                 print_green(f"\nTest case {test_case.name}: P6 PASS\n")
