@@ -26,5 +26,6 @@ id,name,value,explanation,outcome,level
 6,Phylogenetic assessment,A,Candidate species grouped within single clade,The query sequence is genetically consistent with sequences of the best-matching species,1
 6,Phylogenetic assessment,B,The query sequence clusters as sister to a species-specific clade or as a single branch in a tree,"The sample is genetically distinct from the sequences of the best-matching species, and may lack representation in the reference database. This indicates that the sample organism is either poorly studied or a potential novel species.",2
 6,Phylogenetic assessment,C,Genotype diversity grouped into multiple diverse groups,The top candidate species cannot be confidently distinguished from other related species,3
-7,Preliminary identification confirmation,A,Identified species is consistent with preliminary morphology ID,The preliminary identification is supported by the molecular data,1
-7,Preliminary identification confirmation,B,Identified species is not consistent with preliminary morphology ID,The molecular data contradicts the preliminary identification,3
+7,Preliminary identification confirmation,A,Identified species is consistent with preliminary ID,The preliminary identification is supported by the molecular data,1
+7,Preliminary identification confirmation,B,Identified species is not consistent with preliminary ID,The molecular data contradicts the preliminary identification,3
+7,Preliminary identification confirmation,NA,Cannot confirm or reject the preliminary ID,Insufficient evidence due to inconclusive taxonomy of the sample,0

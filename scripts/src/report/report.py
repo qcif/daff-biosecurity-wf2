@@ -228,6 +228,10 @@ def _get_pmi_result(flags):
             'explanation': "Inconclusive taxonomic identity (Flag"
                            f" {FLAGS.POSITIVE_ID}{flag_1.value})",
             'bs-class': 'secondary',
+            'tooltip': (
+                "The preliminary ID cannot be confirmed or rejected, because"
+                " we did not identify a conclusive taxonomy for the sample."
+                ),
         }
     flag_7 = flags[FLAGS.PMI]
     if flag_7.value == FLAGS.A:

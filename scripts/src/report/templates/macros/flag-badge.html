@@ -1,4 +1,6 @@
-{% macro render_flag(flag) %}
+{% from "macros/info-badge.html" import info_badge %}
+
+{% macro render_flag(flag, tooltip=none) %}
 
 <div class="row align-items-center">
   <div class="col-auto pe-2">
@@ -17,6 +19,11 @@
         Flag {{ flag.flag_id }}{{ flag.value }}
       </span>
     </a>
+    {% if tooltip %}
+    <p class="text-center font-xl mb-0">
+      {{ info_badge(tooltip, placement="bottom") }}
+    </p>
+    {% endif %}
   </div>
 
   <div class="col">
