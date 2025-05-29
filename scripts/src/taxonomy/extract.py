@@ -11,6 +11,7 @@ config = Config()
 
 
 TAXONOMIC_RANKS = [
+    "domain",
     "superkingdom",
     'kingdom',
     'phylum',
