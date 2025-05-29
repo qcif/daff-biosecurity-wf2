@@ -2,6 +2,7 @@
 {% from "macros/alert-level-icon.html" import render_level_icon %}
 {% from "macros/db-coverage-target-modal.html" import render_target_modal %}
 {% from "macros/flag-badge.html" import render_flag %}
+{% from "macros/info-badge.html" import info_badge %}
 
 <h2>Identification of candidate species</h2>
 
@@ -13,13 +14,17 @@
   {% if not bold %}
   <div class="col">
     <p class="lead" style="margin-bottom: 2rem;">
-      Candidate hits must meet ONE of these criteria:
+      {{ info_badge("A BLAST hit is a match between the sample DNA sequence and a sequence record in the reference database. There are often hundreds of hits per query sequence, of varying similarity.") }}
+      BLAST hits must meet <strong>ONE</strong> of these criteria to be considered for candidate screening:
     </p>
 
     <table class="table">
       <tr>
         <td>
-          <strong>Minimum alignment length</strong>
+          <strong>
+            Minimum alignment length
+            {{ info_badge("The length of matching sequence between the sample DNA sequence and the matching hit sequence.") }}
+          </strong>
         </td>
         <td>
           <code>{{ config.CRITERIA.ALIGNMENT_MIN_NT }}bp</code>
@@ -27,7 +32,10 @@
       </tr>
       <tr>
         <td>
-          <strong>Minimum query coverage</strong>
+          <strong>
+            Minimum query coverage
+            {{ info_badge("The proportion of the sample DNA sequence that must be matched by the hit sequence.") }}
+          </strong>
         </td>
         <td>
           <code>{{ config.CRITERIA.ALIGNMENT_MIN_Q_COVERAGE * 100 }}%</code>
@@ -45,9 +53,18 @@
     <table class="table tight font-small">
       <thead>
         <th>Classification</th>
-        <th>Alignment identity</th>
-        <th>Number of hits</th>
-        <th>Number of species</th>
+        <th>
+          Alignment identity
+          {{ info_badge("The proportion of nucleotides that match between the query and reference sequence.") }}
+        </th>
+        <th>
+          Number of hits
+          {{ info_badge("The number of reference sequences that meet this threshold. There can be many reference sequences for one species.") }}
+        </th>
+        <th>
+          Number of species
+          {{ info_badge("The number of species that are represented in the matching reference sequences at this threshold. These are considered 'Candidate Species' for the purpose of the analysis.") }}
+        </th>
       </thead>
       <tr class="{% if candidates.strict %}alert-success{% endif %}">
         <td>
@@ -103,14 +120,29 @@
 
       <thead>
         <th>Species</th>
-        <th class="text-center">Hits</th>
-        <th class="text-center" data-sort-method="number">Identity</th>
+        <th class="text-center">
+          Hits
+          {{ info_badge("The number of candidate hits with reference sequences that have this species annotation.") }}
+        </th>
+        <th class="text-center" data-sort-method="number">
+          Identity
+          {{ info_badge("The proportion of nucleotides that match between the query and reference sequence.") }}
+        </th>
         {% if bold %}
-          <th class="text-center">BOLD Record</th>
+          <th class="text-center">
+            BOLD Record
+            {{ info_badge("The highest-matching BOLD sequence record for this species.") }}
+          </th>
         {% else %}
-          <th class="text-center">E-value</th>
+          <th class="text-center">
+            E-value
+            {{ info_badge("A measure of likelihood that the match is due to random chance. A value of zero is an excellent match.") }}
+          </th>
         {% endif %}
-        <th class="text-center">Database coverage</th>
+        <th class="text-center">
+          Database coverage
+          {{ info_badge("An analysis of species coverage in the reference database.") }}
+        </th>
       </thead>
       {% for candidate in candidates.species %}
       {% set taxon = candidate.species %}
@@ -126,7 +158,7 @@
         <td class="text-center">{{ candidate.e_value }}</td>
         {% endif %}
         <td class="text-center">
-          {% if candidate.species | length > config.CRITERIA.MAX_CANDIDATES_FOR_ANALYSIS %}
+          {% if candidates.species | length > config.CRITERIA.MAX_CANDIDATES_FOR_ANALYSIS %}
           <span
             class="badge bg-secondary px-2"
             data-bs-toggle="tooltip"

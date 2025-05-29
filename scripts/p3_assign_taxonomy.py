@@ -287,7 +287,12 @@ def _write_pmi_match(taxonomic_identity, query_ix, query_dir):
                 f.write(','.join(('rank', 'taxon')))
                 f.write(','.join(match[0]))
     else:
-        logger.info("No taxonomic ID - no PMI flag (7) written.")
+        logger.info("No taxonomic ID - PMI flag 7NA written.")
+        Flag.write(
+            query_dir,
+            FLAGS.PMI,
+            FLAGS.NA,
+        )
 
 
 def _write_boxplot(query_dir, hits, bold=False):

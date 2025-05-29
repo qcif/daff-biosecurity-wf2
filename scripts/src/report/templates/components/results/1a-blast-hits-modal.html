@@ -1,4 +1,6 @@
-<div class="modal" id="blastHitsModal" tabindex="-1">
+{% from "macros/info-badge.html" import info_badge %}
+
+<div class="modal fade" id="blastHitsModal" tabindex="-1">
   <div class="modal-dialog modal-xxl">
     <div class="modal-content">
       <div class="modal-header">
@@ -13,25 +15,62 @@
       <div class="modal-body">
         <p>
           This table shows all results that were returned by the BLAST search.
+            Each row represents a reference sequence that matched the query
+            sequence.
           Use <code>CTRL+F</code> to search the table, and click table headers
-          to sort by column.
+            to sort by column. Click on a row to show the corresponding BLAST
+            alignment and taxonomy information in the bottom panes.
         </p>
-        <div class="mb-5" style="max-height: 35vh; overflow-y: auto;">
+        <div class="mb-3" style="max-height: 35vh; overflow-y: auto;">
           <table class="table tight font-small freeze-header sortable">
-            <thead>
-              <th class="text-center" data-sort-method="number">Rank</th>
-              <th>Accession</th>
-              <th>Hit subject</th>
-              <th class="text-center" data-sort-method="number">Align length</th>
-              <th class="text-center" data-sort-method="number">Query coverage</th>
-              <th class="text-center" data-sort-method="number">Bitscore</th>
-              <th class="text-center" data-sort-method="number" style="white-space: nowrap;">E-value</th>
-              <th class="text-center" data-sort-method="number">Identity</th>
+            <thead class="no-wrap">
+              <th class="text-center" data-sort-method="number">
+                Rank
+                {{ info_badge("The hit rank determined in the BLAST program output.") }}
+              </th>
+              <th>
+                Accession
+                {{ info_badge("The NCBI accession number for the reference sequence record. Click to view on NCBI.") }}
+              </th>
+              <th>
+                Hit subject
+                {{ info_badge("A description of the NCBI sequence record (information provided by the sequence submitter).") }}
+              </th>
+              <th class="text-center" data-sort-method="number">
+                Align length
+                {{ info_badge("The proportion of nucleotides that match between the query and reference sequence.") }}
+              </th>
+              <th class="text-center" data-sort-method="number">
+                Query coverage
+                {{ info_badge("The proportion of the sample DNA sequence that must be matched by the hit sequence.") }}
+              </th>
+              <th class="text-center" data-sort-method="number">
+                Bitscore
+                {{ info_badge("A match score calculated by the BLAST algorithm based on the number of matches,mismatches and gaps in the sequence alignment.") }}
+              </th>
+              <th class="text-center" data-sort-method="number" style="white-space: nowrap;">
+                E-value
+                {{ info_badge("A measure of likelihood that the match is due to random chance. A value of zero is an excellent match.") }}
+              </th>
+              <th class="text-center" data-sort-method="number">
+                Identity
+                {{ info_badge("The proportion of nucleotides that match between the query and reference sequence.") }}
+              </th>
             </thead>
             {% for hit in hits %}
             <tr class="interactive" onclick="showBlastHit({{ loop.index0 }});">
               <td class="text-center">{{ loop.index }}</td>
-              <td>{{ hit.accession }}</td>
+              <td>
+                <a
+                  href="https://ncbi.nlm.nih.gov/nuccore/{{ hit.accession }}"
+                  target="_blank"
+                  title="View sequence record on NCBI"
+                  data-bs-toggle="tooltip"
+                  data-bs-placement="top"
+                >
+                  {{ hit.accession }}
+                </a>
+              </td>
               <td>{{ hit.hit_subject }}</td>
               <td class="text-center" data-sort="{{ hit.alignment_length }}">{{ hit.alignment_length }}</td>
               <td class="text-center" data-sort="{{ hit.query_coverage }}">{{ (hit.query_coverage * 100) | round(1) }}%</td>
@@ -45,11 +84,17 @@
 
         <div class="d-flex justify-content-around">
           <div style="flex: 1.5; margin-right: 2rem;">
-            <p class="lead">Selected alignment</p>
+            <p class="lead">
+              Selected alignment
+              {{ info_badge("This pane shows the BLAST alignment between query and reference sequences, allowing any mismatched residues and gaps in the alignment to be manually inspected.") }}
+            </p>
             <pre id="selectedHitAlignment"></pre>
           </div>
           <div style="flex: 1;">
-            <p class="lead">Selected taxonomy</p>
+            <p class="lead">
+              Selected taxonomy
+              {{ info_badge("Taxonomic records provided by the NCBI Taxonomy registry.") }}
+            </p>
             <table id="selectedHitTaxonomy" class="table tight font-small">
               <tr>
                 <th>Domain</th>

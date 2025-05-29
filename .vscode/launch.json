@@ -36,7 +36,7 @@
                 "TAXONKIT_DATA": "${env:HOME}/.taxonkit",
                 "KEEP_OUTPUTS": "1",  // Always retain outputs for debugging
                 "GBIF_MAX_OCCURRENCE_RECORDS": "200",
-                "RUN_TEST_CASE": "A",  // Optional, run a specific test case
+                "RUN_TEST_CASE": "110",  // Optional, run a specific test case
             },
             "console": "integratedTerminal",
             "justMyCode": true
@@ -196,9 +196,12 @@
                 // "output/query_002_ON075825",
                 // "output/query_003_PP466915"
 
+                "--versions_yml", "tests/test-data/versions.yml",
+                "--params_json", "tests/test-data/params.json",
+
                 // For testing issue cases:
-                // "output/issues/93/query_007_barcode_85_MG250214_4_1_1_KAPA",
-                // "--output_dir", "output/issues/93",
+                // "output/issues/44/query_001_VE25-1406_COI",
+                // "--output_dir", "output/issues/44",
             ],
             "env": {
                 "REPORT_DEBUG": "1",
@@ -207,8 +210,8 @@
                 // "INPUT_FASTA_FILEPATH": "tests/test-data/queries.fasta",
 
                 // For testing issue cases:
-                // "INPUT_FASTA_FILEPATH": "output/issues/93/query.fasta",
-                // "INPUT_METADATA_CSV_FILEPATH": "output/issues/93/metadata.csv",
+                // "INPUT_FASTA_FILEPATH": "output/issues/44/query.fasta",
+                // "INPUT_METADATA_CSV_FILEPATH": "output/issues/44/metadata.csv",
             },
         },
         {
@@ -220,6 +223,8 @@
                 "output/bold/query_001_LC438549",
                 "--output_dir", "output/bold",
                 "--bold",
+                "--versions_yml", "tests/test-data/versions.yml",
+                "--params_json", "tests/test-data/params.json",
             ],
             "env": {
                 "INPUT_FASTA_FILEPATH": "tests/test-data/queries.fasta",

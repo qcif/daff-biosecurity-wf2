@@ -13,7 +13,12 @@ def main():
     """Build the workflow report."""
     args = _parse_args()
     config.configure(args.output_dir, query_dir=args.query_dir)
-    report.render(args.query_dir, args.bold)
+    report.render(
+        args.query_dir,
+        args.bold,
+        params_json=args.params_json,
+        versions_yml=args.versions_yml,
+    )
 
 
 def _parse_args():
@@ -29,6 +34,16 @@ def _parse_args():
         "--bold",
         action="store_true",
         help="If set, will enable the 'bold' logic for rendering the report."
+    )
+    parser.add_argument(
+        "--params_json",
+        type=existing_path,
+        help="Path to params JSON file."
+    )
+    parser.add_argument(
+        "--versions_yml",
+        type=existing_path,
+        help="Path to versions YAML file."
     )
 
     return parser.parse_args()

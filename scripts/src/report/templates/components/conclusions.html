@@ -47,13 +47,12 @@
     <td>
       <small>
         {% if '7' in conclusions.flags %}
-        {{ render_flag(conclusions.flags['7']) }}
+        {{ render_flag(conclusions.flags['7'], tooltip=conclusions.summary.pmi.tooltip) }}
         {% else %}
         <p>
           No candidates were identified, so the preliminary morphology ID cannot be assessed.
         </p>
         {% endif %}
-
       </small>
     </td>
 

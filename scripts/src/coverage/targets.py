@@ -92,7 +92,7 @@ def fetch_target_taxa(targets, query_dir):
                 context={"target": target},
             )
             continue
-        if gbif_target.rank > RANK.GENUS:
+        if gbif_target.rank and gbif_target.rank > RANK.GENUS:
             # These get processed differently - broad GB record count only
             higher_taxon_targets[target] = gbif_target
         else:

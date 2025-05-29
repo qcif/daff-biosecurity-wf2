@@ -9,6 +9,7 @@ import re
 from datetime import datetime
 from pathlib import Path
 
+import yaml
 from jinja2 import Environment, FileSystemLoader
 
 from src.utils import config, serialize
@@ -25,14 +26,19 @@ TEMPLATE_DIR = Path(__file__).parent / 'templates'
 STATIC_DIR = Path(__file__).parent / 'static'
 
 
-def render(query, bold=False):
+def render(
+    query,
+    bold=False,
+    params_json=None,
+    versions_yml=None,
+):
     """Render to HTML report to the configured output directory."""
     query_ix = config.get_query_ix(query)
     j2 = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
     j2.filters['css_hash'] = css_hash
     j2.filters['bs_class'] = level_to_bs_class
     template = j2.get_template('index.html')
-    context = _get_report_context(query_ix, bold)
+    context = _get_report_context(query_ix, bold, params_json, versions_yml)
 
     path = config.output_dir / 'report_context.json'
     with path.open('w') as f:
@@ -88,7 +94,7 @@ def _get_img_src(path):
     )
 
 
-def _get_report_context(query_ix, bold):
+def _get_report_context(query_ix, bold, params_json, versions_yml):
     """Build the context for the report template."""
     query_fasta_str = config.read_query_fasta(query_ix).format('fasta')
     hits = config.read_hits_json(query_ix)['hits']
@@ -98,9 +104,10 @@ def _get_report_context(query_ix, bold):
         else config.REPORT.TITLE
     )
     return {
-        'url_from_accession': config.url_from_accession,
         'title': config.REPORT.TITLE,
         'html_title': html_title,
+        'workflow_params': _read_params_json(params_json),
+        'workflow_versions': _read_versions_yml(versions_yml),
         'facility': config.INPUTS.FACILITY_NAME,
         'analyst_name': config.INPUTS.ANALYST_NAME,
         'start_time': config.start_time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -126,6 +133,34 @@ def _get_report_context(query_ix, bold):
                          / config.TREE_NWK_FILENAME).read_text().strip(),
         'error_log': ErrorLog(config.get_query_dir(query_ix)),
         'bold': bold,
+        # rendering functions:
+        'url_from_accession': config.url_from_accession,
+    }
+
+
+def _read_params_json(params_json: Path) -> dict[str, str]:
+    """Read the workflow parameters from a JSON file."""
+    if not params_json:
+        return {}
+    if not params_json.exists():
+        logger.warning(f"Parameters JSON file {params_json} does not exist.")
+        return {}
+    return json.loads(params_json.read_text())
+
+
+def _read_versions_yml(versions_yml: Path) -> dict[str, str]:
+    """Read the workflow versions from a YAML file."""
+    if not versions_yml:
+        return {}
+    if not versions_yml.exists():
+        logger.warning(f"Versions YAML file {versions_yml} does not exist.")
+        return {}
+    with versions_yml.open() as f:
+        data = yaml.safe_load(f)
+    return {
+        k: v
+        for versions in data.values()
+        for k, v in versions.items()
     }
 
 
@@ -193,6 +228,10 @@ def _get_pmi_result(flags):
             'explanation': "Inconclusive taxonomic identity (Flag"
                            f" {FLAGS.POSITIVE_ID}{flag_1.value})",
             'bs-class': 'secondary',
+            'tooltip': (
+                "The preliminary ID cannot be confirmed or rejected, because"
+                " we did not identify a conclusive taxonomy for the sample."
+                ),
         }
     flag_7 = flags[FLAGS.PMI]
     if flag_7.value == FLAGS.A:
