@@ -54,6 +54,7 @@ class RANK:
     CLASS = 5
     PHYLUM = 6
     KINGDOM = 7
+    DOMAIN = 8
 
     @classmethod
     def from_string(cls, rank: str) -> str:
