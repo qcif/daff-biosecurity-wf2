@@ -28,4 +28,4 @@ id,name,value,explanation,outcome,level
 6,Phylogenetic assessment,C,Genotype diversity grouped into multiple diverse groups,The top candidate species cannot be confidently distinguished from other related species,3
 7,Preliminary identification confirmation,A,Identified species is consistent with preliminary ID,The preliminary identification is supported by the molecular data,1
 7,Preliminary identification confirmation,B,Identified species is not consistent with preliminary ID,The molecular data contradicts the preliminary identification,3
-7,Preliminary identification confirmation,NA,Cannot confirm or reject the preliminary ID,Insufficient evidence due to inconclusive taxonomy of the sample,0
+7,Preliminary identification confirmation,NA,Insufficient evidence due to inconclusive taxonomy of the sample,Cannot confirm or reject the preliminary ID,0
