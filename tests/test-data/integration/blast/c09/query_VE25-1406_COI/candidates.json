@@ -1,0 +1,92 @@
+{
+  "hits": [
+    {
+      "hit_id": "gi|2418074787|gb|OQ134363.1|",
+      "hit_subject": "Pteromalidae sp. voucher D83 cytochrome c oxidase subunit I (COX1) gene, partial cds; mitochondrial",
+      "accession": "OQ134363",
+      "alignment_length": 566,
+      "subject_length": 573,
+      "query_coverage": 0.841,
+      "bitscore": 1059.02,
+      "e_value": 0.0,
+      "identity": 0.986,
+      "hsps": [
+        {
+          "bitscore": 1059.02,
+          "e_value": 0.0,
+          "identity": 1.0,
+          "identities": 558,
+          "strand_query": "Plus",
+          "strand_subject": "Plus",
+          "gaps": 0,
+          "query_start": 108,
+          "query_end": 673,
+          "subject_start": 4,
+          "subject_end": 569,
+          "alignment_length": 566,
+          "alignment": "Query  108 ATTGGTAATG ATCAAATTTA TAATTCTATT GTTACAACTC ATGCTTTTAC AATAATTTTT TTTTTCGTTA TACCAGTAAT\n           |||||||||| |||||||||| |||||||||| |||||||||| |||||||||| |||||||||| |||||||||| ||||||||||\nSbjct  004 ATTGGTAATG ATCAAATTTA TAATTCTATT GTTACAACTC ATGCTTTTAC AATAATTTTT TTTTTCGTTA TACCAGTAAT\n\nQuery  188 AATAGGAGGA TTTGGTAATT ATTTTATTCC AATTATTTTA GGTATTCCCG ATATGGCTTT CCCTCGAATA AATAATATAA\n           |||||||||| |||||||||| |||||||||| |||||||||| |||||||| | | ||||||||  ||||||||| ||||||||||\nSbjct  084 AATAGGAGGA TTTGGTAATT ATTTTATTCC AATTATTTTA GGTATTCCTG ACATGGCTTT TCCTCGAATA AATAATATAA\n\nQuery  268 GATTTTGATT ATTACCTCCA AGATTAATAT TATTAATTAG AAGAATATTT ATTAGTACAG GTACAGGTAC AGGTTGGACT\n           |||||||||| |||||||||| |||||||||| |||||||||| |||||||||| |||||||||| |||||||||| ||||||||| \nSbjct  164 GATTTTGATT ATTACCTCCA AGATTAATAT TATTAATTAG AAGAATATTT ATTAGTACAG GTACAGGTAC AGGTTGGACA\n\nQuery  348 GTTTATCCAC CATTATCATT AAATTTATCT CATAATGGAC CTTCAGTTGA TTTATCAATT TTTTCTTTAC ATTTAGCAGG\n           |||||||||| |||||||||| |||||||||| |||||||||| |||||||||| |||||||||| |||||||||| ||||||||||\nSbjct  244 GTTTATCCAC CATTATCATT AAATTTATCT CATAATGGAC CTTCAGTTGA TTTATCAATT TTTTCTTTAC ATTTAGCAGG\n\nQuery  428 TGTTAGATCA ATTATAGGAT CAGTTAATTT TATTACTACT ATTTTAAATA TAAAAATTAA TAAATATGAA AATATTCCTT\n           |||||||||| || ||||||| |||||||||| |||||||||| |||||||||| |||||||||| |||||||||| ||||||||||\nSbjct  324 TGTTAGATCA ATCATAGGAT CAGTTAATTT TATTACTACT ATTTTAAATA TAAAAATTAA TAAATATGAA AATATTCCTT\n\nQuery  508 TATTAGCTTG GGCTTTATTA CTTACAGCTA TTTTATTACT ATTATCTTTA CCTGTACTTG CTGGAGCAAT TACTATACTA\n           |||||||||| |||||||||| |||||||||| |||||||| | |||||||||| |||||||||| |||||||||| ||||||| ||\nSbjct  404 TATTAGCTTG GGCTTTATTA CTTACAGCTA TTTTATTATT ATTATCTTTA CCTGTACTTG CTGGAGCAAT TACTATATTA\n\nQuery  588 TTATTTGATC GAAATTTAAA TACATCTTTT TTTGATCCTG CAGGAGGTGG AGATCCTGTT TTATATCAAC ATTTATTTTG\n           |||||||||| |||||||||| |||||||||| |||||||||| | |||||||| |||||||||| |||||||||| ||||||||||\nSbjct  484 TTATTTGATC GAAATTTAAA TACATCTTTT TTTGATCCTG CGGGAGGTGG AGATCCTGTT TTATATCAAC ATTTATTTTG\n\nQuery  668 ATTTTT\n           ||||||\nSbjct  564 ATTTTT\n\n"
+        }
+      ],
+      "taxonomy": {
+        "accession": "OQ134363.1",
+        "taxid": "2761519",
+        "superkingdom": "Eukaryota",
+        "kingdom": "Metazoa",
+        "phylum": "Arthropoda",
+        "class": "Insecta",
+        "order": "Hymenoptera",
+        "family": "Pteromalidae",
+        "genus": "",
+        "species": "Pteromalidae sp."
+      },
+      "species": "Pteromalidae sp.",
+      "taxid": "2761519",
+      "hit_count": 1
+    }
+  ],
+  "species": [
+    {
+      "hit_id": "gi|2418074787|gb|OQ134363.1|",
+      "hit_subject": "Pteromalidae sp. voucher D83 cytochrome c oxidase subunit I (COX1) gene, partial cds; mitochondrial",
+      "accession": "OQ134363",
+      "alignment_length": 566,
+      "subject_length": 573,
+      "query_coverage": 0.841,
+      "bitscore": 1059.02,
+      "e_value": 0.0,
+      "identity": 0.986,
+      "hsps": [
+        {
+          "bitscore": 1059.02,
+          "e_value": 0.0,
+          "identity": 1.0,
+          "identities": 558,
+          "strand_query": "Plus",
+          "strand_subject": "Plus",
+          "gaps": 0,
+          "query_start": 108,
+          "query_end": 673,
+          "subject_start": 4,
+          "subject_end": 569,
+          "alignment_length": 566,
+          "alignment": "Query  108 ATTGGTAATG ATCAAATTTA TAATTCTATT GTTACAACTC ATGCTTTTAC AATAATTTTT TTTTTCGTTA TACCAGTAAT\n           |||||||||| |||||||||| |||||||||| |||||||||| |||||||||| |||||||||| |||||||||| ||||||||||\nSbjct  004 ATTGGTAATG ATCAAATTTA TAATTCTATT GTTACAACTC ATGCTTTTAC AATAATTTTT TTTTTCGTTA TACCAGTAAT\n\nQuery  188 AATAGGAGGA TTTGGTAATT ATTTTATTCC AATTATTTTA GGTATTCCCG ATATGGCTTT CCCTCGAATA AATAATATAA\n           |||||||||| |||||||||| |||||||||| |||||||||| |||||||| | | ||||||||  ||||||||| ||||||||||\nSbjct  084 AATAGGAGGA TTTGGTAATT ATTTTATTCC AATTATTTTA GGTATTCCTG ACATGGCTTT TCCTCGAATA AATAATATAA\n\nQuery  268 GATTTTGATT ATTACCTCCA AGATTAATAT TATTAATTAG AAGAATATTT ATTAGTACAG GTACAGGTAC AGGTTGGACT\n           |||||||||| |||||||||| |||||||||| |||||||||| |||||||||| |||||||||| |||||||||| ||||||||| \nSbjct  164 GATTTTGATT ATTACCTCCA AGATTAATAT TATTAATTAG AAGAATATTT ATTAGTACAG GTACAGGTAC AGGTTGGACA\n\nQuery  348 GTTTATCCAC CATTATCATT AAATTTATCT CATAATGGAC CTTCAGTTGA TTTATCAATT TTTTCTTTAC ATTTAGCAGG\n           |||||||||| |||||||||| |||||||||| |||||||||| |||||||||| |||||||||| |||||||||| ||||||||||\nSbjct  244 GTTTATCCAC CATTATCATT AAATTTATCT CATAATGGAC CTTCAGTTGA TTTATCAATT TTTTCTTTAC ATTTAGCAGG\n\nQuery  428 TGTTAGATCA ATTATAGGAT CAGTTAATTT TATTACTACT ATTTTAAATA TAAAAATTAA TAAATATGAA AATATTCCTT\n           |||||||||| || ||||||| |||||||||| |||||||||| |||||||||| |||||||||| |||||||||| ||||||||||\nSbjct  324 TGTTAGATCA ATCATAGGAT CAGTTAATTT TATTACTACT ATTTTAAATA TAAAAATTAA TAAATATGAA AATATTCCTT\n\nQuery  508 TATTAGCTTG GGCTTTATTA CTTACAGCTA TTTTATTACT ATTATCTTTA CCTGTACTTG CTGGAGCAAT TACTATACTA\n           |||||||||| |||||||||| |||||||||| |||||||| | |||||||||| |||||||||| |||||||||| ||||||| ||\nSbjct  404 TATTAGCTTG GGCTTTATTA CTTACAGCTA TTTTATTATT ATTATCTTTA CCTGTACTTG CTGGAGCAAT TACTATATTA\n\nQuery  588 TTATTTGATC GAAATTTAAA TACATCTTTT TTTGATCCTG CAGGAGGTGG AGATCCTGTT TTATATCAAC ATTTATTTTG\n           |||||||||| |||||||||| |||||||||| |||||||||| | |||||||| |||||||||| |||||||||| ||||||||||\nSbjct  484 TTATTTGATC GAAATTTAAA TACATCTTTT TTTGATCCTG CGGGAGGTGG AGATCCTGTT TTATATCAAC ATTTATTTTG\n\nQuery  668 ATTTTT\n           ||||||\nSbjct  564 ATTTTT\n\n"
+        }
+      ],
+      "taxonomy": {
+        "accession": "OQ134363.1",
+        "taxid": "2761519",
+        "superkingdom": "Eukaryota",
+        "kingdom": "Metazoa",
+        "phylum": "Arthropoda",
+        "class": "Insecta",
+        "order": "Hymenoptera",
+        "family": "Pteromalidae",
+        "genus": "",
+        "species": "Pteromalidae sp."
+      },
+      "species": "Pteromalidae sp.",
+      "taxid": "2761519",
+      "hit_count": 1
+    }
+  ]
+}

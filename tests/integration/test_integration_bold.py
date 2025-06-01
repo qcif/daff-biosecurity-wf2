@@ -35,6 +35,7 @@ class IntegrationTest(unittest.TestCase):
         cls.scripts_root = PROJECT_ROOT / "scripts"
         cls.python = PROJECT_ROOT / "venv/bin/python"
         cls.test_case_root = TEST_DATA_DIR / "integration/bold"
+        cls.taxdump_dir = Path.home() / ".taxonkit"
 
     def setUp(self):
         """Clean up old temp dirs and create a new one."""
