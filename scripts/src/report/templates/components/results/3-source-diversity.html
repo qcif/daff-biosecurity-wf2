@@ -120,31 +120,34 @@
               </tr>
               {% endfor %}
 
-              {% if collectors in src %}
-              <tr>
-                <td>
-                  <a href="{{ src.bold_url }}" target="_blank">
-                    {{ src.bold_id }}
-                  </a>
-                </td>
-                <td>False</td>
-                <td>BOLD Collectors: {{ src.collectors }}</td>
-                <td>NA</td>
-                <td>NA</td>
-              </tr>
-              {% endif %}
-
               {% if not src.publications %}
-              {% set ns.counter = ns.counter + 1 %}
-              <tr{% if ns.counter > 2 %} class="hide"{% endif %}>
-                <td>
-                  <a href="{{ url_from_accession(src['accession']) }}" target="_blank">
-                    {{ src.accession }}
-                  </a>
-                </td>
-                <td>{{ src.is_automated }}</td>
-                <td colspan="3">No publications for this record</td>
-              </tr>
+                {% if 'collectors' in src %}
+                {% set ns.counter = ns.counter + 1 %}
+                <tr{% if ns.counter > 2 %} class="hide"{% endif %}>
+                  <td>
+                    <a href="{{ src.bold_url }}" target="_blank">
+                      {{ src.bold_id }}
+                    </a>
+                  </td>
+                  <td>False</td>
+                  <td>BOLD Collectors: {{ src.collectors }}</td>
+                  <td>NA</td>
+                  <td>NA</td>
+                </tr>
+                {% endif %}
+              {% else %}
+                {% if 'accession' not in src %}
+                {% set ns.counter = ns.counter + 1 %}
+                <tr{% if ns.counter > 2 %} class="hide"{% endif %}>
+                  <td>
+                    <a href="{{ url_from_accession(src['accession']) }}" target="_blank">
+                      {{ src.accession or src.bold_id }}
+                    </a>
+                  </td>
+                  <td>{{ src.is_automated }}</td>
+                  <td colspan="3">No publications for this record</td>
+                </tr>
+                {% endif %}
               {% endif %}
 
               {% endfor %}
@@ -177,8 +180,6 @@
 <script>
   function togglePublicationsCollapse(link) {
     const tableRow = link.closest('tr');
-
-    // Change the text in the "toggle" link
     tableRow.querySelectorAll('.toggle-collapse').forEach((el) => {
       el.classList.toggle('hide');
     });
