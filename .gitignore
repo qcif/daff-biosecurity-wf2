@@ -2,7 +2,7 @@
 data/
 output/
 tests/test-data/integration/*/query_*
-
+completed_test*.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
