@@ -13,7 +13,7 @@ import argparse
 import json
 import logging
 
-from src.entrez import genbank
+from src.sources import collect
 from src.utils import existing_path, serialize
 from src.utils.config import Config
 from src.utils.flags import FLAGS, Flag
@@ -26,7 +26,7 @@ def main():
     args = _parse_args()
     config.configure(args.output_dir, query_dir=args.query_dir)
     species, hits = _read_candidate_hits(args.query_dir)
-    species, hits, aggregated_sources = _collect_sources_per_species(
+    species, hits, aggregated_sources = collect.sources_per_species(
         species, hits)
     _set_flags(species, args.query_dir)
     candidates = {
@@ -48,43 +48,6 @@ def _parse_args():
         default=config.output_dir,
         help=f"Path to output directory. Defaults to {config.output_dir}.")
     return parser.parse_args()
-
-
-def _collect_sources_per_species(species, hits) -> list[dict]:
-    aggregated_sources = {}
-    accession_sources = genbank.fetch_sources([
-        hit["accession"] for hit in hits
-        if hit["accession"]
-    ])
-    for sp_ix, spec in enumerate(species):
-        species_str = spec["species"]
-        independent_sources = []
-        for hit_ix, hit in enumerate(hits):
-            if hit["species"] == species_str:
-                if hit["accession"] in accession_sources:
-                    source = accession_sources[hit["accession"]]
-                    matched = False
-                    for j, independent_source in enumerate(
-                        independent_sources
-                    ):
-                        for src in independent_source:
-                            if source.matches(src):
-                                independent_sources[j].append(source)
-                                matched = True
-                                break
-                    if not matched:
-                        independent_sources.append([source])
-                else:
-                    # It's a BOLD hit without a genbank ID - do nothing for now
-                    logger.warning(
-                        f"Hit {hit['accession']} not found in genbank sources."
-                    )
-                hits[hit_ix]["source"] = source
-
-        species[sp_ix]['independent_sources'] = len(independent_sources)
-        species[sp_ix]['hit_count'] = hit_ix + 1
-        aggregated_sources[species_str] = independent_sources
-    return species, hits, aggregated_sources
 
 
 def _read_candidate_hits(query_dir):

@@ -30,10 +30,13 @@ class APIError(Exception):
 class LOCATIONS:
     """These locations define where a reportable exception occurred and
     can be used to display it in the appropriate location in the report.
+    Major numbers refer to the analysis "phase" and minor versions distinguish
+    specific report locations within that phase.
     """
     BLAST = 1.0
     BOLD_ID_ENGINE = 1.10
     BOLD_TAXA = 1.11
+    SOURCE_DIVERSITY_ACCESSION_ERROR = 4.01
     DATABASE_COVERAGE = 5.0
     DATABASE_COVERAGE_NO_GBIF_RECORD = 5.01
     DATABASE_COVERAGE_TAXONKIT_ERROR = 5.02

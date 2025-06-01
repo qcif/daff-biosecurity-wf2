@@ -80,9 +80,7 @@ class GbRecordSource:
     def matches(self, other) -> bool:
         """Return True if other has a publication source that matches self."""
         if not isinstance(other, GbRecordSource):
-            raise ValueError(
-                "Cannot only comparte GbRecordSource with an object of the"
-                f" same type. Received type '{type(other)}'")
+            return False
         self_publications = self.get_publication_repr()
         other_publications = other.get_publication_repr()
         has_shared_source = self_publications == other_publications

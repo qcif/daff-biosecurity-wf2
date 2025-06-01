@@ -72,6 +72,9 @@
             </p>
             <p class="px-3">
               The matching reference sequences for this species have been annotated by {{ src_groups|length }} independent source(s). A source is considered independent if the author list or publication title is distinct.
+              {% if bold %}
+              For BOLD records without a GenBank IDs, the BOLD Collector is used as the source.
+              {% endif %}
             </p>
           </div>
         </div>
@@ -116,6 +119,20 @@
                 <td class="font-small">{{ publication.journal }}</td>
               </tr>
               {% endfor %}
+
+              {% if collectors in src %}
+              <tr>
+                <td>
+                  <a href="{{ src.bold_url }}" target="_blank">
+                    {{ src.bold_id }}
+                  </a>
+                </td>
+                <td>False</td>
+                <td>BOLD Collectors: {{ src.collectors }}</td>
+                <td>NA</td>
+                <td>NA</td>
+              </tr>
+              {% endif %}
 
               {% if not src.publications %}
               {% set ns.counter = ns.counter + 1 %}
