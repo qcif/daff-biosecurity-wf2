@@ -21,7 +21,7 @@ from unittest.mock import patch
 
 PROJECT_ROOT = Path(__file__).parents[2]
 TEST_DATA_DIR = PROJECT_ROOT / "tests/test-data"
-COMPLETED_TESTS_FILE = "completed_tests_bold.json"
+COMPLETED_TESTS_FILE = "completed_tests.json"
 TEMPDIR_PREFIX = "integration_test_"
 
 
