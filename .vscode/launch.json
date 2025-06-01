@@ -42,6 +42,27 @@
             "justMyCode": true
         },
         {
+            "name": "BOLD Integration tests",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "unittest",
+            "args": [
+                "discover",
+                "-s", "tests/integration",
+                "-p", "test_integration.py",
+                "-f",  // fail fast
+                "-v",  // show stdout instead of dots
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/scripts",
+                "KEEP_OUTPUTS": "1",  // Always retain outputs for debugging
+                "GBIF_MAX_OCCURRENCE_RECORDS": "200",
+                "RUN_TEST_CASE": "112",  // Optional, run a specific test case
+            },
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
             "type": "debugpy",
             "request": "launch",
             "name": "P1 BLAST Parser",
@@ -139,11 +160,16 @@
             "name": "P4 BOLD Source diversity",
             "program": "${workspaceFolder}/scripts/p4_source_diversity.py",
             "args": [
-                "output/bold/query_001_LC438549",
-                "--output_dir", "output/bold",
+                // "output/bold/query_001_LC438549",
+                // "--output_dir", "output/bold",
+
+                "output/issues/112/query_004_MG240613_4",
+                "--output_dir", "output/issues/112",
             ],
             "env": {
                 "LOGGING_DEBUG": "1",
+                "INPUT_METADATA_CSV_FILEPATH": "output/issues/112/metadata.csv",
+                "INPUT_FASTA_FILEPATH": "output/issues/112/query.fasta",
             },
             "preLaunchTask": "clear-log-files"
         },

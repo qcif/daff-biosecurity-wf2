@@ -7,6 +7,7 @@ if [[ ! -d "tests/integration" ]]; then
     exit 1
 fi
 
+SCRIPT_NAME=test_integration.py
 
 export PYTHONPATH="$PWD/scripts"
 export TAXONKIT_DATA="$HOME/.taxonkit"
@@ -22,6 +23,10 @@ while [[ $# -gt 0 ]]; do
             export SKIP_PASSED_TESTS=1
             shift
             ;;
+        --bold)
+            SCRIPT_NAME=test_integration_bold.py
+            shift
+            ;;
         --test_case)
             export RUN_TEST_CASE="$2"
             shift 2
@@ -35,4 +40,4 @@ done
 
 python -m unittest discover -f -v \
     -s tests/integration \
-    -p test_integration.py
+    -p $SCRIPT_NAME

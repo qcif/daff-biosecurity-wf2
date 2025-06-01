@@ -21,7 +21,7 @@ from unittest.mock import patch
 
 PROJECT_ROOT = Path(__file__).parents[2]
 TEST_DATA_DIR = PROJECT_ROOT / "tests/test-data"
-COMPLETED_TESTS_FILE = "completed_tests.json"
+COMPLETED_TESTS_FILE = "completed_tests_bold.json"
 TEMPDIR_PREFIX = "integration_test_"
 
 
@@ -32,21 +32,9 @@ def print_green(text: str):
 class IntegrationTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        for var in (
-            'USER_EMAIL',
-            'NCBI_API_KEY',
-            'TAXONKIT_DATA',
-        ):
-            if var not in os.environ:
-                raise EnvironmentError(
-                    f"Environment variable {var} is not set. "
-                    "Please set it before running integration tests. You may"
-                    " wish to set this in a venv/bin/activate script or in"
-                    " your shell profile.")
         cls.scripts_root = PROJECT_ROOT / "scripts"
-        cls.python = PROJECT_ROOT / "venv" / "bin" / "python"
-        cls.taxdump_dir = Path.home() / ".taxonkit"
-        cls.test_case_root = TEST_DATA_DIR / "integration"
+        cls.python = PROJECT_ROOT / "venv/bin/python"
+        cls.test_case_root = TEST_DATA_DIR / "integration/bold"
 
     def setUp(self):
         """Clean up old temp dirs and create a new one."""
@@ -180,28 +168,19 @@ class IntegrationTest(unittest.TestCase):
                         "metadata_csv": wdir / "metadata.csv",
                         "query_fasta": wdir / "query.fasta",
                         "taxdb_dir": self.taxdump_dir,
-                        "bold": False,
+                        "bold": True,
                     },
                 )
                 print_green(f"\nTest case {test_case.name}: P0 PASS\n")
 
                 self.patch_and_run(
-                    "p1_parse_blast",
+                    "p1_bold_search",
                     {
-                        "blast_xml_path": wdir / "blast_result.xml",
+                        "fasta_file": wdir / "query.fasta",
                         "output_dir": wdir,
                     },
                 )
                 print_green(f"\nTest case {test_case.name}: P1 PASS\n")
-
-                self.patch_and_run(
-                    "p2_extract_taxonomy",
-                    {
-                        "taxids_csv": wdir / "taxids.csv",
-                        "output_dir": wdir,
-                    },
-                )
-                print_green(f"\nTest case {test_case.name}: P2 PASS\n")
 
                 query_dir = next(wdir.glob("query_001*"))
 
@@ -210,7 +189,7 @@ class IntegrationTest(unittest.TestCase):
                     {
                         "query_dir": query_dir,
                         "output_dir": wdir,
-                        "bold": False,
+                        "bold": True,
                     },
                 )
                 print_green(f"\nTest case {test_case.name}: P3 PASS\n")
@@ -240,7 +219,7 @@ class IntegrationTest(unittest.TestCase):
                     {
                         "query_dir": query_dir,
                         "output_dir": wdir,
-                        "bold": False,
+                        "bold": True,
                     },
                 )
                 print_green(f"\nTest case {test_case.name}: P5 PASS\n")
@@ -254,7 +233,7 @@ class IntegrationTest(unittest.TestCase):
                     {
                         "query_dir": query_dir,
                         "output_dir": wdir,
-                        "bold": False,
+                        "bold": True,
                         "params_json": TEST_DATA_DIR / "params.json",
                         "versions_yml": TEST_DATA_DIR / "versions.yml",
                     },
