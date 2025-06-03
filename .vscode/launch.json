@@ -202,13 +202,19 @@
             "name": "P5 BOLD DB coverage",
             "program": "${workspaceFolder}/scripts/p5_db_coverage.py",
             "args": [
-                "output/bold/query_001_LC438549",
-                "--output_dir", "output/bold",
+                // "output/bold/query_001_LC438549",
+                // "--output_dir", "output/bold",
                 "--bold",
+
+                // For testing issue cases:
+                "output/issues/117/query_012_VE24-1068_COI",
+                "--output_dir", "output/issues/117",
             ],
             "env": {
                 "LOGGING_DEBUG": "1",
                 "GBIF_MAX_OCCURRENCE_RECORDS": "200",
+                "INPUT_METADATA_CSV_FILEPATH": "output/issues/117/metadata.csv",
+                "INPUT_FASTA_FILEPATH": "output/issues/117/query.fasta",
             },
             "preLaunchTask": "clear-log-files"
         },

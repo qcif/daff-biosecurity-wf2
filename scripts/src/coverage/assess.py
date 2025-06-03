@@ -234,7 +234,7 @@ def _set_flags(db_coverage, query_dir, higher_taxon_targets):
             if total_species:
                 represented_species = len([
                     count for count in species_counts.values()
-                    if count > 0
+                    if count and count > 0
                 ])
                 percent_coverage = 100 * represented_species / total_species
                 if percent_coverage > config.CRITERIA.DB_COV_RELATED_MIN_A:
@@ -271,7 +271,7 @@ def _set_flags(db_coverage, query_dir, higher_taxon_targets):
             total_species = len(species_counts)
             represented_species = len([
                 count for count in species_counts.values()
-                if count > 0
+                if count and count > 0
             ])
             unrepresented = total_species - represented_species
             if not species_counts:
