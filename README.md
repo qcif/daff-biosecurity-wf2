@@ -6,20 +6,50 @@ A user guide for each module is listed here. Examples of running
 each script can be found in the [.vscode/launch.json](.vscode/launch.json) file,
 which shows CLI arguments and environment variables for each script.
 
-Throughout execution of these scripts, access to the inputs files is required.
+
+## Table of Contents
+
+1. [Workflow steps (Python scripts)](#workflow-steps-python-scripts)
+    1. [P0 validate inputs](#p0-validate-inputs)
+    2. [P1 BLAST parser](#p1-blast-parser)
+    3. [BLASTDBCMD](#blastdbcmd)
+    4. [P2 NCBI Taxonomy extractor](#p2-ncbi-taxonomy-extractor)
+    5. [P3 Evaluate taxonomy](#p3-evaluate-taxonomy)
+    6. [P4 Analysis of reference sequence publications](#p4-analysis-of-reference-sequence-publications)
+    7. [P5 Analysis of database coverage](#p5-analysis-of-database-coverage)
+    8. [P6 Report generation](#p6-report-generation)
+1. [Handling errors](#handling-errors)
+1. [Throttling API requests](#throttling-api-requests)
+
+
+# Workflow steps (Python scripts)
+
+Six Python scripts provide entrypoints which can be called by Nextflow to run
+the steps required for this pipeline. Some workflow steps (BLASTN, BLASTDBCMD,
+MAFFT, FastME) are actioned with other tools, but most steps require invoking one
+of the Python scripts included in this repository. For ease of reference, the
+scripts are enumerated as P1-P6.
+
+Throughout execution of these scripts, access to input files is required.
 To avoid repeated passing of these files, they can just be set as environment
 variables:
 
 ```sh
 INPUT_FASTA_FILEPATH="/my/input/folder/query.fasta"
 INPUT_METADATA_CSV_FILEPATH="/my/input/folder/metadata.csv"
-LOGGING_DEBUG=0  # 1 to enable
+```
+
+Some other environment variables that can be useful in development:
+
+```sh
+LOGGING_DEBUG=0  # 1 to enable additional logging to help with debugging
 SKIP_ORIENTATION=0  # 1 to skip orientation of BOLD sequences (requires setup)
 GBIF_MAX_OCCURRENCE_RECORDS=200  # Reduce to 200 for testing/dev to speed up p5. Default 5000.
 REPORT_DEBUG=0  # 1 to omit timestamp from report filename for browser reload between changes
 FACILITY_NAME="Hogwarts"  # Displayed in report
 ANALYST_NAME="Harry Potter"  # Displayed in report
 ```
+
 
 ## P0 validate inputs
 
@@ -210,36 +240,155 @@ from the targets and the analysis will only be performed for the PMI and TOIs.
 This analysis also includes the generation of geographic occurrence maps for
 each target taxon.
 
+```
+$ python p5_db_coverage.py -h
+
+usage: p5_db_coverage.py [-h] [--output_dir OUTPUT_DIR] [--bold] query_dir
+
+Analyze the database coverage of target species at the given locus. Database coverage is analysed at three levels: 1. Target species coverage: The number of records for the
+target species 2. Related species coverage: The number of records for species related to the target species 3. Related species from sample country of origin: as for (2), but
+only for species which have occurence records in the same country as the target species.
+
+positional arguments:
+  query_dir             Path to query output directory
+
+options:
+  -h, --help            show this help message and exit
+  --output_dir OUTPUT_DIR
+                        Path to output directory. Defaults to output.
+  --bold                Reference the BOLD database instead of GenBank.
+```
+
 The code for these analyses is fairly abstract in order to accomodate the range
 of cases described above, and is heavily threaded to complete the analysis in a
 reasonable time. The [Throttle](#throttling-api-requests)
 is critical here to avoid exceeding API rate limits, since the analysis involves
 sending LOTS of API requests (sometimes many hundreds per-sample). The entrypoint
-for this analysis is
+for the `coverage` module is
 [assess.py](https://github.com/qcif/daff-biosecurity-wf2/blob/main/scripts/src/coverage/assess.py).
 
 1. **Setup** (see [targets.py](https://github.com/qcif/daff-biosecurity-wf2/blob/main/scripts/src/coverage/targets.py))
     1. A list of target taxa is generated from candidate species, PMIs and TOIs
     1. TaxIDs are extracted for each target taxon
-    1. GBIF records are extracted for each target taxon
+    1. GBIF records are extracted for each target taxon (see
+      [relatives.py](https://github.com/qcif/daff-biosecurity-wf2/blob/main/scripts/src/gbif/relatives.py))
 1. **Occurrence maps** are drawn (see [maps.py](https://github.com/qcif/daff-biosecurity-wf2/blob/main/scripts/src/gbif/maps.py))
 1. **Generate tasks**: a list of analysis tasks (targets x 3 analyses) is generated for threading
 1. **Thread tasks** - for each target taxon:
     1. **5.1** - DB coverage of target taxon. How many records are in the
       reference database for the target taxon?
     1. **5.2** - DB coverage of species in target genus (only applies to targets
-      at rank genus or species).
+      at rank genus or species). This requires sending a request to NCBI/BOLD for
+      each related species - this is where most threads are spawned.
     1. **5.3** - DB coverage of species in target genus, limited to the sample
       country of origin (declared in metadata.csv input)
-1. Collect results from threads and write to `db_coverage.json`
+1. Wait for all threads to complete, collect results and write to `db_coverage.json`
+
+One of the main difficulties in this analysis is that we are sending lots of API
+requests and some of them may fail for legitimate reasons. In these cases, we
+handle the errors gracefully by using the
+[errors module](#handling-errors)
+module to write errors to file which can later be rendered in the workflow
+report. This often results in a `None` result being
+returned for the analysis, and so we also have to be careful to ensure that any
+code which depends on these results can handle that (especially flags and report
+generation). Inadequate handling of API errors has accounted for many of the
+bugs been raised in the P5 module.
 
 
 ## P6 Report generation
 
 This script reads in outputs generated throughout the workflow and generates a
 final HTML report which aims to provide all the analytical results required
-by the user.
+by the user. The report is a single HTML file rendered from many templates
+(snippets and macros) using the Jinja2 templating engine.
 
+```
+$ python p6_report.py -h
+usage: p6_report.py [-h] [--output_dir OUTPUT_DIR] [--bold] [--params_json PARAMS_JSON] [--versions_yml VERSIONS_YML] query_dir
+
+Build the workflow report.
+
+positional arguments:
+  query_dir             Path to query output directory
+
+options:
+  -h, --help            show this help message and exit
+  --output_dir OUTPUT_DIR
+                        Path to output directory. Defaults to output.
+  --bold                If set, will enable the 'bold' logic for rendering the report.
+  --params_json PARAMS_JSON
+                        Path to params JSON file.
+  --versions_yml VERSIONS_YML
+                        Path to versions YAML file.
+```
+
+The entrypoint for the
+report module is
+[report.py](https://github.com/qcif/daff-biosecurity-wf2/blob/main/scripts/src/report/report.py)
+which includes compilation of report context from analysis output files, followed
+by rendering the report. Given that we are rendering a standalone HTML file that
+needs to be fully portable and robust, this process involves some tactics that
+are not typical of web development:
+
+- Content that would often be loaded over a CDN is included in the repository
+  to ensure stability of the product over time.
+- Static files (CSS, JavaScript, images) are embedded directly in the HTML file,
+  with images encoded in base64. This results in a fairly large HTML file. All
+  css/js files in the static directory get embedded in the HTML document, so
+  be careful what you put in here (don't bloat the document)
+- A "Save report" feature is included that allows the analyst to save any typed
+  content and lock the document as read-only. This is a hack that involves a good
+  dose of JavaScript (see
+  [save-report.js](https://github.com/qcif/daff-biosecurity-wf2/blob/main/scripts/src/report/static/js/save-report.js))
+
+
+
+## Application configuration
+
+
+## Handling errors
+
+There are numerous locations in the workflow where non-fatal errors can occur.
+At minimum, a log statement is written to record these, but typically the
+[errors.py](https://github.com/qcif/daff-biosecurity-wf2/blob/main/scripts/src/utils/errors.py)
+module is used to track these errors and render them at the appropriate place in
+the HTML report:
+
+```py
+# An exception has been caught in P5 database coverage
+errors.write(
+    errors.LOCATIONS.DATABASE_COVERAGE,
+    'A really bad error has occured while analysing this taxon',
+    exc=e,  # If an Exception was caught
+    context={'target': 'Homo sapiens'},
+)
+```
+
+The `LOCATION` provided corresponds to a named location where the error occurred
+in the analysis, and this also maps to a specific location in the report. The
+`context` dict provides additional context on what exactly was being analysed
+(e.g. which target taxon) when the error occurred. So for the example above, we
+know when rendering the report that this error should be shown at the
+`DATABASE_COVERAGE` location, for the target *Homo sapiens*.
+
+In practice, the `errors` module has a neat filter that can be used for
+rendering these in our Jinja2 templates:
+
+```html
+<!-- Filter to get a range of locations relevant to this report section -->
+<!-- Location "5.0" is the value behind errors.LOCATIONS.DATABASE_COVERAGE -->
+{% set errors = context.error_log.filter(location_min=5.0, location_max=5.99, context={'target': context.target_taxon}) %}
+
+...
+
+<!-- Filter further to get this specific location -->
+{% set p5_01_errors = errors.filter(location=5.01) %}
+
+{% if p5_01_errors %}
+{{ render_error_message(p5_01_errors) }}
+{% endif %}
+```
 
 ## Throttling API requests
 
