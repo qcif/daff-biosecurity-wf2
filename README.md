@@ -219,19 +219,26 @@ for this analysis is
 [assess.py](https://github.com/qcif/daff-biosecurity-wf2/blob/main/scripts/src/coverage/assess.py).
 
 1. **Setup** (see [targets.py](https://github.com/qcif/daff-biosecurity-wf2/blob/main/scripts/src/coverage/targets.py))
-  1. A list of target taxa is generated from candidate species, PMIs and TOIs
-  1. TaxIDs are extracted for each target taxon
-  1. GBIF records are extracted for each target taxon
+    1. A list of target taxa is generated from candidate species, PMIs and TOIs
+    1. TaxIDs are extracted for each target taxon
+    1. GBIF records are extracted for each target taxon
 1. **Occurrence maps** are drawn (see [maps.py](https://github.com/qcif/daff-biosecurity-wf2/blob/main/scripts/src/gbif/maps.py))
 1. **Generate tasks**: a list of analysis tasks (targets x 3 analyses) is generated for threading
 1. **Thread tasks** - for each target taxon:
-  1. **5.1** - DB coverage of target taxon. How many records are in the
-    reference database for the target taxon?
-  1. **5.2** - DB coverage of species in target genus (only applies to targets
-    at rank genus or species).
-  1. **5.3** - DB coverage of species in target genus, limited to the sample
-    country of origin (declared in metadata.csv input)
+    1. **5.1** - DB coverage of target taxon. How many records are in the
+      reference database for the target taxon?
+    1. **5.2** - DB coverage of species in target genus (only applies to targets
+      at rank genus or species).
+    1. **5.3** - DB coverage of species in target genus, limited to the sample
+      country of origin (declared in metadata.csv input)
 1. Collect results from threads and write to `db_coverage.json`
+
+
+## P6 Report generation
+
+This script reads in outputs generated throughout the workflow and generates a
+final HTML report which aims to provide all the analytical results required
+by the user.
 
 
 ## Throttling API requests
