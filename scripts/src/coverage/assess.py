@@ -9,8 +9,8 @@ import logging
 from pprint import pformat
 
 from src.gbif.maps import draw_occurrence_map
-from src.utils.config import Config
 from src.utils import errors
+from src.utils.config import Config
 from src.utils.flags import FLAGS, Flag
 
 from .fetch import (
