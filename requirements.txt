@@ -6,3 +6,4 @@ pycountry
 fsspec
 geopandas
 pyyaml
+boldigger3
