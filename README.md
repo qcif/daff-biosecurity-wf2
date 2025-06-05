@@ -7,8 +7,10 @@ each script can be found in the [.vscode/launch.json](.vscode/launch.json) file,
 which shows CLI arguments and environment variables for each script.
 
 
-## Table of Contents
+# Table of Contents
 
+1. [FAQs](#faqs)
+    1. [Can I update the workflow report?](#can-i-update-the-workflow-report)
 1. [Workflow steps (Python scripts)](#workflow-steps-python-scripts)
     1. [P0 validate inputs](#p0-validate-inputs)
     2. [P1 BLAST parser](#p1-blast-parser)
@@ -18,8 +20,25 @@ which shows CLI arguments and environment variables for each script.
     6. [P4 Analysis of reference sequence publications](#p4-analysis-of-reference-sequence-publications)
     7. [P5 Analysis of database coverage](#p5-analysis-of-database-coverage)
     8. [P6 Report generation](#p6-report-generation)
-1. [Handling errors](#handling-errors)
-1. [Throttling API requests](#throttling-api-requests)
+1. [Application features](#application-features)
+    1. [Configuration](#application-configuration)
+    2. [Handling errors](#handling-errors)
+    3. [Throttling API requests](#throttling-api-requests)
+    4. [Flags](#flags)
+    5. [Sample locus](#sample-locus)
+1. Development
+    1. TODO: Developer setup
+    1. TODO: Build a Docker image
+
+# FAQs
+
+### Can I update the workflow report?
+
+- For editing flag detail text, see the [Flags sections](#flags)
+- Some constants e.g. title, database names, can be modified in the [config](#application-configuration)
+- Most report text is defined in HTML templates, so try:
+    - Repo-wide search for the text you're trying to update
+    - Looking through the [report templates](./scripts/src/report/templates/) for the component you want to update
 
 
 # Workflow steps (Python scripts)
@@ -343,8 +362,42 @@ are not typical of web development:
   [save-report.js](https://github.com/qcif/daff-biosecurity-wf2/blob/main/scripts/src/report/static/js/save-report.js))
 
 
+# Application features
+
 
 ## Application configuration
+
+The [config.py] module provides all of the configuration for the application at
+runtime, and pulls a lot of configuration from environment variables set by the
+user or Nextflow. The idea is that any module should be able to import config
+and easily access a set of global constants/variables:
+
+```py
+from src.utils.config import Config
+
+config = Config()
+```
+
+The `Config` object has a lot of properties/methods for convenient access to
+analysis context, for example:
+
+```py
+query_ix = 0
+sample_id = config.get_sample_id(query_ix)
+locus = config.get_locus_for_query(query_ix)
+```
+
+You do have to be careful when mutating config attributes - just because you
+change a config attribute in one script, doesn't mean that it has changed in
+an imported module! We have special methods for mutating config, one of which
+is called at the beginning of most scripts:
+
+```py
+# Set the output dir and query dir globally so the entire codebase
+# can use the config object to build reliable and reproducible file paths.
+# Otherwise we'd be passing these variables throughout the entire codebase:
+config.configure(args.output_dir, query_dir=args.query_dir)
+```
 
 
 ## Handling errors
@@ -377,13 +430,8 @@ rendering these in our Jinja2 templates:
 
 ```html
 <!-- Filter to get a range of locations relevant to this report section -->
-<!-- Location "5.0" is the value behind errors.LOCATIONS.DATABASE_COVERAGE -->
-{% set errors = context.error_log.filter(location_min=5.0, location_max=5.99, context={'target': context.target_taxon}) %}
-
-...
-
-<!-- Filter further to get this specific location -->
-{% set p5_01_errors = errors.filter(location=5.01) %}
+<!-- errors.LOCATIONS.DATABASE_COVERAGE_NO_GBIF_RECORD = 5.01 -->
+{% set p5_01_errors = errors.filter(location=5.01, context={'target': context.target_taxon}) %}
 
 {% if p5_01_errors %}
 {{ render_error_message(p5_01_errors) }}
@@ -414,11 +462,82 @@ res = throttle.with_retry(
 
 The throttle works by writing timestamps to a SQLite3 table which is stored
 in the user's temp files and shared across instances. When a thread is being
-throttled, the timestamps in the database are being checked until they indicate
+throttled, the timestamps in the database are checked until they indicate
 that less than 10 requests have been sent in the last second. At that point,
-whichever thread is "lucky enough" to acquire the database lock first is able to
+whichever thread is "lucky enough" to acquire the database lock is able to
 write its timestamp to the table and then the throttle for that thread is
-released. The database table depends on the `ENDPOINT` that the throttle was
-created with:
+released. The database table used depends on the `ENDPOINT` that the throttle
+was created with, as each endpoint is throttled independently:
 
 https://github.com/qcif/daff-biosecurity-wf2/blob/cfb1a93917cb91dc81bccf8b4956a7a081a86a29/scripts/src/utils/throttle.py#L14-L30
+
+
+## Flags
+
+Flags are a way that we capture and report discrete analytical outcomes clearly
+and concisely. For example, `Flag 1A` means that a positive species
+identification was concluded from the analysis.
+
+The `flags.csv` file describes the flags and their potential
+values in detail - the content in this table is used directly to render the
+HTML report, so any text updates here will propagate to the report generation.
+Some of the criteria for calling flags is declared in `config.CRITERIA` - refer
+the [config section](#application-configuration).
+
+During the analysis (P3-P5) flag files are written. I'm not super happy with how
+these are structured, but they needed to be written as a separate file for each
+script that can be collected by Nextflow and then passed to the P6 script for
+rendering the report. So I decided to write one file per flag, encode the flag
+metadata in the file name, and then write only the value to the file. These files
+can then all be read from the output directory to get a complete "Flag set" for
+the report. A complete set of flag files might look like this, though the
+number of flag 4/5s depends on how many candidates and TOIs exist:
+
+```
+1.flag
+2.flag
+4-Anneissia_japonica.flag
+4-Anneissia_sp._NIBGE_MOT(~)03651.flag
+5.1-candidate-Anneissia_japonica.flag
+5.1-pmi-Tortricidae.flag
+5.1-toi-Acanthaster_planci.flag
+5.2-candidate-Anneissia_japonica.flag
+5.2-pmi-Tortricidae.flag
+5.2-toi-Acanthaster_planci.flag
+5.3-candidate-Anneissia_japonica.flag
+5.3-pmi-Tortricidae.flag
+5.3-toi-Acanthaster_planci.flag
+7.flag
+```
+
+Flags have caused a few bugs because sometimes a non-fatal error (usually an
+API call) results in a flag file not being written.
+
+
+## Sample locus
+
+The loci (genetic regions) permitted for query DNA sequences is listed in the
+[loci.json](./loci.json) file. For each locus, ambiguous and non-ambiguous
+synonyms are defined:
+
+```json
+  "16s": {
+    "ambiguous_synonyms": [
+      "16s"
+    ],
+    "non_ambiguous_synonyms": [
+      "16s rrna",
+      "16s mitochondrial rrna",
+      "16s ribosomal rna"
+    ]
+  },
+```
+
+These are used to build dynamic genbank queries, when we are trying to request
+a count of genbank records at a given locus. Non-ambiguous
+synonyms are queried against all fields, whereas ambiguous synonyms are queried
+against the `[Gene name]` and `[Title]` fields only, to avoid returning records
+which are not the intended locus. For example, a query of "COI[ALL]" matches
+all kinds of records that have nothing to do with the cytochrome oxidase gene.
+All the logic for managing loci and rendering GB query strings is encapsulated
+in [locus.py](./scripts/src/utils/locus.py).
