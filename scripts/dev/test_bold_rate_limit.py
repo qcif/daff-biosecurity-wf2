@@ -51,11 +51,14 @@ while True:
             if count is None:
                 error = True
                 break
-            completed.append((time.time() - t0, taxon))
-    if error:
-        print('Error occurred while fetching BOLD records. Exiting.')
-        break
+            completed.append((time.time() - t0, count))
+    # if error:
+    #     print('Error occurred while fetching BOLD records. Exiting.')
+    #     break
     print(f"Completed task batch ({len(completed)} total).")
+    if len(completed) >= 150:
+        print('Reached 50 completed tasks, stopping.')
+        break
 
 elapsed = time.time() - t0
 print(f'Fetched {len(completed)} taxa in {elapsed:.2f} seconds.')

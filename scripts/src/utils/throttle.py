@@ -25,6 +25,7 @@ class ENDPOINTS:
         'name': 'entrez',
     }
     BOLD = {
+        'requests_per_second': 5,
         'requests_per_minute': 50,
         'name': 'bold',
     }
@@ -41,7 +42,7 @@ class Throttle:
     The endpoint arg should be a dict of:
         {
           'requests_per_second': int,  # Max requests per second
-          // OR
+          // AND/OR
           'requests_per_minute': int,  # Max requests per minute
           'name': str,                 # Name to identify this endpoint
         }
@@ -52,27 +53,25 @@ class Throttle:
 
     FIELD_NAME = 'timestamp'
     PER_SECOND_BLOCK_MS = 2000
-    PER_MINUTE_BLOCK_MS = 90000
+    PER_MINUTE_BLOCK_MS = 12000
 
     def __init__(
         self,
         endpoint: dict,
     ):
-        self.request_limit = (
-            endpoint.get('requests_per_second')
-            or endpoint.get('requests_per_minute')
-        )
-        if not self.request_limit:
+        self.rps = endpoint.get('requests_per_second')
+        self.rpm = endpoint.get('requests_per_minute')
+        if not (self.rps or self.rpm):
             raise ValueError(
                 "Endpoint must specify either 'requests_per_second' or"
                 " 'requests_per_minute'."
             )
-        self.per_second_limit = bool(endpoint.get('requests_per_second'))
-        self.per_minute_limit = not self.per_second_limit
+        self.per_second_limit = bool(self.rps)
+        self.per_minute_limit = bool(self.rpm)
         self.window_length_ms = (
-            self.PER_SECOND_BLOCK_MS
-            if self.per_second_limit
-            else self.PER_MINUTE_BLOCK_MS
+            self.PER_MINUTE_BLOCK_MS
+            if self.rpm
+            else self.PER_SECOND_BLOCK_MS
         )
         self.db_path = config.throttle_sqlite_path
         self.name = endpoint['name']
@@ -133,11 +132,38 @@ class Throttle:
                             (window_start,))
 
                         # Count requests in the window
-                        request_count = conn.execute(
-                            f"SELECT COUNT(*) FROM {self.name}"
-                        ).fetchone()[0]
+                        rps_observed = None
+                        rpm_observed = None
 
-                        if request_count < self.request_limit:
+                        if self.per_second_limit:
+                            args = [
+                                f"SELECT COUNT(*) FROM {self.name}",
+                            ]
+                            if self.per_minute_limit:
+                                # The window is for rpm, so need to narrow
+                                # query to RPS window size
+                                args[0] += f" WHERE {self.FIELD_NAME} >= ?"
+                                rps_window_start = (
+                                    now - self.PER_SECOND_BLOCK_MS
+                                )
+                                args.append((rps_window_start,))
+                            rps_observed = conn.execute(*args).fetchone()[0]
+
+                        if self.per_minute_limit:
+                            rpm_observed = conn.execute(
+                                f"SELECT COUNT(*) FROM {self.name}"
+                            ).fetchone()[0]
+
+                        within_per_second_limit = (
+                            self.per_second_limit
+                            and rps_observed < self.rps
+                        )
+                        within_per_minute_limit = (
+                            self.per_minute_limit
+                            and rpm_observed < self.rpm
+                        )
+
+                        if within_per_minute_limit and within_per_second_limit:
                             # Insert current timestamp atomically
                             conn.execute(
                                 f"INSERT INTO {self.name} ({self.FIELD_NAME})"
@@ -153,6 +179,7 @@ class Throttle:
                     except sqlite3.OperationalError:
                         # Handle potential lock contention gracefully
                         pass
+
             except sqlite3.OperationalError as e:
                 raise sqlite3.OperationalError(
                     str(e) + f"\nDB path: {self.db_path}"

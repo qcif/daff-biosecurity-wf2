@@ -261,6 +261,15 @@
             "env": {
                 "INPUT_FASTA_FILEPATH": "tests/test-data/queries.fasta",
             },
+        },
+        {
+            "type": "debugpy",
+            "request": "launch",
+            "name": "Test BOLD API limit",
+            "program": "${workspaceFolder}/scripts/dev/test_bold_rate_limit.py",
+            "env": {
+                "LOGGING_DEBUG": "1",
+            },
         }
     ]
 }
