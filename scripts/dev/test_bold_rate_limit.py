@@ -57,7 +57,7 @@ while True:
     #     break
     print(f"Completed task batch ({len(completed)} total).")
     if len(completed) >= 150:
-        print('Reached 50 completed tasks, stopping.')
+        print('Reached 150 completed tasks, stopping.')
         break
 
 elapsed = time.time() - t0
