@@ -25,7 +25,7 @@ class ENDPOINTS:
         'name': 'entrez',
     }
     BOLD = {
-        'requests_per_second': 10,
+        'requests_per_minute': 50,
         'name': 'bold',
     }
 
@@ -41,17 +41,39 @@ class Throttle:
     The endpoint arg should be a dict of:
         {
           'requests_per_second': int,  # Max requests per second
+          // OR
+          'requests_per_minute': int,  # Max requests per minute
           'name': str,                 # Name to identify this endpoint
         }
+
+    To be conservative, the throttle will limit per-second requests in 2-second
+    blocks and per-minute requests in 90-second blocks.
     """
 
     FIELD_NAME = 'timestamp'
+    PER_SECOND_BLOCK_MS = 2000
+    PER_MINUTE_BLOCK_MS = 90000
 
     def __init__(
         self,
         endpoint: dict,
     ):
-        self.requests_per_second = endpoint['requests_per_second']
+        self.request_limit = (
+            endpoint.get('requests_per_second')
+            or endpoint.get('requests_per_minute')
+        )
+        if not self.request_limit:
+            raise ValueError(
+                "Endpoint must specify either 'requests_per_second' or"
+                " 'requests_per_minute'."
+            )
+        self.per_second_limit = bool(endpoint.get('requests_per_second'))
+        self.per_minute_limit = not self.per_second_limit
+        self.window_length_ms = (
+            self.PER_SECOND_BLOCK_MS
+            if self.per_second_limit
+            else self.PER_MINUTE_BLOCK_MS
+        )
         self.db_path = config.throttle_sqlite_path
         self.name = endpoint['name']
         self._initialize_db()
@@ -102,20 +124,20 @@ class Throttle:
                         conn.execute("BEGIN IMMEDIATE")
 
                         now = int(time.time() * 1000)
-                        window_start = now - 2000  # Two-second sliding window
+                        window_start = now - self.window_length_ms
 
-                        # Remove expired timestamps (older than 1s)
+                        # Remove expired timestamps older than window length
                         conn.execute(
                             f"DELETE FROM {self.name}"
                             f" WHERE {self.FIELD_NAME} < ?",
                             (window_start,))
 
-                        # Count remaining requests in the last second
+                        # Count requests in the window
                         request_count = conn.execute(
                             f"SELECT COUNT(*) FROM {self.name}"
                         ).fetchone()[0]
 
-                        if request_count < self.requests_per_second:
+                        if request_count < self.request_limit:
                             # Insert current timestamp atomically
                             conn.execute(
                                 f"INSERT INTO {self.name} ({self.FIELD_NAME})"
