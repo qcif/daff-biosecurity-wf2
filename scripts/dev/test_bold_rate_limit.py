@@ -1,8 +1,6 @@
 """Test the BOLD API until rate limit is reached.
 
-OUTCOME - tests indicate that we got blocked between the 45th and 60th request,
-while sending requests consistently at a rate of ~5 per second. This suggests
-a rate limit of 50 requests per minute.
+OUTCOME - tests strongly suggest a rate limit of 250 requests per hour or day.
 
 """
 
@@ -52,9 +50,9 @@ while True:
                 error = True
                 break
             completed.append((time.time() - t0, count))
-    # if error:
-    #     print('Error occurred while fetching BOLD records. Exiting.')
-    #     break
+    if error:
+        print('Error occurred while fetching BOLD records. Exiting.')
+        break
     print(f"Completed task batch ({len(completed)} total).")
     if len(completed) >= 150:
         print('Reached 150 completed tasks, stopping.')
