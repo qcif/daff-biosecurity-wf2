@@ -10,7 +10,8 @@ which shows CLI arguments and environment variables for each script.
 # Table of Contents
 
 1. [FAQs](#faqs)
-    1. [Can I update the workflow report?](#can-i-update-the-workflow-report)
+    1. [How to update the workflow report?](#how-to-update-the-workflow-report)
+1. [Developer setup](#developer-setup)
 1. [Workflow steps (Python scripts)](#workflow-steps-python-scripts)
     1. [P0 validate inputs](#p0-validate-inputs)
     2. [P1 BLAST parser](#p1-blast-parser)
@@ -32,13 +33,77 @@ which shows CLI arguments and environment variables for each script.
 
 # FAQs
 
-### Can I update the workflow report?
+### How to update the workflow report?
 
 - For editing flag detail text, see the [Flags sections](#flags)
 - Some constants e.g. title, database names, can be modified in the [config](#application-configuration)
 - Most report text is defined in HTML templates, so try:
     - Repo-wide search for the text you're trying to update
     - Looking through the [report templates](./scripts/src/report/templates/) for the component you want to update
+
+
+# Developer setup
+
+Development is easier on Linux/MacOS because the program was developed on
+Unix. One of our team has run this in Windows (using git-bash or WSL) but
+it was more painful to get going.
+
+1. Clone the repository
+   ```sh
+   git clone https://github.com/qcif/daff-biosecurity-wf2.git
+   ```
+2. Install dependencies
+   ```sh
+   # Create a virtual environment for python3.12
+   python3.12 -m venv venv
+   source venv/bin/activate
+
+   # Install dependencies with pip
+   pip install -r requirements.txt
+   ```
+3. Install [taxonkit](https://bioinf.shenwei.me/taxonkit/download/) (used for obtaining taxonomy data)
+   ```sh
+   # Change URL to download appropriate for your platform
+   wget https://github.com/shenwei356/taxonkit/releases/download/v0.20.0/taxonkit_linux_amd64.tar.gz
+   tar xf taxonkit_linux_amd64.tar.gz
+   cp taxonkit/taxonkit /usr/local/bin  # Choose an appropriate PATH location
+
+   # Download taxdump from NCBI
+   mkdir -p $HOME/.taxonkit
+   cd $HOME/.taxonkit
+   wget -c ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz
+   tar -xzf taxdump.tar.gz
+   ```
+4. (Optional) Install HMMSearch for orientation of BOLD queries. If you omit this step you will need to run p1_bold_search.py with env var `SKIP_ORIENTATION=1`. See [Dockerfile](./Dockerfile) for installation instructions.
+
+
+# Running tests
+
+## Unit tests
+
+```sh
+python -m unittest discover \
+  -s tests \
+  -p test*.py \
+  -b \
+  -p test_gbif.py  # optional, to run a specific test only
+```
+
+## Integration tests
+
+The integration tests do not make any assertions, they just run a bunch of different tests cases, some of which contain edge cases that have caused errors in the past. Some assertions of the output data and HTML report content would be nice, but would take a while to generate and require constant updates as the code changes. These tests are mainly for broad coverage to ensure that we haven't introduced any fatal errors.
+
+> [!NOTE]
+> The integration tests have no mocking or fancy machinery, so they make real API calls and can take a while to run. I usually run them on a server so I can leave them to run for the ~15 minutes required.
+
+The integration tests are actually run with unittest (see [test_integration.py](./tests/integration/test_integration.py)).
+
+```sh
+./tests/integration/run_tests.sh
+
+# Or, for BOLD test cases:
+./tests/integration/run_tests.sh --bold
+```
 
 
 # Workflow steps (Python scripts)
