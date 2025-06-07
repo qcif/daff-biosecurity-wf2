@@ -13,7 +13,7 @@ import yaml
 from jinja2 import Environment, FileSystemLoader
 
 from src.utils import config, serialize
-from src.utils.errors import ErrorLog
+from src.utils.errors import ErrorLog, LOCATIONS
 from src.utils.flags import FLAGS, Flag, TARGETS, level_to_bs_class
 
 from .filters.css_hash import css_hash
@@ -135,6 +135,7 @@ def _get_report_context(query_ix, bold, params_json, versions_yml):
         'bold': bold,
         # rendering functions:
         'url_from_accession': config.url_from_accession,
+        'error_locations': LOCATIONS,
     }
 
 

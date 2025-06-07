@@ -2,6 +2,7 @@
 {% from "macros/subjective.html" import render_subjective_input %}
 {% from "macros/flag-badge.html" import render_flag %}
 {% from "macros/info-badge.html" import info_badge %}
+{% from "macros/error-message.html" import render_error_badge, render_error_message %}
 
 <h2>Publications supporting taxonomic association</h2>
 
@@ -51,6 +52,13 @@
       role="tabpanel"
       aria-labelledby="{{ species_id }}-tab"
     >
+
+      {% set errors = error_log.filter(
+          location=error_locations.SOURCE_DIVERSITY_ACCESSION_ERROR,
+          context={'species': species},
+        )
+      %}
+
       <p class="mb-3 text-center">
         <strong>Independent publication sources</strong>
       </p>
@@ -76,8 +84,23 @@
               For BOLD records without a GenBank IDs, the BOLD Collector is used as the source.
               {% endif %}
             </p>
+
+
           </div>
         </div>
+
+        {% set blank_accession_errors = errors.filter(
+            context={'accession': ''},
+          )
+        %}
+        {% set null_accession_errors = errors.filter(
+            context={'accession': none},
+          )
+        %}
+        {% set misc_errors = blank_accession_errors + null_accession_errors %}
+        {% if misc_errors %}'
+        {{ render_error_message(misc_errors) }}
+        {% endif %}
 
 
         {% for src_group in src_groups %}
@@ -105,6 +128,13 @@
               {% set ns.counter = ns.counter + 1 %}
               <tr{% if ns.counter > 2 %} class="hide"{% endif %}>
                 <td>
+                  {% set accession_errors = errors.filter(
+                      context={'accession': src['accession']},
+                    )
+                  %}
+                  {% if src.accession and accession_errors %}
+                  {{ render_error_badge(accession_errors) }}
+                  {% endif %}
                   <a href="{{ url_from_accession(src['accession']) }}" target="_blank">
                     {{ src.accession }}
                   </a>
@@ -121,9 +151,9 @@
               {% endfor %}
 
               {% if not src.publications %}
-                {% if 'collectors' in src %}
                 {% set ns.counter = ns.counter + 1 %}
                 <tr{% if ns.counter > 2 %} class="hide"{% endif %}>
+                {% if 'collectors' in src %}
                   <td>
                     <a href="{{ src.bold_url }}" target="_blank">
                       {{ src.bold_id }}
@@ -133,21 +163,23 @@
                   <td>BOLD Collectors: {{ src.collectors }}</td>
                   <td>NA</td>
                   <td>NA</td>
-                </tr>
-                {% endif %}
-              {% else %}
-                {% if 'accession' not in src %}
-                {% set ns.counter = ns.counter + 1 %}
-                <tr{% if ns.counter > 2 %} class="hide"{% endif %}>
+                {% else %}
                   <td>
+                    {% set accession_errors = errors.filter(
+                        context={'accession': src['accession']},
+                      )
+                    %}
+                    {% if src.accession and accession_errors %}
+                    {{ render_error_badge(accession_errors) }}
+                    {% endif %}
                     <a href="{{ url_from_accession(src['accession']) }}" target="_blank">
-                      {{ src.accession or src.bold_id }}
+                      {{ src.accession }}
                     </a>
                   </td>
                   <td>{{ src.is_automated }}</td>
                   <td colspan="3">No publications for this record</td>
+                  {% endif %}
                 </tr>
-                {% endif %}
               {% endif %}
 
               {% endfor %}

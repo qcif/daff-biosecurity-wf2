@@ -21,3 +21,17 @@
 </div>
 
 {% endmacro %}
+
+{% macro render_error_badge(errorlist) %}
+
+<span
+  class="badge bg-danger error-badge mx-2"
+  title="Errors encountered in this record"
+  data-bs-toggle="tooltip"
+  data-error-list='{{ errorlist.to_json() | tojson }}'
+  onclick="toggleErrorDetails(this);"
+>
+  X
+</span>
+
+{% endmacro %}

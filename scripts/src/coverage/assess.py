@@ -170,7 +170,7 @@ def _draw_occurrence_maps(
                    " error in the GBIF occurrence.")
             logger.error(f'{msg} Target: "{target}" Exception: {e}')
             errors.write(
-                errors.LOCATIONS.DATABASE_COVERAGE,
+                errors.LOCATIONS.DB_COVERAGE,
                 msg,
                 exc=e,
                 context={'target': target},

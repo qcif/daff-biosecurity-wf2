@@ -411,7 +411,7 @@ the HTML report:
 ```py
 # An exception has been caught in P5 database coverage
 errors.write(
-    errors.LOCATIONS.DATABASE_COVERAGE,
+    errors.LOCATIONS.DB_COVERAGE,
     'A really bad error has occured while analysing this taxon',
     exc=e,  # If an Exception was caught
     context={'target': 'Homo sapiens'},
@@ -423,14 +423,14 @@ in the analysis, and this also maps to a specific location in the report. The
 `context` dict provides additional context on what exactly was being analysed
 (e.g. which target taxon) when the error occurred. So for the example above, we
 know when rendering the report that this error should be shown at the
-`DATABASE_COVERAGE` location, for the target *Homo sapiens*.
+`DB_COVERAGE` location, for the target *Homo sapiens*.
 
 In practice, the `errors` module has a neat filter that can be used for
 rendering these in our Jinja2 templates:
 
 ```html
 <!-- Filter to get a range of locations relevant to this report section -->
-<!-- errors.LOCATIONS.DATABASE_COVERAGE_NO_GBIF_RECORD = 5.01 -->
+<!-- errors.LOCATIONS.DB_COVERAGE_NO_GBIF_RECORD = 5.01 -->
 {% set p5_01_errors = errors.filter(location=5.01, context={'target': context.target_taxon}) %}
 
 {% if p5_01_errors %}

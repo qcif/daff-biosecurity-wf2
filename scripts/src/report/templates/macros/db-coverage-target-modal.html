@@ -7,7 +7,11 @@
 {% set flag_5_2 = context.flags['5.2'][context.target_type][context.target_taxon] %}
 {% set flag_5_3 = context.flags['5.3'][context.target_type][context.target_taxon] %}
 {% set flag = context.flags['5'][context.target_type].get(context.target_taxon, none) %}
-{% set errors = context.error_log.filter(location_min=5.0, location_max=5.99, context={'target': context.target_taxon}) %}
+{% set errors = context.error_log.filter(
+    location_in=context.error_locations.DB_COVERAGE,
+    context={'target': context.target_taxon},
+  )
+%}
 
 <div class="modal fade" id="{{ context.target_id }}Modal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-xl">
@@ -52,8 +56,11 @@
             </span>
           </p>
 
-          {% if errors %}
-          {{ render_error_message(errors) }}
+          {% set general_errors = errors.filter(
+              location_lt=context.error_locations.DB_COVERAGE_TARGET,
+          ) %}
+          {% if general_errors %}
+          {{ render_error_message(general_errors) }}
           {% endif %}
 
           {% if context.data.target is not none %}
@@ -114,10 +121,9 @@
             <div class="row my-5">
               <div class="col">
 
-                {% set p5_01_errors = errors.filter(location=5.01, context={'target': target_taxon }) %}
-
-                {% if p5_01_errors %}
-                {{ render_error_message(p5_01_errors) }}
+                {% set p5_1_errors = errors.filter(location=5.1) %}
+                {% if p5_1_errors %}
+                {{ render_error_message(p5_1_errors) }}
                 {% endif %}
 
                 {% if context.data.target is not in [none, 'NA'] %}
@@ -201,6 +207,11 @@
               <br>
               <strong>Reasoning:</strong> {{ flag_5_2.explanation }}
             </p>
+
+            {% set p5_2_errors = errors.filter(location=5.2) %}
+            {% if p5_2_errors %}
+            {{ render_error_message(p5_2_errors) }}
+            {% endif %}
 
             {% if context.data.related is not none %}
             <div class="my-5">
@@ -327,6 +338,11 @@
               <br>
               <strong>Reasoning:</strong> {{ flag_5_3.explanation }}
             </p>
+
+            {% set p5_3_errors = errors.filter(location=5.3) %}
+            {% if p5_3_errors %}
+            {{ render_error_message(p5_3_errors) }}
+            {% endif %}
 
             {% if context.data.country is not none %}
             <div class="my-5">

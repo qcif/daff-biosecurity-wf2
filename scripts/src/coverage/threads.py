@@ -68,7 +68,7 @@ def parallel_process_tasks(
                     f" Exception: {type(exc).__name__}: {exc}")
                 logger.error(f"{msg}")
                 errors.write(
-                    errors.LOCATIONS.DATABASE_COVERAGE,
+                    errors.LOCATIONS.DB_COVERAGE,
                     msg,
                     exc=exc,
                     query_dir=query_dir,
