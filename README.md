@@ -12,6 +12,10 @@ which shows CLI arguments and environment variables for each script.
 1. [FAQs](#faqs)
     1. [How to update the workflow report?](#how-to-update-the-workflow-report)
 1. [Developer setup](#developer-setup)
+1. [Building a Docker image](#building-a-docker-image)
+1. [Running tests](#running-tests)
+    1. [Units tests](#unit-tests)
+    2. [Integration tests](#integration-tests)
 1. [Workflow steps (Python scripts)](#workflow-steps-python-scripts)
     1. [P0 validate inputs](#p0-validate-inputs)
     2. [P1 BLAST parser](#p1-blast-parser)
@@ -27,9 +31,8 @@ which shows CLI arguments and environment variables for each script.
     3. [Throttling API requests](#throttling-api-requests)
     4. [Flags](#flags)
     5. [Sample locus](#sample-locus)
-1. Development
-    1. TODO: Developer setup
-    1. TODO: Build a Docker image
+
+
 
 # FAQs
 
@@ -77,6 +80,33 @@ it was more painful to get going.
 4. (Optional) Install HMMSearch for orientation of BOLD queries. If you omit this step you will need to run p1_bold_search.py with env var `SKIP_ORIENTATION=1`. See [Dockerfile](./Dockerfile) for installation instructions.
 
 
+
+# Building a Docker image
+
+> [!NOTE]
+> The GitHub repo [qcif/daff-biosecurity-wf2](https://github.com/qcif/daff-biosecurity-wf2) has a GitHub workflow that automates the build/push of Docker images when a [release](https://github.com/qcif/daff-biosecurity-wf2/releases) is made. This is the preferred method of generating images as it's less error prone.
+
+We've pushed a lot of versions, so there's a script for this.
+
+Update the image path before running if required. You will need to have push access to the remote repository (e.g. DockerHub) if you intend to push this:
+
+```sh
+# nano docker_build.sh
+IMAGE=neoformit/daff-taxonomic-assignment
+```
+
+Now to build image `neoformit/daff-taxonomic-assignment:v1.2.0`:
+
+```sh
+# Build an image from the current working directory:
+./docker_build.sh -t v1.2.0  # it will ask for a tag if you don't provide one
+
+# To build and push in one go:
+./docker_build.sh -t v1.2.0 -p
+```
+
+
+
 # Running tests
 
 ## Unit tests
@@ -104,6 +134,7 @@ The integration tests are actually run with unittest (see [test_integration.py](
 # Or, for BOLD test cases:
 ./tests/integration/run_tests.sh --bold
 ```
+
 
 
 # Workflow steps (Python scripts)
@@ -425,6 +456,7 @@ are not typical of web development:
   content and lock the document as read-only. This is a hack that involves a good
   dose of JavaScript (see
   [save-report.js](https://github.com/qcif/daff-biosecurity-wf2/blob/main/scripts/src/report/static/js/save-report.js))
+
 
 
 # Application features
