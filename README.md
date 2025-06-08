@@ -1,8 +1,13 @@
-# DAFF Biosecurity Workflows - Taxonomic Assignment
+# Taxonomic Assignment workflow modules (DAFF Biosecurity Workflows)
 
 These Python modules are used for intermediate data processing as part of a
-[Nextflow workflow](https://github.com/qcif/nf-daff-biosecurity-wf2/tree/main).
-A user guide for each module is listed here. Examples of running
+[Nextflow workflow](https://github.com/qcif/nf-daff-biosecurity-wf2/tree/main)
+for taxonomic assigment of sample DNA sequences. The purpose of this analysis
+is not metabarcoding, but a comprehensive analysis of samples at the individual
+level. Taxonomic identities are assigned conservatively, with various measures
+of confidence provided to support analytical conclusions.
+
+A user guide for each module is listed below. Examples of running
 each script can be found in the [.vscode/launch.json](.vscode/launch.json) file,
 which shows CLI arguments and environment variables for each script.
 
@@ -84,7 +89,7 @@ it was more painful to get going.
 # Building a Docker image
 
 > [!NOTE]
-> The GitHub repo [qcif/daff-biosecurity-wf2](https://github.com/qcif/daff-biosecurity-wf2) has a GitHub workflow that automates the build/push of Docker images when a [release](https://github.com/qcif/daff-biosecurity-wf2/releases) is made. This is the preferred method of generating images as it's less error prone.
+> The GitHub repo [qcif/daff-biosecurity-wf2](https://github.com/qcif/daff-biosecurity-wf2) has a GitHub workflow that automates the build/push of Docker images when a [release](https://github.com/qcif/daff-biosecurity-wf2/releases) is made. This is the preferred method of generating images as it removes human error.
 
 We've pushed a lot of versions, so there's a script for this.
 
