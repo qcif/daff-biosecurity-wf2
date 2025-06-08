@@ -122,7 +122,7 @@ class Throttle:
                         # Lock the database for writing
                         conn.execute("BEGIN IMMEDIATE")
                         now = int(time.time() * 1000)
-                        if self._within_request_limits(conn):
+                        if self._within_request_limits(now, conn):
                             # Insert current timestamp atomically
                             conn.execute(
                                 f"INSERT INTO {self.name} ({self.FIELD_NAME})"
