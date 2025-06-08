@@ -5,14 +5,13 @@ These Python modules are used for intermediate data processing as part of a
 for taxonomic assigment of sample DNA sequences. The purpose of this analysis
 is not metabarcoding, but a comprehensive analysis of samples at the individual
 level. Taxonomic identities are assigned conservatively, with various measures
-of confidence provided to support analytical conclusions. You can download an
-example of the workflow report
-<a href="https://raw.githubusercontent.com/qcif/daff-biosecurity-wf2/refs/heads/main/examples/example_report.html" download>here</a>.
+of confidence provided to support analytical conclusions. You can see an
+example workflow report
+[here](https://qcif.github.io/daff-biosecurity-wf2/example_report.html).
 
 A user guide for each module is listed below. Examples of running
 each script can be found in the [.vscode/launch.json](.vscode/launch.json) file,
 which shows CLI arguments and environment variables for each script.
-
 
 # Table of Contents
 
