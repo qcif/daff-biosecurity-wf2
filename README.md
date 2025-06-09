@@ -82,7 +82,7 @@ it was more painful to get going.
    mkdir -p $HOME/.taxonkit
    cd $HOME/.taxonkit
    wget -c ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz
-   tar -xzf taxdump.tar.gz
+   tar -xzf taxdump.tar.gz && rm taxdump.tar.gz
    ```
 4. (Optional) Install HMMSearch for orientation of BOLD queries. If you omit this step you will need to run p1_bold_search.py with env var `SKIP_ORIENTATION=1`. See [Dockerfile](./Dockerfile) for installation instructions.
 
