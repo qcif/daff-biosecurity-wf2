@@ -1,5 +1,6 @@
 """Test orientation of query sequences."""
 
+import shutil
 import unittest
 from pathlib import Path
 
@@ -17,6 +18,8 @@ class TestSequenceOrientation(unittest.TestCase):
 
     def setUp(self):
         """Set up test data."""
+        if not shutil.which("hmmsearch"):
+            self.skipTest("hmmsearch command not found in PATH")
         self.sequences = list(SeqIO.parse(TEST_FASTA, "fasta"))
 
     def test_orientate(self):
