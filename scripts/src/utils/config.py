@@ -22,9 +22,12 @@ from .utils import path_safe_str
 
 logger = logging.getLogger(__name__)
 
+ROOT_DIR = Path(__file__).parents[3]
 MAP_FILENAME_TEMPLATE = "map_{taxon_str}.png"
 REPORT_FILENAME = "report_{prefix}{sample_id}_{timestamp}.html"
 QUERY_DIR_PREFIX = 'query_'
+DEFAULT_FASTA_INPUT = ROOT_DIR / 'tests/test-data/queries.fasta'
+DEFAULT_METADATA_INPUT = ROOT_DIR / 'tests/test-data/metadata.csv'
 
 
 class Config:
@@ -127,16 +130,10 @@ class Config:
             "preliminary_id",
         )
         FASTA_FILEPATH = Path(
-            os.getenv(
-                "INPUT_FASTA_FILEPATH",
-                Path(__file__).parent.parent.parent.parent
-                / 'tests/test-data/queries.fasta')
+            os.getenv("INPUT_FASTA_FILEPATH", DEFAULT_FASTA_INPUT)
         )
         METADATA_PATH = Path(
-            os.getenv(
-                "INPUT_METADATA_CSV_FILEPATH",
-                Path(__file__).parent.parent.parent.parent
-                / 'tests/test-data/metadata.csv')
+            os.getenv("INPUT_METADATA_CSV_FILEPATH", DEFAULT_METADATA_INPUT)
         )
         FASTA_MAX_LENGTH_NT = 3000
         FASTA_MIN_LENGTH_NT = 20
