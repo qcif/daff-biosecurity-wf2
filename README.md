@@ -22,7 +22,8 @@ which shows CLI arguments and environment variables for each script.
 1. [Running tests](#running-tests)
     1. [Units tests](#unit-tests)
     2. [Integration tests](#integration-tests)
-1. [Workflow steps (Python scripts)](#workflow-steps-python-scripts)
+1. [Running the scripts](#workflow-steps-python-scripts)
+    1. [Environment variables](#environment-variables)
     1. [P0 validate inputs](#p0-validate-inputs)
     2. [P1 BLAST parser](#p1-blast-parser)
     3. [BLASTDBCMD](#blastdbcmd)
@@ -151,8 +152,10 @@ MAFFT, FastME) are actioned with other tools, but most steps require invoking on
 of the Python scripts included in this repository. For ease of reference, the
 scripts are enumerated as P1-P6.
 
+## Environment variables
+
 Throughout execution of these scripts, access to input files is required.
-To avoid repeated passing of these files, they can just be set as environment
+To avoid repeated passing of these files, they are just set as environment
 variables:
 
 ```sh
@@ -170,6 +173,8 @@ REPORT_DEBUG=0  # 1 to omit timestamp from report filename for browser reload be
 FACILITY_NAME="Hogwarts"  # Displayed in report
 ANALYST_NAME="Harry Potter"  # Displayed in report
 ```
+
+Environment variables are fully documented [here](https://qcif.github.io/daff-biosecurity-wf2/environment.html).
 
 
 ## P0 validate inputs
