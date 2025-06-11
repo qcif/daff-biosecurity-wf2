@@ -17,8 +17,12 @@ done
 
 if [[ -z $TAG ]]; then
   # Prompt for the tag if not provided
-  read -p "Enter the tag for the image (default: latest): " TAG
-  TAG=${TAG:-latest}
+  read -p "Have you updated the VERSION file? [y/n] > " REPLY
+  if [[ $REPLY != "y" ]]; then
+    echo "Please update the VERSION file before building."
+    exit 1
+  fi
+  TAG=$(cat VERSION)
 fi
 
 # Build the Docker image

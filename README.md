@@ -93,6 +93,9 @@ it was more painful to get going.
 > [!NOTE]
 > The GitHub repo [qcif/daff-biosecurity-wf2](https://github.com/qcif/daff-biosecurity-wf2) has a GitHub workflow that automates the build/push of Docker images when a [release](https://github.com/qcif/daff-biosecurity-wf2/releases) is made. This is the preferred method of generating images as it removes human error.
 
+> [!NOTE]
+> Make sure you update the VERSION file before publishing a new version!
+
 We've pushed a lot of versions, so there's a script for this.
 
 Update the image path before running if required. You will need to have push access to the remote repository (e.g. DockerHub) if you intend to push this:
