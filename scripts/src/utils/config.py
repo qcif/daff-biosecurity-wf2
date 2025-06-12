@@ -48,6 +48,8 @@ class Config:
                                 'assigned_taxonomy.csv')
     CANDIDATES_FASTA = os.getenv("CANDIDATES_FASTA_FILENAME",
                                  'candidates.fasta')
+    PHYLOGENY_FASTA = os.getenv("PHYLOGENY_FASTA_FILENAME",
+                                'phylogeny.fasta')
     CANDIDATES_CSV = os.getenv("CANDIDATES_CSV_FILENAME", 'candidates.csv')
     CANDIDATES_JSON = os.getenv("CANDIDATES_JSON_FILENAME", 'candidates.json')
     CANDIDATES_COUNT_FILE = os.getenv("CANDIDATES_COUNT_FILENAME",
@@ -154,6 +156,10 @@ class Config:
         DB_COV_RELATED_MIN_B = int(os.getenv('DB_COV_RELATED_MIN_B', 10))
         DB_COV_COUNTRY_MISSING_A = int(
             os.getenv('DB_COV_COUNTRY_MISSING_A', 1))
+        PHYLOGENY_MIN_HIT_IDENTITY = float(
+            os.getenv('PHYLOGENY_MIN_HIT_IDENTITY', 0.95))
+        PHYLOGENY_MIN_HIT_SEQUENCES = int(
+            os.getenv('PHYLOGENY_MIN_HIT_SEQUENCES', 10))
 
     class OUTPUTS:
         TOI_DETECTED_HEADER = [
