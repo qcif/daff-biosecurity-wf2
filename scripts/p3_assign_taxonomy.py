@@ -159,6 +159,24 @@ def _assign_species_id(
             )),
         }
 
+    def _get_median_bs_class(median_identity, top_identity):
+        """Get the median identity class based on the top identity."""
+        identity_threshold = (
+            config.CRITERIA.ALIGNMENT_MIN_IDENTITY_STRICT
+            if top_identity >= config.CRITERIA.ALIGNMENT_MIN_IDENTITY_STRICT
+            else config.CRITERIA.ALIGNMENT_MIN_IDENTITY
+        )
+        if median_identity >= identity_threshold:
+            return "success"
+        elif (
+            median_identity
+            >= identity_threshold
+            * config.CRITERIA.MEDIAN_IDENTITY_WARNING_FACTOR
+        ):
+            return "warning"
+        else:
+            return "danger"
+
     query_ix = config.get_query_ix(query_dir)
     candidate_species = deduplicate([
         hit for hit in candidate_hits
@@ -192,6 +210,19 @@ def _assign_species_id(
             True
             if hit['hit_id'] in selected_hit_ids
             else False
+        )
+
+    for hit in selected_species:
+        hit_identities = [
+            h['identity'] for h in selected_species_hits
+            if h['species'] == hit['species']
+        ]
+        hit['median_identity'] = sorted(hit_identities)[
+            len(hit_identities) // 2
+        ]
+        hit['median_bs_class'] = _get_median_bs_class(
+            hit['median_identity'],
+            hit['identity'],
         )
 
     moderate_match_ids = [

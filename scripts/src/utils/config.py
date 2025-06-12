@@ -147,6 +147,8 @@ class Config:
         ALIGNMENT_MIN_IDENTITY = float(os.getenv('MIN_IDENTITY', 0.935))
         ALIGNMENT_MIN_IDENTITY_STRICT = float(
             os.getenv('MIN_IDENTITY_STRICT', 0.985))
+        MEDIAN_IDENTITY_WARNING_FACTOR = float(
+            os.getenv('MEDIAN_IDENTITY_WARNING_FACTOR', 0.95))
         MAX_CANDIDATES_FOR_ANALYSIS = int(
             os.getenv('MAX_CANDIDATES_FOR_ANALYSIS', 3))
         SOURCES_MIN_COUNT = int(os.getenv('MIN_SOURCE_COUNT', 5))

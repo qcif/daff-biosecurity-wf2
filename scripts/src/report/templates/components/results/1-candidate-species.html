@@ -119,6 +119,10 @@
           Top identity
           {{ info_badge("The proportion of nucleotides that match between the query and best-matching reference sequence for this species.") }}
         </th>
+        <th class="text-center" data-sort-method="number">
+          Median identity
+          {{ info_badge("The median of all hit identities for this species. A median that is significantly lower than the top identity indicates high genetic diversity across reference sequences, reducing our confidence in their taxonomic annotation.") }}
+        </th>
         {% if bold %}
           <th class="text-center">
             BOLD Record
@@ -140,7 +144,14 @@
       <tr>
         <td><em>{{ taxon }}</em></td>
         <td class="text-center">{{ candidate.hit_count }}</td>
-        <td class="text-center" data-sort="{{ candidate.identity }}">{{ (candidate.identity * 100) | round(2)}}%</td>
+        <td class="text-center" data-sort="{{ candidate.identity }}">
+          {{ (candidate.identity * 100) | round(2)}}%
+        </td>
+        <td class="text-center" data-sort="{{ candidate.median_identity }}">
+          <span class="badge alert-{{ candidate.median_bs_class }} font-normal">
+            {{ (candidate.median_identity * 100) | round(2)}}%
+          </span>
+        </td>
         {% if bold %}
         <td class="text-center">
           <a href="{{ candidate.url }}" target="_blank">{{ candidate.hit_id }}</a>
