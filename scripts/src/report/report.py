@@ -183,9 +183,8 @@ def _get_metadata(query_ix):
     """Return mock metadata for the report."""
     sample_id = config.get_sample_id(query_ix)
     return {
-        **config.metadata[sample_id],
         'sample_id': sample_id,
-        'locus_provided': config.locus_was_provided_for(query_ix),
+        **config.metadata[sample_id],
     }
 
 

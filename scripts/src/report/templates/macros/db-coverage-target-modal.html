@@ -37,7 +37,7 @@
           For example, if your sample is from <em>Homo sapiens</em>, but there are no <em>Homo sapiens</em> DNA records in the reference database, the analysis will be unable to detect <em>Homo sapiens</em> as the correct taxonomic identity. In the latter case, the analysis will most likely try to assign the closest relative with existing reference data as the taxonomic identity.
         </p>
 
-        {% if not context.metadata.locus_provided %}
+        {% if not context.locus_provided %}
         <p class="alert alert-warning">
           <strong>Warning: no locus provided</strong>
           <br>
@@ -135,7 +135,7 @@
                   There are {{ records_str }} sequence records in the reference database for
                   <em>{{ context.target_taxon }}</em>
                   <span
-                    {% if not context.metadata.locus_provided %}
+                    {% if not context.locus_provided %}
                     class="strikethrough"
                     title="No locus was provided for this sample in metadata.csv"
                     data-bs-toggle="tooltip"
@@ -229,7 +229,7 @@
                 </li>
                 <li>
                   <span
-                    {% if not context.metadata.locus_provided %}
+                    {% if not context.locus_provided %}
                     class="strikethrough"
                     title="No locus was provided for this sample in metadata.csv"
                     data-bs-toggle="tooltip"
@@ -266,7 +266,7 @@
                     <p class="mb-0 text-center">
                       Number of GenBank records
                       <span
-                        {% if not context.metadata.locus_provided %}
+                        {% if not context.locus_provided %}
                         class="strikethrough"
                         title="No locus was provided for this sample in metadata.csv"
                         data-bs-toggle="tooltip"
@@ -360,7 +360,7 @@
                 </li>
                 <li>
                   <span
-                    {% if not context.metadata.locus_provided %}
+                    {% if not context.locus_provided %}
                     class="strikethrough"
                     title="No locus was provided for this sample in metadata.csv"
                     data-bs-toggle="tooltip"
@@ -400,7 +400,7 @@
                     <p class="mb-0 text-center">
                       Number of GenBank records
                       <span
-                        {% if not context.metadata.locus_provided %}
+                        {% if not context.locus_provided %}
                         class="strikethrough"
                         title="No locus was provided for this sample in metadata.csv"
                         data-bs-toggle="tooltip"
