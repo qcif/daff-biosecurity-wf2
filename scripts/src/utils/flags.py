@@ -111,6 +111,10 @@ class Flag:
         """Read flags from *.flag files.
         If a flag file doesn't exist for a given <flag_id, type, target>
         combination, it will be created with a default value of 'NA'.
+
+        TODO: Honestly this is an abomination - should probably refactor this
+        to serialize each flag to a JSON file with a standard structure rather
+        than encoding metadata in the filename.
         """
         def get_level(flag):
             """Get the warning level for the given flag."""
@@ -267,6 +271,7 @@ class FLAGS:
     INTRASPECIES_DIVERSITY = '6'
     PMI = '7'
     NA = 'NA'
+    ERROR = 'ERR'
     A = "A"
     B = "B"
     C = "C"

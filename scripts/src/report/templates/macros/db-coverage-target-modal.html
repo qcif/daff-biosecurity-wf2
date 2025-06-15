@@ -126,7 +126,7 @@
                 {{ render_error_message(p5_1_errors) }}
                 {% endif %}
 
-                {% if context.data.target is not in [none, 'NA'] %}
+                {% if context.data.target is not in [none, 'NA', 'ERR'] %}
                 {% set records_str = "{:,}".format(context.data.target) %}
                 <div class="big-number alert-{{ flag_5_1.bs_class }}">
                   {{ records_str }} records
