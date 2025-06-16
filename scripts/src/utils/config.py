@@ -433,7 +433,13 @@ class Config:
                 flag['level'] = flag.get('level', {})
                 flag['explanation'][row['value']] = row['explanation']
                 flag['outcome'][row['value']] = row['outcome']
-                flag['level'][row['value']] = int(row['level'])
+                try:
+                    flag['level'][row['value']] = int(row['level'])
+                except ValueError:
+                    raise ValueError(
+                        f"flags.csv: level value must be a valid integer - got"
+                        f" '{row['level']}' for flag {row['id']}{row['value']}"
+                    )
                 data[row['id']] = flag
         return data
 
