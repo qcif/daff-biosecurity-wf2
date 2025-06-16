@@ -93,7 +93,7 @@ def draw_occurrence_map(taxon_key: str, path: Path):
     else:
         ax.text(
             0.5, 0.15,
-            "No occurrence records available on GBIF",
+            "No occurrence records returned from GBIF",
             color="white",
             fontsize=16,
             ha="center",
