@@ -213,7 +213,7 @@
             {{ render_error_message(p5_2_errors) }}
             {% endif %}
 
-            {% if context.data.related is not none %}
+            {% if context.data.related | length %}
             <div class="my-5">
               <p>
                 <span class="small-number alert-{{ flag_5_2.bs_class }}">
@@ -281,19 +281,25 @@
 
                     <script>
                       document.addEventListener('DOMContentLoaded', function() {
-                        var data = DB_COVERAGE['{{ context.target_type }}']['{{ context.target_taxon }}'].related;
-                        var entries = Object.entries(data);
+                        const data = DB_COVERAGE['{{ context.target_type }}']['{{ context.target_taxon }}'].related;
+                        const entries = Object.entries(data);
                         entries.sort((a, b) => a[1] - b[1]);
-                        var keys = entries.map(entry => entry[0]);
-                        var values = entries.map(entry => entry[1]);
-                        var keyLength = Math.max(...keys.map(key => key.length));
-                        var plotData = [{
+                        const keys = entries.map(entry => entry[0]);
+                        const values = entries.map(entry => entry[1]);
+                        const keyLength = Math.max(...keys.map(key => key.length));
+                        const zeroValues = values.filter(value => value === 0).length;
+                        const coverage = values.length - zeroValues;
+                        const coverage_percent = Math.round(coverage / values.length * 100);
+                        $(".relatedHasReference-{{ context.target_id }}").text(coverage);
+                        $(".relatedCount-{{ context.target_id }}").text(values.length);
+                        $(".relatedCoveragePercent-{{ context.target_id }}").text(coverage_percent);
+                        const plotData = [{
                           type: 'bar',
                           x: values,
                           y: keys,
                           orientation: 'h'
                         }];
-                        var height = Math.max(300, 25 * keys.length);
+                        const height = Math.max(300, 25 * keys.length);
                         Plotly.newPlot(
                           'dbcov-plot-related-{{ context.target_id }}',
                           plotData,
@@ -302,24 +308,25 @@
                             height: height,
                             xaxis: {
                               side: 'top',
+                              range: [0, null],
                             },
                           }
                         );
-
-                        zeroValues = values.filter(value => value === 0).length;
-                        coverage = values.length - zeroValues;
-                        coverage_percent = Math.round(coverage / values.length * 100);
-                        $(".relatedHasReference-{{ context.target_id }}").text(coverage);
-                        $(".relatedCount-{{ context.target_id }}").text(values.length);
-                        $(".relatedCoveragePercent-{{ context.target_id }}").text(coverage_percent);
                       });
                     </script>
                   </div>
                 </div>
               </div>
             </div>
-            {% endif %}
 
+            {% else %}
+            {% if context.data.related | length == 0 %}
+            <p>
+              No species were found in genus <em>{{ context.target_taxon.split(' ')[0] }}</em>
+              in the GBIF database, so there is nothing to report here.
+            </p>
+            {% endif %}
+            {% endif %}
           </div>
 
           <hr>
@@ -330,7 +337,7 @@
               that occur in country of origin <strong>{{ context.metadata.country }}</strong>
             </h3>
 
-            {% if context.metadata.country %}
+            {% if context.metadata.country != 'NA' %}
 
             <p class="alert alert-{{ flag_5_3.bs_class }}">
               <strong>Flag {{ flag_5_3.flag_id }}{{ flag_5_3.value }}:</strong>
@@ -344,114 +351,123 @@
             {{ render_error_message(p5_3_errors) }}
             {% endif %}
 
-            {% if context.data.country is not none %}
-            <div class="my-5">
-              <p>
-                <span class="small-number alert-{{ flag_5_3.bs_class }}">
-                  <span class="relatedCountryHasReference-{{ context.target_id }}"></span>/<span class="relatedCountryCount-{{ context.target_id }}"></span>
-                  (<span class="relatedCountryCoveragePercent-{{ context.target_id }}"></span>%)
-                </span>
-                 of species have sequence records in the reference database for:
-              </p>
+            {% if context.data.country | length %}
+              <div class="my-5">
+                <p>
+                  <span class="small-number alert-{{ flag_5_3.bs_class }}">
+                    <span class="relatedCountryHasReference-{{ context.target_id }}"></span>/<span class="relatedCountryCount-{{ context.target_id }}"></span>
+                    (<span class="relatedCountryCoveragePercent-{{ context.target_id }}"></span>%)
+                  </span>
+                  of species have sequence records in the reference database for:
+                </p>
 
-               <ul>
-                <li>
-                  Species in the genus <em>{{ context.target_taxon.split(' ')[0] }}</em>
-                </li>
-                <li>
-                  <span
-                    {% if not context.locus_provided %}
-                    class="strikethrough"
-                    title="No locus was provided for this sample in metadata.csv"
-                    data-bs-toggle="tooltip"
-                    data-bs-placement="bottom"
-                    {% endif %}
+                <ul>
+                  <li>
+                    Species in the genus <em>{{ context.target_taxon.split(' ')[0] }}</em>
+                  </li>
+                  <li>
+                    <span
+                      {% if not context.locus_provided %}
+                      class="strikethrough"
+                      title="No locus was provided for this sample in metadata.csv"
+                      data-bs-toggle="tooltip"
+                      data-bs-placement="bottom"
+                      {% endif %}
+                    >
+                      At the target locus <strong>{{ context.metadata.locus }}</strong>
+                  </span>
+                  </li>
+                  <li>
+                    In the sample country of origin <strong>{{ context.metadata.country }}</strong>
+                  </li>
+                </ul>
+                </div>
+
+              <div class="accordion" id="accordionRelatedCountry-{{ context.target_id }}">
+                <div class="accordion-item">
+                  <h2 class="accordion-header">
+                    <button
+                      class="accordion-button collapsed"
+                      type="button"
+                      data-bs-toggle="collapse"
+                      data-bs-target="#collapseAccordionRelatedCountry-{{ context.target_id }}"
+                      aria-expanded="false"
+                      aria-controls="collapseAccordionRelatedCountry-{{ context.target_id }}"
+                    >
+                      Per-species reference sequence counts
+                    </button>
+                  </h2>
+
+                  <div
+                    id="collapseAccordionRelatedCountry-{{ context.target_id }}"
+                    class="accordion-collapse collapse"
+                    data-bs-parent="#accordionRelatedCountry-{{ context.target_id }}"
                   >
-                    At the target locus <strong>{{ context.metadata.locus }}</strong>
-                </span>
-                </li>
-                <li>
-                  In the sample country of origin <strong>{{ context.metadata.country }}</strong>
-                </li>
-               </ul>
-            </div>
+                    <div class="accordion-body">
+                      <p class="mb-0 text-center">
+                        Number of GenBank records
+                        <span
+                          {% if not context.locus_provided %}
+                          class="strikethrough"
+                          title="No locus was provided for this sample in metadata.csv"
+                          data-bs-toggle="tooltip"
+                          data-bs-placement="bottom"
+                          {% endif %}
+                        >
+                          at locus <strong>{{ context.metadata.locus }}</strong>
+                        </span>
+                      </p>
 
-            <div class="accordion" id="accordionRelatedCountry-{{ context.target_id }}">
-              <div class="accordion-item">
-                <h2 class="accordion-header">
-                  <button
-                    class="accordion-button collapsed"
-                    type="button"
-                    data-bs-toggle="collapse"
-                    data-bs-target="#collapseAccordionRelatedCountry-{{ context.target_id }}"
-                    aria-expanded="false"
-                    aria-controls="collapseAccordionRelatedCountry-{{ context.target_id }}"
-                  >
-                    Per-species reference sequence counts
-                  </button>
-                </h2>
+                      <div class="verticalScrollChart" id="dbcov-plot-relatedCountry-{{ context.target_id }}"></div>
 
-                <div
-                  id="collapseAccordionRelatedCountry-{{ context.target_id }}"
-                  class="accordion-collapse collapse"
-                  data-bs-parent="#accordionRelatedCountry-{{ context.target_id }}"
-                >
-                  <div class="accordion-body">
-                    <p class="mb-0 text-center">
-                      Number of GenBank records
-                      <span
-                        {% if not context.locus_provided %}
-                        class="strikethrough"
-                        title="No locus was provided for this sample in metadata.csv"
-                        data-bs-toggle="tooltip"
-                        data-bs-placement="bottom"
-                        {% endif %}
-                      >
-                        at locus <strong>{{ context.metadata.locus }}</strong>
-                      </span>
-                    </p>
-
-                    <div class="verticalScrollChart" id="dbcov-plot-relatedCountry-{{ context.target_id }}"></div>
-
-                    <script>
-                      document.addEventListener('DOMContentLoaded', function() {
-                        var data = DB_COVERAGE['{{ context.target_type }}']['{{ context.target_taxon }}'].country;
-                        var entries = Object.entries(data);
-                        entries.sort((a, b) => a[1] - b[1]);
-                        var keys = entries.map(entry => entry[0]);
-                        var values = entries.map(entry => entry[1]);
-                        var keyLength = Math.max(...keys.map(key => key.length));
-                        var plotData = [{
-                          type: 'bar',
-                          x: values,
-                          y: keys,
-                          orientation: 'h'
-                        }];
-                        var height = Math.max(300, 25 * keys.length);
-                        Plotly.newPlot(
-                          'dbcov-plot-relatedCountry-{{ context.target_id }}',
-                          plotData,
-                          {
-                            margin: { t: 20, r: 0, b: 0, l: keyLength * 8 },
-                            height: height,
-                            xaxis: {
-                              side: 'top',
-                            },
-                          }
-                        );
-
-                        zeroValues = values.filter(value => value === 0).length;
-                        coverage = values.length - zeroValues;
-                        coverage_percent = Math.round(coverage / values.length * 100);
-                        $(".relatedCountryHasReference-{{ context.target_id }}").text(coverage);
-                        $(".relatedCountryCount-{{ context.target_id }}").text(values.length);
-                        $(".relatedCountryCoveragePercent-{{ context.target_id }}").text(coverage_percent);
-                      });
-                    </script>
+                      <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                          const data = DB_COVERAGE['{{ context.target_type }}']['{{ context.target_taxon }}'].country;
+                          const entries = Object.entries(data);
+                          entries.sort((a, b) => a[1] - b[1]);
+                          const keys = entries.map(entry => entry[0]);
+                          const values = entries.map(entry => entry[1]);
+                          const keyLength = Math.max(...keys.map(key => key.length));
+                          const zeroValues = values.filter(value => value === 0).length;
+                          const coverage = values.length - zeroValues;
+                          const coverage_percent = Math.round(coverage / values.length * 100);
+                          $(".relatedCountryHasReference-{{ context.target_id }}").text(coverage);
+                          $(".relatedCountryCount-{{ context.target_id }}").text(values.length);
+                          $(".relatedCountryCoveragePercent-{{ context.target_id }}").text(coverage_percent);
+                          const plotData = [{
+                            type: 'bar',
+                            x: values,
+                            y: keys,
+                            orientation: 'h'
+                          }];
+                          const height = Math.max(300, 25 * keys.length);
+                          Plotly.newPlot(
+                            'dbcov-plot-relatedCountry-{{ context.target_id }}',
+                            plotData,
+                            {
+                              margin: { t: 20, r: 0, b: 0, l: keyLength * 8 },
+                              height: height,
+                              xaxis: {
+                                side: 'top',
+                                range: [0, null],
+                              },
+                            }
+                          );
+                        });
+                      </script>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+
+            {% else %}
+            {% if context.data.country | length == 0 %}
+            <p>
+              The GBIF database returned no species in genus <em>{{ context.target_taxon.split(' ')[0] }}</em>
+              with occurrence records in country <strong>{{ context.metadata.country }}</strong>,
+              so there is nothing to report here.
+            </p>
+            {% endif %}
             {% endif %}
 
             {% else %}
@@ -459,7 +475,6 @@
               A country of origin was not provided in the sample metadata, so this analysis could not be performed.
             </p>
             {% endif %}
-
           </div>
 
           {% else %}
@@ -473,7 +488,6 @@
             {% endif %}
           </p>
           {% endif %}
-
         </div>
       </div>
     </div>
