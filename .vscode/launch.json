@@ -113,6 +113,7 @@
             ],
             "env": {
                 // "MAX_CANDIDATES_FOR_ANALYSIS": "0",  // Force boxplot
+                "PHYLOGENY_MAX_HITS_PER_SPECIES": "5",
             },
             "preLaunchTask": "clear-log-files"
         },

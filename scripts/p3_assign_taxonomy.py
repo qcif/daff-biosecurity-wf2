@@ -266,6 +266,58 @@ def _assign_species_id(
     return selected_species
 
 
+def _get_accessions_for_phylogeny(
+    phylo_hits: list[dict],
+    id_key: str,
+    identity_key: str,
+) -> list[str]:
+    """Remove surplus sequences if there are too many per species.
+    Sample hits in a systematic manner (by identity) to ensure a sample
+    that is representative of sequence diversity.
+    """
+    def _systematic_sample(seq, n, key=None):
+        """Return `n` elements spaced as evenly as possible through `seq`."""
+        data = sorted(seq, key=key)
+        N = len(data)
+        if n <= 0:
+            return []
+        if n >= N:
+            return data[:]               # every item
+        if n == 1:
+            return [data[(N - 1) // 2]]  # middle element
+
+        step = (N - 1) / (n - 1)        # ideal distance between picks
+        idx = [round(i * step) for i in range(n - 1)] + [N - 1]
+        return [data[i] for i in idx]
+
+    accessions = []
+    max_hits = config.CRITERIA.PHYLOGENY_MAX_HITS_PER_SPECIES
+    phylo_species = {
+        hit['species'] for hit in phylo_hits
+    }
+    hits_by_species = {
+        species: [
+            hit for hit in phylo_hits
+            if hit['species'] == species
+        ]
+        for species in phylo_species
+    }
+    for hits in hits_by_species.values():
+        if len(hits) > max_hits:
+            # Take a sample representative of sequence diversity
+            accessions += [
+                hit[id_key]
+                for hit in _systematic_sample(
+                    hits,
+                    max_hits,
+                    key=lambda x: x[identity_key],
+                )
+            ]
+        else:
+            accessions += [hit[id_key] for hit in hits]
+    return accessions
+
+
 def _write_taxonomic_id(query_dir, candidate_species_strict):
     if len(candidate_species_strict) != 1:
         logger.info(
@@ -339,27 +391,38 @@ def _write_candidates_csv(query_dir, hits, bold=False):
 
 
 def _write_candidates_fasta(query_dir, hits, bold=False):
-    """Write FASTA sequences for each candidate species to file."""
-    hit_key = "hit_id" if bold else "accession"
+    """Write FASTA sequences for each candidate species to file.
+
+    Writes two FASTA files:
+    - candidates.fasta: Contains all candidate sequences
+    - phylogeny.fasta: Contains a subset of candidate sequences for phylogeny
+    """
+    id_key = "hit_id" if bold else "accession"
     identity_key = "similarity" if bold else "identity"
     path = query_dir / config.CANDIDATES_FASTA
     phylo_path = query_dir / config.PHYLOGENY_FASTA
     fastas = config.read_hits_fasta(query_dir)
     accessions = [
-        hit[hit_key] for hit in hits
+        hit[id_key] for hit in hits
     ]
-    phylogeny_accessions = []
+    phylogeny_hits = []
     for hit in sorted(
         hits,
         key=lambda x: x[identity_key]
     ):
         if (
             hit[identity_key] < config.CRITERIA.PHYLOGENY_MIN_HIT_IDENTITY
-            and len(phylogeny_accessions)
+            and len(phylogeny_hits)
             > config.CRITERIA.PHYLOGENY_MIN_HIT_SEQUENCES
         ):
             break
-        phylogeny_accessions.append(hit[hit_key])
+        phylogeny_hits.append(hit)
+
+    phylogeny_accessions = _get_accessions_for_phylogeny(
+        phylogeny_hits,
+        id_key,
+        identity_key,
+    )
 
     candidate_fastas = [
         fasta for fasta in fastas

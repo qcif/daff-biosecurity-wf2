@@ -198,6 +198,25 @@
             </td>
           </tr>
           <tr>
+            <td><code>PHYLOGENY_MIN_HIT_IDENTITY</code></td>
+            <td><code>0.95</code></td>
+            <td>Minimum hit identity to be included into phylogenetic tree.</td>
+          </tr>
+          <tr>
+            <td><code>PHYLOGENY_MIN_HIT_SEQUENCES</code></td>
+            <td><code>10</code></td>
+            <td>
+              The minimum number of sequences to be included (non-candidate sequences will be included until this limit is reached).
+            </td>
+          </tr>
+          <tr>
+            <td><code>PHYLOGENY_MAX_HITS_PER_SPECIES</code></td>
+            <td><code>1000</code></td>
+            <td>
+              Maximum number of hits to be included for each species. This is useful for runs where one species has 30+ sequences that are redundant in the tree. Reducing this parameter to 10 would increase tree clarity while also dramatically reducing run time. In this case, a stratified sample of sequences (based on identity) is taken to represent the range of diversity present in each species' sequences.
+            </td>
+          </tr>
+          <tr>
             <td>
               <code><strong>BLAST_DATABASE_NAME</strong></code>
             </td>

@@ -164,6 +164,8 @@ class Config:
             os.getenv('PHYLOGENY_MIN_HIT_IDENTITY', 0.95))
         PHYLOGENY_MIN_HIT_SEQUENCES = int(
             os.getenv('PHYLOGENY_MIN_HIT_SEQUENCES', 10))
+        PHYLOGENY_MAX_HITS_PER_SPECIES = int(
+            os.getenv('PHYLOGENY_MAX_HITS_PER_SPECIES', 1000))
 
     class OUTPUTS:
         TOI_DETECTED_HEADER = [
