@@ -9,10 +9,12 @@ Use the ./run_tests.sh script to run this easily with the required environment
 variables set.
 """
 
+import gc
 import importlib
 import json
 import os
 import shutil
+import sys
 import tempfile
 import unittest
 from argparse import Namespace
@@ -136,13 +138,19 @@ class IntegrationTest(unittest.TestCase):
 
     def patch_and_run(self, module_name, patched_args):
         mock_args = Namespace(**patched_args)
-        module = importlib.import_module(f"scripts.{module_name}")
+        module_path = f"scripts.{module_name}"
+        module = importlib.import_module(module_path)
         with patch.object(
             module,
             "_parse_args",
             return_value=mock_args,
         ):
             module.main()
+
+        # Ensure that modules are cleaned up after each step to avoid
+        # cross-test contamination e.g. config instances
+        sys.modules.pop(module_path, None)
+        gc.collect()
 
     def test_integration_cases(self):
         test_cases = [

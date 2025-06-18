@@ -31,6 +31,14 @@ DEFAULT_FASTA_INPUT = ROOT_DIR / 'tests/test-data/queries.fasta'
 DEFAULT_METADATA_INPUT = ROOT_DIR / 'tests/test-data/metadata.csv'
 
 
+class class_property:
+    def __init__(self, fget):
+        self.fget = fget
+
+    def __get__(self, instance, owner):
+        return self.fget(owner)
+
+
 class Config:
 
     USER_EMAIL = os.getenv("USER_EMAIL")
@@ -133,15 +141,22 @@ class Config:
             "locus",
             "preliminary_id",
         )
-        FASTA_FILEPATH = Path(
-            os.getenv("INPUT_FASTA_FILEPATH", DEFAULT_FASTA_INPUT)
-        )
-        METADATA_PATH = Path(
-            os.getenv("INPUT_METADATA_CSV_FILEPATH", DEFAULT_METADATA_INPUT)
-        )
         FASTA_MAX_LENGTH_NT = 3000
         FASTA_MIN_LENGTH_NT = 20
         FASTA_MAX_SEQUENCES = 150
+
+        @class_property
+        def FASTA_FILEPATH(cls):
+            return Path(
+                os.getenv("INPUT_FASTA_FILEPATH", DEFAULT_FASTA_INPUT)
+            )
+
+        @class_property
+        def METADATA_PATH(cls):
+            return Path(
+                os.getenv("INPUT_METADATA_CSV_FILEPATH",
+                          DEFAULT_METADATA_INPUT)
+            )
 
     class CRITERIA:
         ALIGNMENT_MIN_NT = int(os.getenv('MIN_NT', 300))
