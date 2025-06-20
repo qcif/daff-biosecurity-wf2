@@ -149,7 +149,9 @@ class IntegrationTest(unittest.TestCase):
 
         # Ensure that modules are cleaned up after each step to avoid
         # cross-test contamination e.g. config instances
-        sys.modules.pop(module_path, None)
+        for module in list(sys.modules):
+            if module.startswith("scripts.") or module.startswith("src."):
+                sys.modules.pop(module, None)
         gc.collect()
 
     def test_integration_cases(self):
