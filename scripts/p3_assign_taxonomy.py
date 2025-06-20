@@ -524,7 +524,7 @@ def _detect_taxa_of_interest(candidate_species, query_dir):
             'taxon': taxon,
             'species': hit['species'],
             'accession': hit['accession'],
-            'identity': hit['identity'],
+            'identity': str(100 * hit['identity']) + '%',
         }
         for hit in candidate_species
         for rank, taxon in hit["taxonomy"].items()
