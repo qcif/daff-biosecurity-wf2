@@ -25,6 +25,7 @@ PROJECT_ROOT = Path(__file__).parents[2]
 TEST_DATA_DIR = PROJECT_ROOT / "tests/test-data"
 COMPLETED_TESTS_FILE = "completed_tests.json"
 TEMPDIR_PREFIX = "integration_test_"
+QUERY_INDEX_FILENAME = 'query.index'  # optional query index to use (0-indexed)
 
 
 def print_green(text: str):
@@ -183,6 +184,12 @@ class IntegrationTest(unittest.TestCase):
                     wdir / "query.fasta")
                 os.environ['INPUT_METADATA_CSV_FILEPATH'] = str(
                     wdir / "metadata.csv")
+                query_ix_path = wdir / QUERY_INDEX_FILENAME
+                query_ix = (
+                    int(query_ix_path.read_text().strip()) + 1
+                    if query_ix_path.exists()
+                    else 1
+                )
 
                 self.patch_and_run(
                     "p0_validation",
@@ -213,7 +220,9 @@ class IntegrationTest(unittest.TestCase):
                 )
                 print_green(f"\nTest case {test_case.name}: P2 PASS\n")
 
-                query_dir = next(wdir.glob("query_001*"))
+                query_dir = next(
+                    wdir.glob(f"query_{query_ix:03}*")
+                )
 
                 self.patch_and_run(
                     "p3_assign_taxonomy",
