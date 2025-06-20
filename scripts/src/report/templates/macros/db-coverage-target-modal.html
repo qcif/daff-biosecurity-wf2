@@ -213,7 +213,7 @@
             {{ render_error_message(p5_2_errors) }}
             {% endif %}
 
-            {% if context.data.related | length %}
+            {% if context.data.related %}
             <div class="my-5">
               <p>
                 <span class="small-number alert-{{ flag_5_2.bs_class }}">
@@ -320,7 +320,7 @@
             </div>
 
             {% else %}
-            {% if context.data.related | length == 0 %}
+            {% if context.data.related %}
             <p>
               No species were found in genus <em>{{ context.target_taxon.split(' ')[0] }}</em>
               in the GBIF database, so there is nothing to report here.
@@ -351,7 +351,7 @@
             {{ render_error_message(p5_3_errors) }}
             {% endif %}
 
-            {% if context.data.country | length %}
+            {% if context.data.country %}
               <div class="my-5">
                 <p>
                   <span class="small-number alert-{{ flag_5_3.bs_class }}">
@@ -461,7 +461,7 @@
               </div>
 
             {% else %}
-            {% if context.data.country | length == 0 %}
+            {% if context.data.country %}
             <p>
               The GBIF database returned no species in genus <em>{{ context.target_taxon.split(' ')[0] }}</em>
               with occurrence records in country <strong>{{ context.metadata.country }}</strong>,
