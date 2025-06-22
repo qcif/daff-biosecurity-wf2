@@ -217,7 +217,7 @@
     </table>
   </div>
 
-  {% if candidates.species | length %}
+  {% if hits | length %}
     <p class="text-center">
       <button
         class="btn btn-primary"
@@ -232,6 +232,10 @@
     {% else %}
       {% include "components/results/1a-blast-hits-modal.html" %}
     {% endif %}
+  {% else %}
+    <p class="alert alert-info">
+      <em>No BLAST hits were returned for the given query DNA sequence.</em>
+    </p>
   {% endif %}
 </div>
 
