@@ -94,7 +94,7 @@ These values are not present in the BLAST XML and are calculated from the extrac
             <td>
                 A score which takes into account both alignment strength and length. Calculated as the sum of bitscores across all HSPs.
             </td>
-            <td>
+            <td class="text-center p-3">
                 \( \sum_{HSP \in \text{HSPs}} \text{bits}(HSP) \)
             </td>
         </tr>
@@ -105,7 +105,7 @@ These values are not present in the BLAST XML and are calculated from the extrac
             <td>
                 An expression of probability that the alignment occurred due to random chance, often expressed as an exponent to distinguish between very low numbers. If there is only one HSP, the `hsp.evalue` will be used. Otherwise, a formula is used.
             </td>
-            <td>
+            <td class="text-center p-3">
                 \( \text{ess} \cdot 2^{-\sum_{HSP \in \text{hit.HSPs}} \text{bits}(HSP)} \)
                 <br>
                 <em>Where <code>ess</code> is the effective search space specified in the BLAST XML output.</em>
@@ -118,7 +118,7 @@ These values are not present in the BLAST XML and are calculated from the extrac
             <td>
                 The proportion of nucleotides which match between query and subject in the alignment. This is calculated as the weighted identity of HSPs (high-scoring pairs), clipped to a maximum of 1.
             </td>
-            <td>
+            <td class="text-center p-3">
                 \(
                     \frac{\sum_{HSP \in \text{HSPs}} \text{identities}(HSP)}{\sum_{HSP \in \text{HSPs}} \text{alignment length}(HSP)}
                 \)
@@ -131,7 +131,7 @@ These values are not present in the BLAST XML and are calculated from the extrac
             <td>
                 The proportion of the query sequence that is covered by the alignment with the reference sequence.
             </td>
-            <td>
+            <td class="text-center p-3">
                 \(
                     \frac{\text{alignment length}}{\text{query length}}
                 \)
@@ -142,6 +142,7 @@ These values are not present in the BLAST XML and are calculated from the extrac
 
 
 ## BOLD - submitting sequences to ID Engine
+
 
 
 ## BLAST - Extracting taxonomic metadata
