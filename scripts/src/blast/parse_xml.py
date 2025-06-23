@@ -153,7 +153,7 @@ def parse_blast_xml(blast_xml_path: str) -> tuple[
                         "bitscore": hsp.bits,
                         "e_value": hsp.expect,
                         "identity": round(
-                            hsp.align_length / hsp.align_length,
+                            hsp.identities / hsp.align_length,
                             3,
                         ),
                         "identities": hsp.identities,
