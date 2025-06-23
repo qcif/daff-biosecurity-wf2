@@ -271,11 +271,8 @@
         {
             "type": "debugpy",
             "request": "launch",
-            "name": "Test BOLD API limit",
-            "program": "${workspaceFolder}/scripts/dev/test_bold_rate_limit.py",
-            "env": {
-                "LOGGING_DEBUG": "1",
-            },
+            "name": "Render docs",
+            "program": "${workspaceFolder}/scripts/dev/render_docs.py",
         }
     ]
 }
