@@ -19,7 +19,7 @@ def main():
     args = _parse_args()
     config.configure(args.output_dir, bold=True)
     logger.info(f"Searching BOLD with query {args.fasta_file}...")
-    result = BoldSearch(args.fasta_file)
+    result = BoldSearch(args.fasta_file, config.BOLD_DATABASE)
     _write_hits_json(result)
     _write_hits_fasta(result)
     _write_taxa_metadata(result)

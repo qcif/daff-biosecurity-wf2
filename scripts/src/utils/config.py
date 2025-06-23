@@ -82,6 +82,7 @@ class Config:
     BLAST_MAX_TARGET_SEQS = int(os.getenv("BLAST_MAX_TARGET_SEQS", 2000))
 
     # BOLD-specific
+    BOLD_DATABASE = os.getenv("BOLD_DATABASE", "COX1_SPECIES_PUBLIC")
     BOLD_FLAG = 'BOLD'
     BOLD_TAXON_COUNT_JSON = os.getenv("BOLD_TAXON_COUNT_JSON",
                                       "bold_taxon_counts.json")
