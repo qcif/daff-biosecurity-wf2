@@ -69,7 +69,7 @@ def _parse_args():
 def _validate_fasta(path: Path) -> list[str]:
     """Assert that input FASTA file is valid.
 
-    - Must be nucleotide
+    - Must be nucleotide (ambiguous IUPAC DNA)
     - Minimum seq length (50nt?)
     - Max sequences (show warning) - 120?
     - Max seq length (3000nt?)

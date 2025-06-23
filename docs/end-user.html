@@ -8,9 +8,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
 
+    <!-- For rendering LaTex-style math equations: -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"
+            onload="renderMathInElement(document.body);"></script>
+
     <style>
       body {
-        padding: 2rem 1rem;
+        padding: 3rem 1rem;
       }
       code {
         color: #333;
@@ -18,50 +24,241 @@
         padding: 0.2rem;
         border-radius: 0.25rem;
       }
-      h1, h2, h3 {
-        margin-top: 1.5em;
-        margin-bottom: 0.2em;
+      h2, h3 {
+        padding-top: 1em;
+        margin-top: 1em;
+        margin-bottom: .25em;
+      }
+      h2 {
+        border-top: 1px solid #ddd;
+      }
+      h3 {
+        font-size: 1.5rem;
+        color: var(--bs-gray);
+      }
+      h1 .small {
+        font-size: 0.75em;
+      }
+      .katex {
+        font-size: 2em;
       }
     </style>
   </head>
   <body>
     <main class="container">
-      <h1>User documentation</h1>
+      <div class="row my-3">
+        <div class="col">
+          <h1>
+            User documentation
+            <br>
+            <span class="small text-muted">
+              DAFF Taxonomic assignment workflow
+            </span>
+          </h1>
+        </div>
+        <div class="col-auto px-3">
+          <img src="https://github.com/qcif/daff-biosecurity-wf2/blob/main/scripts/src/report/static/img/daff-logo.png?raw=true" alt="DAFF Logo" width="300" style="margin-top: -1rem;">
+        </div>
+      </div>
 
-<p class="lead">DAFF Taxonomic assignment workflow</p>
+      <p>While the HTML reports from this workflow aim to be self-documenting, there are many analytical details which the user may wish to understand in further detail. The purpose of this document is to provide this enhanced understanding of what exactly happens during the analysis, and how outcomes are derived from the resulting data.</p>
 
-<p>While the HTML reports from this workflow aim to be self-documenting, there are many analytical details which the user may wish to understand in further detail. The purpose of this document is to provide this enhanced understanding of what exactly happens during the analysis, and how outcomes are derived from the resulting data.</p>
+<ul>
+<li>To set up and run the workflow, visit the Nextflow workflow repository: <a href="https://github.com/qcif/nf-daff-biosecurity-wf2">qcif/nf-daff-biosecurity-wf2</a>.</li>
+<li>For analysis code, see the Python modules repository (used in the above workflow): <a href="https://github.com/qcif/daff-biosecurity-wf2">qcif/daff-biosecurity-wf2</a></li>
+</ul>
 
-<p>To set up and run the workflow, visit the Nextflow workflow repository: <a href="https://github.com/qcif/nf-daff-biosecurity-wf2">qcif/nf-daff-biosecurity-wf2</a>.</p>
+<h2 id="reference-data">Reference data</h2>
 
-<p>For analysis code, see the Python modules repository (used in the above workflow): <a href="https://github.com/qcif/daff-biosecurity-wf2">qcif/daff-biosecurity-wf2</a></p>
-
-<h2>Reference data</h2>
-
-<h3>BLAST</h3>
+<h3 id="blast">BLAST</h3>
 
 <p>The reference data used by the workflow depends entirely on the deployment - ask your platform administrator if you are unsure.
 For the BLAST version of the workflow, the reference data will be a BLAST database of sequence records that is held on the analysis server - by default this is NCBI's "Core Nt" database, but in future it may be possible to choose a different reference database. The HTML report should specify the database name in the database coverage report (admins can set this manually with <code>BLAST_DATABASE_NAME</code>).</p>
 
-<h3>BOLD</h3>
+<h3 id="bold">BOLD</h3>
 
 <p>By default this is set to <code>COX1_SPECIES_PUBLIC</code> (admins can override this by setting <code>BOLD_DATABASE</code>).</p>
 
-<h2>Validation of user inputs</h2>
+<h2 id="input-files">Input files</h2>
 
-<h2>BLAST - parsing the BLAST result</h2>
+<h3 id="fasta-file">FASTA file</h3>
 
-<h2>BOLD - submitting sequences to ID Engine</h2>
+<p>A FASTA file containing sample sequences to be analysed. Multiple sequences per sample can be used, but the FASTA header for each sequence must be unique and match an entry in the <code>metadata.csv</code> input. The following constraints apply to this input:</p>
 
-<h2>BLAST - Extracting taxonomic metadata</h2>
+<ul>
+<li>Seq IDs must be unique</li>
+<li>Seq IDs must match <code>metadata.csv</code> input</li>
+<li>Max 150 sequences</li>
+<li>Minimum seq length: <code>20nt</code></li>
+<li>Max length of any sequence: <code>3000nt</code></li>
+<li>All residues must be valid nucleotide (ambiguous IUPAC DNA: <code>ATGCRYSWKMBDHVN</code>)</li>
+</ul>
 
-<h2>Assigning taxonomic identity</h2>
+<h3 id="metadata-csv-file">Metadata CSV file</h3>
 
-<h2>Assessment of supporting publications</h2>
+<p>This file provides metadata for each query sequence, with the following fields:</p>
 
-<h2>Assessment of database coverage</h2>
+<table class="table table-striped">
+<thead>
+<tr>
+  <th>Field</th>
+  <th>Required</th>
+  <th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>sample_id</td>
+  <td>yes</td>
+  <td>Must match the header of one FASTA sequence</td>
+</tr>
+<tr>
+  <td>locus</td>
+  <td>yes</td>
+  <td>Must be in the <a href="./allowed-loci.html">list of allowed Loci</a> or <code>NA</code> for virus or BOLD queries</td>
+</tr>
+<tr>
+  <td>preliminary_id</td>
+  <td>yes</td>
+  <td>A suggested taxonomic identity based on sample morphology</td>
+</tr>
+<tr>
+  <td>taxa_of_interest</td>
+  <td>no</td>
+  <td>A pipe-delimited list of taxa to be evaluated against the sample. Can be at rank species, genus, family, order, class, phylum, kingdom or domain.</td>
+</tr>
+<tr>
+  <td>country</td>
+  <td>no</td>
+  <td>The sample country of origin</td>
+</tr>
+<tr>
+  <td>host</td>
+  <td>no</td>
+  <td>The host or commodity that the sample was extracted from</td>
+</tr>
+</tbody>
+</table>
 
-<h2>Report generation</h2>
+<p class="alert alert-info">
+  From <code>v1.1</code> arbitrary fields in this file will be displayed in the workflow report
+</p>
+
+<h2 id="blast-parsing-the-blast-result">BLAST - parsing the BLAST result</h2>
+
+<p>BLAST search is performed using a local (meaning run on the same machine as the workflow) BLASTN from the <a href="https://blast.ncbi.nlm.nih.gov/doc/blast-help/downloadblastdata.html">NCBI BLAST+ toolkit</a>; the version is specified in the workflow report. This command-line BLASTN process produces a series of alignments for each query sequence, with each alignment relating to a BLAST "hit" against a sequence in the reference database.</p>
+
+<h3 id="extracted-values">Extracted values</h3>
+
+<p>The following values are extracted verbatim from BLAST XML fields:</p>
+
+<ul>
+<li>Hit identifier (GenBank ID)</li>
+<li>Hit definition (GenBank record title)</li>
+<li>Hit NCBI accession</li>
+<li>Hit subject length (nt)</li>
+<li>High-scoring pairs (HSPs; each represents a segment of the alignment):
+<ul>
+<li>bitscore</li>
+<li>evalue</li>
+<li>identity</li>
+<li>query_start</li>
+<li>query_end</li>
+<li>subject_start</li>
+<li>subject_end</li>
+<li>alignment_length</li>
+</ul></li>
+</ul>
+
+<h3 id="calculated-values">Calculated values</h3>
+
+<p>These values are not present in the BLAST XML and are calculated from the extracted values:</p>
+
+<table class="table table-striped">
+    <thead>
+        <th>Value</th>
+        <th>Description</th>
+        <th>Equation</th>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+                Alignment length
+            </td>
+            <td>
+                The total non-overlapping length of all HSPs.
+            </td>
+            <td>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Hit bitscore
+            </td>
+            <td>
+                A score which takes into account both alignment strength and length. Calculated as the sum of bitscores across all HSPs.
+            </td>
+            <td>
+                \( \sum_{HSP \in \text{HSPs}} \text{bits}(HSP) \)
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Hit E-value
+            </td>
+            <td>
+                An expression of probability that the alignment occurred due to random chance, often expressed as an exponent to distinguish between very low numbers. If there is only one HSP, the `hsp.evalue` will be used. Otherwise, a formula is used.
+            </td>
+            <td>
+                \( \text{ess} \cdot 2^{-\sum_{HSP \in \text{hit.HSPs}} \text{bits}(HSP)} \)
+                <br>
+                <em>Where <code>ess</code> is the effective search space specified in the BLAST XML output.</em>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Hit identity
+            </td>
+            <td>
+                The proportion of nucleotides which match between query and subject in the alignment. This is calculated as the weighted identity of HSPs (high-scoring pairs), clipped to a maximum of 1.
+            </td>
+            <td>
+                \(
+                    \frac{\sum_{HSP \in \text{HSPs}} \text{identities}(HSP)}{\sum_{HSP \in \text{HSPs}} \text{alignment length}(HSP)}
+                \)
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Query coverage
+            </td>
+            <td>
+                The proportion of the query sequence that is covered by the alignment with the reference sequence.
+            </td>
+            <td>
+                \(
+                    \frac{\text{alignment length}}{\text{query length}}
+                \)
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<h2 id="bold-submitting-sequences-to-id-engine">BOLD - submitting sequences to ID Engine</h2>
+
+<h2 id="blast-extracting-taxonomic-metadata">BLAST - Extracting taxonomic metadata</h2>
+
+<h2 id="assigning-taxonomic-identity">Assigning taxonomic identity</h2>
+
+<h2 id="assessment-of-supporting-publications">Assessment of supporting publications</h2>
+
+<h2 id="assessment-of-database-coverage">Assessment of database coverage</h2>
+
+<h2 id="report-generation">Report generation</h2>
+
+
+      
+      
 
     </main>
   </body>
