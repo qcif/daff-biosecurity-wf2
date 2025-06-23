@@ -1,5 +1,6 @@
 """Render documentation in Markdown format to HTML."""
 
+import json
 from pathlib import Path
 
 import markdown2
@@ -8,6 +9,8 @@ from jinja2 import Environment, FileSystemLoader
 ROOT_DIR = Path(__file__).resolve().parents[2]
 DOCS_SRC_DIR = ROOT_DIR / 'docs/src'
 DOCS_DEST_DIR = ROOT_DIR / 'docs'
+ALLOWED_LOCI_PATH = ROOT_DIR / 'loci.json'
+ALLOWED_LOCI_TEMPLATE = 'allowed-loci.html'
 
 
 def main():
@@ -22,16 +25,41 @@ def main():
             "html-classes": {
                 'table': 'table table-striped',
             },
+            "header-ids": True,
         })
-        j2 = Environment(
-            loader=FileSystemLoader(str(ROOT_DIR / 'docs/src')),
-            autoescape=True,
-        )
-        html_doc = j2.get_template('header.html').render(
-            body=html_body,
-        )
+        html_doc = render_html('header.html', {
+            'body': html_body,
+            'title': 'User documentation',
+        })
         dest_path.write_text(html_doc, encoding='utf-8')
         print(f"Rendered {md_file} -> {dest_path}")
+
+    render_allowed_loci()
+
+
+def render_html(template, context):
+    j2 = Environment(
+        loader=FileSystemLoader(DOCS_SRC_DIR),
+        autoescape=True,
+    )
+    return j2.get_template(template).render(**context)
+
+
+def render_allowed_loci():
+    data = json.loads(ALLOWED_LOCI_PATH.read_text(encoding='utf-8'))
+    loci_list = [
+        item
+        for group in data.values()
+        for loci in group.values()
+        for item in loci
+    ]
+    html_doc = render_html(ALLOWED_LOCI_TEMPLATE, {
+        'title': 'List of permitted loci',
+        'loci': loci_list,
+    })
+    dest_path = DOCS_DEST_DIR / ALLOWED_LOCI_TEMPLATE
+    dest_path.write_text(html_doc, encoding='utf-8')
+    print(f"Rendered allowed loci documentation to {dest_path}")
 
 
 if __name__ == '__main__':
