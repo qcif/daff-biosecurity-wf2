@@ -44,9 +44,13 @@ This file provides metadata for each query sequence, with the following fields:
   From <code>v1.1</code> arbitrary fields in this file will be displayed in the workflow report
 </p>
 
-## BLAST - parsing the BLAST result
+## BLAST - parsing the XML output
 
 BLAST search is performed using a local (meaning run on the same machine as the workflow) BLASTN from the [NCBI BLAST+ toolkit](https://blast.ncbi.nlm.nih.gov/doc/blast-help/downloadblastdata.html); the version is specified in the workflow report. This command-line BLASTN process produces a series of alignments for each query sequence, with each alignment relating to a BLAST "hit" against a sequence in the reference database.
+
+<p class="alert alert-info">
+    This step forks a single BLAST result into a series of query directories. From here each query's results are analysed in parallel.
+</p>
 
 ### Extracted values
 
@@ -140,15 +144,75 @@ These values are not present in the BLAST XML and are calculated from the extrac
     </tbody>
 </table>
 
+## BLAST - Extracting taxonomic metadata
+
+BLAST results do not include structured taxonomic information. This data is extracted for each BLAST hit subject using [taxonkit](https://bioinf.shenwei.me/taxonkit/), a command-line tool which can retrieve taxonomic records from NCBI's [taxdump](https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/) archive. Taxids for each hit are extracted from the local BLAST database using `blastdbcmd`, another tool in the BLAST+ suite. This results in the following fields being collected for each hit:
+
+- Taxid
+- Domain
+- Superkingdom
+- Kingdom
+- Phylum
+- Class
+- Order
+- Family
+- Genus
+- Species
 
 ## BOLD - submitting sequences to ID Engine
 
+When the workflow is run in `--bold` mode, the search method changes to use the BOLD ID Engine through the BOLD API (http://v4.boldsystems.org/index.php/Ids_xml). Since BOLD requires query DNA sequences that are correctly orientated (i.e. not antisense), we attempt to orientate the query sequences before submission. Query sequences are then submitted to the ID Engine API on-by-one. BOLD then returns a set of match statistics similar to BLAST for each query.
 
+<p class="alert alert-info">
+    This step forks each BOLD into a series of query directories. From here each query's results are analysed in parallel.
+</p>
 
-## BLAST - Extracting taxonomic metadata
+### Sequence orientation
 
+Each DNA sequence is translated all three translation frames in both the forward and reverse directions. This results in six translated amino acid sequences for each query in frames `1`, `2`, `3`, `-1`, `-2`, `-3`.
+
+To orientate each query sequence, we then use the `hmmsearch` tool (part of the [HMMER suite](http://eddylab.org/software/hmmer/Userguide.pdf)) locally to determine whether any the translation frames contain any of the following HMM profiles:
+
+- `pf00115.hmm` - [Cytochrome C and Quinol oxidase polypeptide I](https://www.ebi.ac.uk/interpro/entry/pfam/PF00115/)
+- `pf00116.hmm` - [Cytochrome C oxidase subunit II, periplasmic domain](https://www.ebi.ac.uk/interpro/entry/pfam/PF00116/)
+- `pf02790.hmm` - [Cytochrome C oxidase subunit II, transmembrane domain](https://www.ebi.ac.uk/interpro/entry/pfam/PF02790/)
+
+A match is accepted when the E-value is below `1e-5`. The first frame which is predicted to encode one of these domains dictates the orientation that will then be submitted to BOLD. For query sequences with no matches, both the forward and reverse orientations are submitted to BOLD and the one which returns hit(s) is assumed to be in the correct orientation (the other orientation's result is discarded).
+
+### Submitting to ID Engine
+
+Orientated query sequences are submitted to the ID Engine API sequentially, and the requests run in parallel to increase throughput.
+The following data are parsed directly from the API response:
+
+- Query title
+- Query length
+- Query frame
+- Query sequence
+- Hits:
+    - Hit identifier (BOLD ID)
+    - Hit sequence description
+    - Hit taxonomic identification (species)
+    - Hit similarity (used in place of identity)
+    - Hit URL (a link to the record on [https://boldsystems.org](https://boldsystems.org))
+    - Hit nucleotide sequence
+    - Hit collectors (BOLD database submitter(s))
+
+### Requesting additional metadata
+
+For each hit subject, additional metadata are then requested from the "Full data retrieval" BOLD API endpoint:
+
+- Accession (GenBank accession)
+- Phylum
+- Class
+- Order
+- Family
+- Genus
+- Species
+
+The above fields are then used to fetch a kingdom classification (not included in BOLD response data) from the GBIF API.
 
 ## Assigning taxonomic identity
+
 
 
 ## Assessment of supporting publications
