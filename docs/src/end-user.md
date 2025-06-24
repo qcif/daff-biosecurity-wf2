@@ -1,4 +1,4 @@
-While the HTML reports from this workflow aim to be self-documenting, there are many analytical details which the user may wish to understand in further detail. The purpose of this document is to provide this enhanced understanding of what exactly happens during the analysis, and how outcomes are derived from the resulting data.
+While the workflow report aims to be self-documenting, there are many analytical details which the user may wish to understand in further detail. The purpose of this document is to provide this enhanced understanding of what exactly happens during the analysis, and how outcomes are derived from the resulting data.
 
 - To set up and run the workflow, visit the Nextflow workflow repository: [qcif/nf-daff-biosecurity-wf2](https://github.com/qcif/nf-daff-biosecurity-wf2).
 - For analysis code, see the Python modules repository (used in the above workflow): [qcif/daff-biosecurity-wf2](https://github.com/qcif/daff-biosecurity-wf2)
@@ -8,11 +8,11 @@ While the HTML reports from this workflow aim to be self-documenting, there are 
 ### BLAST
 
 The reference data used by the workflow depends entirely on the deployment - ask your platform administrator if you are unsure.
-For the BLAST version of the workflow, the reference data will be a BLAST database of sequence records that is held on the analysis server - by default this is NCBI's "Core Nt" database, but in future it may be possible to choose a different reference database. The HTML report should specify the database name in the database coverage report (admins can set this manually with `BLAST_DATABASE_NAME`).
+For the BLAST version of the workflow, the reference data will be a BLAST database of sequence records that is held on the analysis server - by default this is `{{ config.REPORT.DATABASE_NAME }}`, but it is possible to run with a different reference database. The workflow report specifies the database name in the database coverage report (admins can set this manually with `BLAST_DATABASE_NAME`).
 
 ### BOLD
 
-By default this is set to `COX1_SPECIES_PUBLIC` (admins can override this by setting `BOLD_DATABASE`).
+By default this is set to `{{ config.BOLD_DATABASE }}` (admins can override this by setting `BOLD_DATABASE`).
 
 ## Input files
 
@@ -22,9 +22,9 @@ A FASTA file containing sample sequences to be analysed. Multiple sequences per 
 
 - Seq IDs must be unique
 - Seq IDs must match `metadata.csv` input
-- Max 150 sequences
-- Minimum seq length: `20nt`
-- Max length of any sequence: `3000nt`
+- Maximum query sequences: `{{ config.INPUTS.FASTA_MAX_SEQUENCES }}`
+- Minimum seq length: `{{ config.INPUTS.FASTA_MIN_LENGTH_NT }}nt`
+- Max length of any sequence: `{{ config.INPUTS.FASTA_MAX_LENGTH_NT }}nt`
 - All residues must be valid nucleotide (ambiguous IUPAC DNA: `ATGCRYSWKMBDHVN`)
 
 ### Metadata CSV file
@@ -41,7 +41,7 @@ This file provides metadata for each query sequence, with the following fields:
 | host              | no       | The host or commodity that the sample was extracted from                                                            |
 
 <p class="alert alert-info">
-  From <code>v1.1</code> arbitrary fields in this file will be displayed in the workflow report
+  From <code>v1.1</code> any additional fields in this file will be displayed in the workflow report
 </p>
 
 ## BLAST - parsing the XML output
@@ -161,7 +161,7 @@ BLAST results do not include structured taxonomic information. This data is extr
 
 ## BOLD - submitting sequences to ID Engine
 
-When the workflow is run in `--bold` mode, the search method changes to use the BOLD ID Engine through the BOLD API (http://v4.boldsystems.org/index.php/Ids_xml). Since BOLD requires query DNA sequences that are correctly orientated (i.e. not antisense), we attempt to orientate the query sequences before submission. Query sequences are then submitted to the ID Engine API on-by-one. BOLD then returns a set of match statistics similar to BLAST for each query.
+When the workflow is run in `--bold` mode, the search method changes to use the BOLD ID Engine through the BOLD API ([https://v4.boldsystems.org/resources/api](https://v4.boldsystems.org/resources/api)). Since BOLD requires query DNA sequences that are correctly orientated (i.e. not antisense), we attempt to orientate the query sequences before submission. Query sequences are then submitted to the ID Engine API on-by-one. BOLD then returns a set of match statistics similar to BLAST for each query.
 
 <p class="alert alert-info">
     This step forks each BOLD into a series of query directories. From here each query's results are analysed in parallel.
@@ -177,7 +177,7 @@ To orientate each query sequence, we then use the `hmmsearch` tool (part of the 
 - `pf00116.hmm` - [Cytochrome C oxidase subunit II, periplasmic domain](https://www.ebi.ac.uk/interpro/entry/pfam/PF00116/)
 - `pf02790.hmm` - [Cytochrome C oxidase subunit II, transmembrane domain](https://www.ebi.ac.uk/interpro/entry/pfam/PF02790/)
 
-A match is accepted when the E-value is below `1e-5`. The first frame which is predicted to encode one of these domains dictates the orientation that will then be submitted to BOLD. For query sequences with no matches, both the forward and reverse orientations are submitted to BOLD and the one which returns hit(s) is assumed to be in the correct orientation (the other orientation's result is discarded).
+A match is accepted when the E-value is below `{{ config.HMMSEARCH_MIN_EVALUE }}`. The first frame which is predicted to encode one of these domains dictates the orientation that will then be submitted to BOLD. For query sequences with no matches, both the forward and reverse orientations are submitted to BOLD and the one which returns hit(s) is assumed to be in the correct orientation (the other orientation's result is discarded).
 
 ### Submitting to ID Engine
 
@@ -210,10 +210,61 @@ For each hit subject, additional metadata are then requested from the "Full data
 - Species
 
 The above fields are then used to fetch a kingdom classification (not included in BOLD response data) from the GBIF API.
+The phylum given above is used to fetch a the associated phylum record from the [GBIF species search API](https://techdocs.gbif.org/en/openapi/v1/species#/Searching%20names/searchNames), and the kingdom field is extracted from the response data.
 
 ## Assigning taxonomic identity
 
+This is a critical stage in the analysis. Hits returned from BLAST/BOLD are filtered and a list of candidate species is extracted from those hits. Filtering is applied as follows. For BOLD search, the process is identical, with similarity being used in place of identity.
 
+- All hits which are below `{{ config.CRITERIA.ALIGNMENT_MIN_NT }}nt` AND `{{ config.CRITERIA.ALIGNMENT_MIN_Q_COVERAGE * 100 }}%` query coverage are excluded from the entire analysis. These are referred to as "filtered hits".
+- The identity threshold for candidate hits is either:
+    - `{{ config.CRITERIA.ALIGNMENT_MIN_IDENTITY_STRICT * 100 }}%` (if any filtered hits meet this threshold) - defined as a **STRONG MATCH**
+    - OR `{{ config.CRITERIA.ALIGNMENT_MIN_IDENTITY * 100 }}%` - defined as a **MODERATE MATCH**
+- Resulting candidate hits are then aggregated by species and the top hit per-species is identified. These species are what you see reported in the "Candidates" section of the workflow report.
+- The "No. hits" shown for each candidate includes all filtered hits, not just the candidate hits.
+- The "Median identity" shown in the "Candidate species" table is derived from the identity (%) of all filtered hits. If there is a wide distribution of hit identities, the median will be reduced. If the median drops below the candidate threshold, the badge will turn from green to yellow. If it drops to less than `{{ config.CRITERIA.MEDIAN_IDENTITY_WARNING_FACTOR * 100 }}%` of the threshold (i.e. `<{{ (config.CRITERIA.ALIGNMENT_MIN_IDENTITY_STRICT * 100 * config.CRITERIA.MEDIAN_IDENTITY_WARNING_FACTOR) | round(1) }}%` for a threshold of `{{ config.CRITERIA.ALIGNMENT_MIN_IDENTITY_STRICT * 100 }}%`), the badge will turn red.
+
+The candidate species identified above are then cross-checked against the Preliminary Morphology ID and Taxa of Interest (if provided).
+
+### Checking preliminary morphology ID
+
+The PMI provided by the user is checked against each taxonomic rank from each candidate species. If the provided name matches any of the fields, this is regarded as a match. The user should be aware that in some edge-cases this can result in a mis-match due to the existence of taxonomic homonyms (*Morus*, for example, is both a plant and bird genus).
+
+### Checking taxa of interest
+
+This process is identical to that described above, except that a little more information is collected for display in the "Taxa of interest" section of the workflow report. For each taxon of interest, the best-scoring species that matches the taxonomy is reported. It is possible for a TOI to match multiple candidates, but only the top candidate will be shown.
+
+
+## Phylogenetic analysis
+
+Subject sequences are selected from filtered hits [extracted previously](#assigning-taxonomic-identity).
+The selection process is a little complex, as it aims to strike a balance between reasonable coverage of the genetic diversity present in BLAST/BOLD hit subjects, while also trying to minimize the number of sequences that need to go through alignment and analysis. Building trees with 100+ sequences is SLOW and the resulting tree is often ugly, so we do our best to avoid that.
+
+- Hits are collected in order of descending identity until both:
+    - The identity of the hit drops to `{{ config.CRITERIA.PHYLOGENY_MIN_HIT_IDENTITY * 100 }}%`
+    - AND at least {{ config.CRITERIA.PHYLOGENY_MIN_HIT_SEQUENCES }} hits have been collected
+
+This means that candidate hits are always sampled, and some filtered hits are usually included too.
+
+Next, if there are more than {{ config.CRITERIA.PHYLOGENY_MAX_HITS_PER_SPECIES }} hits for the species, a representative sample of hits for each species is taken:
+
+- Filtered hits for the species are ordered by identity
+- A systematic sample of {{ config.CRITERIA.PHYLOGENY_MAX_HITS_PER_SPECIES }} hits is taken, including the first and last hit
+
+The aim is that a species with 200 hits of alignment identities between 90-95% would result in a sample of hits with identities as follows (assuming a bimodal distribution representing two taxonomic clades, and sample size of n=5):
+
+- 90.3%
+- 90.5%
+- 94.8%
+- 95.1%
+- 95.2%
+
+<p class="alert alert-info">
+    The workflow has a default value of `PHYLOGENY_MAX_HITS_PER_SPECIES=1000` so that the sampling described above is not implemented unless the workflow administrator decides to limit this number to constrain tree size. Setting this sample size too low would result in poor quality trees that may give a false impression of genetic diversity to the user.
+</p>
+
+A FASTA sequence is then written by extracting the nucleotide sequence from each of the selected hits, and adding the query sequence.
+This FASTA file is then alignment with [MAFFT](https://mafft.cbrc.jp/alignment/server/index.html), and then a tree is computed from the alignment with [FastME](http://www.atgc-montpellier.fr/fastme/).
 
 ## Assessment of supporting publications
 

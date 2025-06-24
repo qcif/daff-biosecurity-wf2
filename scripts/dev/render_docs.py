@@ -1,10 +1,16 @@
 """Render documentation in Markdown format to HTML."""
 
 import json
+import sys
 from pathlib import Path
 
 import markdown2
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader, Template
+
+sys.path.append(str(Path(__file__).resolve().parents[1]))
+from src.utils.config import Config  # noqa: E402
+
+config = Config()
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 DOCS_SRC_DIR = ROOT_DIR / 'docs/src'
@@ -27,8 +33,11 @@ def main():
             },
             "header-ids": True,
         })
+        html_body_rendered = Template(html_body).render(
+            config=config,
+        )
         html_doc = render_html('header.html', {
-            'body': html_body,
+            'body': html_body_rendered,
             'title': 'User documentation',
         })
         dest_path.write_text(html_doc, encoding='utf-8')
