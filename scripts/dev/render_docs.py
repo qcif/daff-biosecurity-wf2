@@ -36,9 +36,10 @@ def main():
         html_body_rendered = Template(html_body).render(
             config=config,
         )
+        title = md_file.stem.replace('-', ' ').replace('_', ' ').capitalize()
         html_doc = render_html('header.html', {
             'body': html_body_rendered,
-            'title': 'User documentation',
+            'title': title,
         })
         dest_path.write_text(html_doc, encoding='utf-8')
         print(f"Rendered {md_file} -> {dest_path}")

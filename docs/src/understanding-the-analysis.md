@@ -3,6 +3,10 @@ While the workflow report aims to be self-documenting, there are many analytical
 - To set up and run the workflow, visit the Nextflow workflow repository: [qcif/nf-daff-biosecurity-wf2](https://github.com/qcif/nf-daff-biosecurity-wf2).
 - For analysis code, see the Python modules repository (used in the above workflow): [qcif/daff-biosecurity-wf2](https://github.com/qcif/daff-biosecurity-wf2)
 
+## Interpretting the workflow report
+
+(This should probably be in the workflow report!)
+
 ## Reference data
 
 ### BLAST
@@ -251,16 +255,17 @@ Next, if there are more than {{ config.CRITERIA.PHYLOGENY_MAX_HITS_PER_SPECIES }
 - Filtered hits for the species are ordered by identity
 - A systematic sample of {{ config.CRITERIA.PHYLOGENY_MAX_HITS_PER_SPECIES }} hits is taken, including the first and last hit
 
-The aim is that a species with 200 hits of alignment identities between 90-95% would result in a sample of hits with identities as follows (assuming a bimodal distribution representing two taxonomic clades, and sample size of n=5):
+The aim is that a species with 200 hits of alignment identities between 90-95% would result in a sample of hits with identities similar to the following (assuming a bimodal distribution representing two taxonomic clades, and sample size of n=6):
 
+- 90.0%
 - 90.3%
 - 90.5%
 - 94.8%
-- 95.1%
-- 95.2%
+- 94.8%
+- 95.0%
 
 <p class="alert alert-info">
-    The workflow has a default value of `PHYLOGENY_MAX_HITS_PER_SPECIES=1000` so that the sampling described above is not implemented unless the workflow administrator decides to limit this number to constrain tree size. Setting this sample size too low would result in poor quality trees that may give a false impression of genetic diversity to the user.
+    The workflow has a default value of <code>PHYLOGENY_MAX_HITS_PER_SPECIES=1000</code> so that the sampling described above is not implemented unless the workflow administrator decides to limit this number to constrain tree size. Setting this sample size too low would result in poor quality trees that may give a false impression of genetic diversity to the user.
 </p>
 
 A FASTA sequence is then written by extracting the nucleotide sequence from each of the selected hits, and adding the query sequence.
@@ -268,8 +273,30 @@ This FASTA file is then alignment with [MAFFT](https://mafft.cbrc.jp/alignment/s
 
 ## Assessment of supporting publications
 
+An important drawback of searching against the large Non-redundant (Nr) BLAST database is that this database contains many sequences which are not very reputable. Since anyone can submit sequences to GenBank there are many sequences with incorrect taxonomic annotation. This analysis presents a measure of confidence in the integrity of the reference sequences supporting the conclusions. Are the candidate reference sequences supported by numerous publications? Great, that means that the taxonomic annotation has been corroborated by multiple studies. Do we have 5 reference sequences that were all submitted to genbank by the same author(s)? That casts some doubt over the integrity of the taxonomic annotation.
+
+<p class="alert alert-warning">
+    Even when the workflow report is "green" in all other sections of the report, caution is advised if there is only one independent publication corroborating the reference sequences. Further investigation may be required to confirm the credibility of the reference sequence source.
+</p>
+
+The analysis involves clusting of GenBank publication records based on the provided metadata (author, title, journal). An independent analysis is carried out per-candidate species:
+
+1. For each [candidate hit](#assigning-taxonomic-identity), a list of publications is extracted from the corresponding GenBank record using the Entrez `efetch` API.
+1. Each publication is annotated with:
+    1. The NCBI accession number
+    1. A `source tag`, which is a token derived (by stripping non-alphanumeric characters and converting to lowercase) from one of the following fields (the field with a value):
+        1. Author list
+        2. Publication title ("Direct submission" titles are ignored here as they are computed-generated and not a real publication)
+        3. Journal
+    1. Whether the record appears to have been automatically generated - determined by the presence of the string `##Genome-Annotation-Data-START##` in the GenBank record text.
+1. Publications are then clustered into groups of "independent publications":
+    1. If a publication `source tag` matches one in an existing group, it is added to that group
+    1. Otherwise, it is added to a new group
+    1. Records with no publications are allocated to a single group
+1. The groups are shown as "independent sources" in the "Publications supporting reference sequences" section of the workflow report.
 
 ## Assessment of database coverage
+
 
 
 ## Report generation
