@@ -5,6 +5,7 @@ import time
 import unittest
 from pathlib import Path
 from queue import Queue
+from unittest.mock import patch
 
 from src.entrez.genbank import (
     GbRecordSource,
@@ -34,6 +35,16 @@ SINGLE_ACCESSION = [ACCESSION_1]
 MULTIPLE_ACCESSIONS = [ACCESSION_1, ACCESSION_2]
 LOCUS = 'COI'
 TAXID = "9606"
+MOCK_ENTREZ_IDS = {
+    "Count": 5,
+    "IdList": [
+        "ABC",
+        "DEF",
+        "GHI",
+        "JKL",
+        "MNO",
+    ],
+}
 MAX_ACCESSIONS = 20  # Limit number of accessions to request
 BATCH_SIZE = 10  # Number of accessions per request, in PERFORMANCE mode
 
@@ -50,11 +61,10 @@ class TestFetchRecords(unittest.TestCase):
         result = fetch_gb_records(self.locus, TAXID, True)
         self.assertGreaterEqual(result, EXPECTED_RECORD_COUNT)
 
-    def test_fetch_gb_records_ids(self):
+    @patch("Bio.Entrez.read", return_value=MOCK_ENTREZ_IDS)
+    def test_fetch_gb_records_ids(self, mock_read):
         result = fetch_gb_records(self.locus, TAXID, False)
-        with EXPECT_RECORDS_JSON.open() as f:
-            EXPECTED_RECORD_IDS = json.load(f)
-        missing_ids = set(EXPECTED_RECORD_IDS) - set(result)
+        missing_ids = set(MOCK_ENTREZ_IDS['IdList']) - set(result)
         self.assertEqual(len(missing_ids), 0)
 
     def test_fetch_single_source(self):
