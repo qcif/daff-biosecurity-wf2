@@ -26,12 +26,14 @@ def main():
         dest_path = DOCS_DEST_DIR / dest_filename
         md_content = md_file.read_text(encoding='utf-8')
         html_body = markdown2.markdown(md_content, extras={
+            # Docs: https://github.com/trentm/python-markdown2/wiki/Extras
             "tables": True,
             "code-friendly": True,
             "html-classes": {
                 'table': 'table table-striped',
             },
             "header-ids": True,
+            "fenced-code-blocks": True,
         })
         html_body_rendered = Template(html_body).render(
             config=config,

@@ -43,6 +43,14 @@
       .katex {
         font-size: 2em;
       }
+      pre code {
+        display: block;
+        padding: 1rem;
+        overflow-x: auto;
+        color: #333;
+        background-color: #eee;
+        border-radius: 0.25rem;
+      }
     </style>
   </head>
   <body>
@@ -66,12 +74,81 @@
 
 <ul>
 <li>To set up and run the workflow, visit the Nextflow workflow repository: <a href="https://github.com/qcif/nf-daff-biosecurity-wf2">qcif/nf-daff-biosecurity-wf2</a>.</li>
-<li>For analysis code, see the Python modules repository (used in the above workflow): <a href="https://github.com/qcif/daff-biosecurity-wf2">qcif/daff-biosecurity-wf2</a></li>
+<li>For analysis code (used in the above workflow), see the Python modules repository: <a href="https://github.com/qcif/daff-biosecurity-wf2">qcif/daff-biosecurity-wf2</a></li>
 </ul>
+
+<ol>
+<li><a href="#interpretting-the-workflow-report">Interpretting the workflow report</a></li>
+<li><a href="#reference-data">Reference data</a>
+<ol>
+<li><a href="#blast">BLAST</a></li>
+<li><a href="#bold">BOLD</a></li>
+</ol></li>
+<li><a href="#input-files">Input files</a>
+<ol>
+<li><a href="#fasta-file">FASTA file</a></li>
+<li><a href="#metadata-csv-file">Metadata CSV file</a></li>
+</ol></li>
+<li><a href="#blast---parsing-the-xml-output">BLAST - parsing the XML output</a>
+<ol>
+<li><a href="#extracted-values">Extracted values</a></li>
+<li><a href="#calculated-values">Calculated values</a></li>
+</ol></li>
+<li><a href="#blast---extracting-taxonomic-metadata">BLAST - Extracting taxonomic metadata</a></li>
+<li><a href="#bold---submitting-sequences-to-id-engine">BOLD - submitting sequences to ID Engine</a>
+<ol>
+<li><a href="#sequence-orientation">Sequence orientation</a></li>
+<li><a href="#submitting-to-id-engine">Submitting to ID Engine</a></li>
+<li><a href="#requesting-additional-metadata">Requesting additional metadata</a></li>
+</ol></li>
+<li><a href="#assigning-taxonomic-identity">Assigning taxonomic identity</a>
+<ol>
+<li><a href="#checking-preliminary-morphology-id">Checking preliminary morphology ID</a></li>
+<li><a href="#checking-taxa-of-interest">Checking taxa of interest</a></li>
+</ol></li>
+<li><a href="#phylogenetic-analysis">Phylogenetic analysis</a></li>
+<li><a href="#assessment-of-supporting-publications">Assessment of supporting publications</a></li>
+<li><a href="#assessment-of-database-coverage">Assessment of database coverage</a>
+<ol>
+<li><a href="#obtaining-related-species">Obtaining related species</a></li>
+<li><a href="#enumerating-genbank-records">Enumerating GenBank records</a></li>
+<li><a href="#occurrence-maps">Occurrence maps</a></li>
+</ol></li>
+</ol>
 
 <h2 id="interpretting-the-workflow-report">Interpretting the workflow report</h2>
 
-<p>(This should probably be in the workflow report!)</p>
+<p>The workflow report aims to deliver clear outcomes with supporting evidence. The taxonomic identity (or lack thereof) is the first thing to be reported. The remainder of the report serves to corroborate supporting evidence for that claim.</p>
+
+<p class="alert alert-warning">
+    It is crucial that the reader pays attention to supporting evidence when evaluating the report. Even when a positive identity is reported, there are other aspects of the analysis that can subtract from the credibility of such an outcome. Most notably, it is possible that a positive species identification could be based on a single reference sequence with an incorrect taxonomic annotation. In this case the result would obviously be erroneous. The potential for this error would be raised in the section "Publications supporting taxonomic association", which would flag that there is only one independent publication source supporting the outcome.
+</p>
+
+<h3 id="results-overview">Results overview</h3>
+
+<ol>
+<li>Check the taxonomic outcome (the first item under "Result overview")</li>
+<li>If positive, the <a href="#metadata-csv-file">Preliminary ID</a> will be either confirmed or rejected
+<ol>
+<li>If rejected, you may wish to check the database coverage (square button) to ensure that the taxon is represented in the reference database</li>
+</ol></li>
+<li>If Taxa of Interest (TOIs) were provided, check whether they were detected.
+<ol>
+<li>If not detected, you may wish to check the database coverage to ensure that the taxon is represented in the reference database. A brief overview of TOI coverage is provided beneath the TOI item; this shows the highest observed warning level from each of the provided TOIs. For the full database coverage reports, go to the "Taxa of interest" report section.</li>
+</ol></li>
+</ol>
+
+<h3 id="candidate-species">Candidate species</h3>
+
+<ol>
+<li>First take a look at the hit classification table (top-right). This shows how many hits were returned, and how they have been classified for the purpose of the analysis. You will typically see a few candidate species and many that are classified as <code>NO MATCH</code>. The first row of <code>STRONG MATCH</code> and <code>MODERATE MATCH</code> with 1+ species determines the <a href="#assigning-taxonomic-identity">identity threshold</a> for identifying candidates.</li>
+<li>Check the "Candidate species" table. For each species, you might be interested to note:
+<ol>
+<li>Number of hits - &gt;5 hits gives more confidence in the taxonomic annotation of reference sequences</li>
+<li>Top identity - with multiple candidates, a stark drop in identity between species provides higher confidence</li>
+<li>Median identity - if &gt;0.5% lower than the top identity, this indicates high intraspecific diversity or possibly misidentified reference sequences.</li>
+</ol></li>
+</ol>
 
 <h2 id="reference-data">Reference data</h2>
 
@@ -357,6 +434,10 @@ The phylum given above is used to fetch a the associated phylum record from the 
 
 <p>This process is identical to that described above, except that a little more information is collected for display in the "Taxa of interest" section of the workflow report. For each taxon of interest, the best-scoring species that matches the taxonomy is reported. It is possible for a TOI to match multiple candidates, but only the top candidate will be shown.</p>
 
+<h3 id="boxplot-of-identity-distribution">Boxplot of identity distribution</h3>
+
+<p>When the analysis identifies more than  candidate species, the analyst is prompted to make a subjective genus-level taxonomic assignment. To assist in this, a boxplot which shows the distribution of hit identities per-species is included in the report.</p>
+
 <h2 id="phylogenetic-analysis">Phylogenetic analysis</h2>
 
 <p>Subject sequences are selected from filtered hits <a href="#assigning-taxonomic-identity">extracted previously</a>.
@@ -399,7 +480,7 @@ This FASTA file is then alignment with <a href="https://mafft.cbrc.jp/alignment/
 
 <h2 id="assessment-of-supporting-publications">Assessment of supporting publications</h2>
 
-<p>An important drawback of searching against the large Non-redundant (Nr) BLAST database is that this database contains many sequences which are not very reputable. Since anyone can submit sequences to GenBank there are many sequences with incorrect taxonomic annotation. This analysis presents a measure of confidence in the integrity of the reference sequences supporting the conclusions. Are the candidate reference sequences supported by numerous publications? Great, that means that the taxonomic annotation has been corroborated by multiple studies. Do we have 5 reference sequences that were all submitted to genbank by the same author(s)? That casts some doubt over the integrity of the taxonomic annotation.</p>
+<p>An important drawback of searching against the large Non-redundant (Nr) BLAST database is that this database contains many sequences which are not very reputable. Since anyone can submit sequences to GenBank there are many sequences with incorrect taxonomic annotation. This analysis presents a measure of confidence in the integrity of the reference sequences supporting the conclusions. Are the candidate reference sequences supported by numerous publications? Great, that means that the taxonomic annotation has been corroborated by multiple studies. Do we have 5 reference sequences that were all submitted to GenBank by the same author(s)? That casts some doubt over the integrity of the taxonomic annotation.</p>
 
 <p class="alert alert-warning">
     Even when the workflow report is "green" in all other sections of the report, caution is advised if there is only one independent publication corroborating the reference sequences. Further investigation may be required to confirm the credibility of the reference sequence source.
