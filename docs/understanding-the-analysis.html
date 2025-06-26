@@ -75,7 +75,10 @@
 <ul>
 <li>To set up and run the workflow, visit the Nextflow workflow repository: <a href="https://github.com/qcif/nf-daff-biosecurity-wf2">qcif/nf-daff-biosecurity-wf2</a>.</li>
 <li>For analysis code (used in the above workflow), see the Python modules repository: <a href="https://github.com/qcif/daff-biosecurity-wf2">qcif/daff-biosecurity-wf2</a></li>
+<li>For reference, an example workflow report is available <a href="https://qcif.github.io/daff-biosecurity-wf2/example_report.html">here</a></li>
 </ul>
+
+<h2 id="table-of-contents">Table of contents</h2>
 
 <ol>
 <li><a href="#interpretting-the-workflow-report">Interpretting the workflow report</a></li>
@@ -142,13 +145,23 @@
 
 <ol>
 <li>First take a look at the hit classification table (top-right). This shows how many hits were returned, and how they have been classified for the purpose of the analysis. You will typically see a few candidate species and many that are classified as <code>NO MATCH</code>. The first row of <code>STRONG MATCH</code> and <code>MODERATE MATCH</code> with 1+ species determines the <a href="#assigning-taxonomic-identity">identity threshold</a> for identifying candidates.</li>
-<li>Check the "Candidate species" table. For each species, you might be interested to note:
+<li>Check the "Candidate species" table. For each species, you should take note of:
 <ol>
 <li>Number of hits - &gt;5 hits gives more confidence in the taxonomic annotation of reference sequences</li>
 <li>Top identity - with multiple candidates, a stark drop in identity between species provides higher confidence</li>
 <li>Median identity - if &gt;0.5% lower than the top identity, this indicates high intraspecific diversity or possibly misidentified reference sequences.</li>
+<li>Database coverage - if the identity is not 100% and there are species in the genus with no database representation, it's possible that the true identity of the sample could be one of the unrepresented species.</li>
+</ol></li>
+<li>If there are multiple candidates, the report will prompt the analyst to make a genus-level assignment for the sample. To aid in this process the analyst should refer to:
+<ol>
+<li>The identities (max and median) of each candidate</li>
+<li>The phylogenetic tree</li>
 </ol></li>
 </ol>
+
+<h3 id="taxa-of-interest">Taxa of interest</h3>
+
+<p>See <a href="#checking-taxa-of-interest">Checking taxa of interest</a></p>
 
 <h2 id="reference-data">Reference data</h2>
 

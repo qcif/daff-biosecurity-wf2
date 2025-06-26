@@ -2,7 +2,9 @@ While the workflow report aims to be self-documenting, there are many analytical
 
 - To set up and run the workflow, visit the Nextflow workflow repository: [qcif/nf-daff-biosecurity-wf2](https://github.com/qcif/nf-daff-biosecurity-wf2).
 - For analysis code (used in the above workflow), see the Python modules repository: [qcif/daff-biosecurity-wf2](https://github.com/qcif/daff-biosecurity-wf2)
+- For reference, an example workflow report is available [here](https://qcif.github.io/daff-biosecurity-wf2/example_report.html)
 
+## Table of contents
 
 1. [Interpretting the workflow report](#interpretting-the-workflow-report)
 1. [Reference data](#reference-data)
@@ -49,10 +51,20 @@ The workflow report aims to deliver clear outcomes with supporting evidence. The
 ### Candidate species
 
 1. First take a look at the hit classification table (top-right). This shows how many hits were returned, and how they have been classified for the purpose of the analysis. You will typically see a few candidate species and many that are classified as `NO MATCH`. The first row of `STRONG MATCH` and `MODERATE MATCH` with 1+ species determines the [identity threshold](#assigning-taxonomic-identity) for identifying candidates.
-1. Check the "Candidate species" table. For each species, you might be interested to note:
+1. Check the "Candidate species" table. For each species, you should take note of:
     1. Number of hits - >5 hits gives more confidence in the taxonomic annotation of reference sequences
     1. Top identity - with multiple candidates, a stark drop in identity between species provides higher confidence
     1. Median identity - if >0.5% lower than the top identity, this indicates high intraspecific diversity or possibly misidentified reference sequences.
+    1. Database coverage - if the identity is not 100% and there are species in the genus with no database representation, it's possible that the true identity of the sample could be one of the unrepresented species.
+1. If there are multiple candidates, the report will prompt the analyst to make a genus-level assignment for the sample. To aid in this process the analyst should refer to:
+    1. The identities (top and median) of each candidate
+    1. The phylogenetic tree, to see how the query sequence relates to the reference sequences. We hope to see the query sequence clustering with a monophyletic clade of one species.
+
+
+### Taxa of interest
+
+See [Checking taxa of interest](#checking-taxa-of-interest)
+
 
 ## Reference data
 
@@ -375,7 +387,7 @@ To obtain "species in genus" in analyses `5.2` and `5.3`, we use the GBIF API:
 
 ### Enumerating GenBank records
 
-For each species identified, the Entrez API is used to query GenBank records that match that species at the given locus.The query is dynamically generated to include all synonyms for the locus specified in the workflow's [loci.json](./loci.json) file. the taxid is extracted from NCBI taxonomies [using taxonkit](#blast---extracting-taxonomic-metadata).
+For each species identified, the Entrez API is used to query GenBank records that match that species at the given locus. The query is dynamically generated to include all synonyms for the locus specified in the workflow's [loci.json](./loci.json) file. the taxid is extracted from NCBI taxonomies [using taxonkit](#blast---extracting-taxonomic-metadata).
 
 For example, the following locus and taxon "Homo sapiens" (taxid `9606`):
 
