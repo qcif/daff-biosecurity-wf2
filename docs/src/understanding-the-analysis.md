@@ -297,6 +297,60 @@ The analysis involves clusting of GenBank publication records based on the provi
 
 ## Assessment of database coverage
 
+An analysis of taxonomic coverage of the reference database is carried out for each of the following taxa:
 
+- Candidate species (only when `n ≤ {{ config.CRITERIA.MAX_CANDIDATES_FOR_ANALYSIS }}`)
+- Preliminary ID taxon (provided in [metadata.csv](#metadata-csv-file))
+- Taxa of interest (provided in [metadata.csv](#metadata-csv-file); only when `n ≤ {{ config.DB_COVERAGE_TOI_LIMIT }}`)
 
-## Report generation
+Each of these is referred to as a "target taxon" or, more concisely, "target".
+For each target, three analyses may be performed:
+
+- `5.1`: number of GenBank records for target taxon at the [given locus](#metadata-csv-file) (if provided)
+- `5.2`: number of species in target genus which have 1+ GenBank records at the [given locus](#metadata-csv-file) (if provided)
+- `5.3`: as for `5.2`, but with species limited to those which occur in the country of origin (according to GBIF occurrence records)
+
+<p class="alert alert-info">
+    Analyses <code>5.2</code> and <code>5.3</code> are only run when the target is of rank genus or species. This is because there would be far too much data to analyse at higher ranks.
+</p>
+
+### Obtaining related species
+
+To obtain "species in genus" in analyses `5.2` and `5.3`, we use the GBIF API:
+
+1. A GBIF record is retrieved from the [/species/suggest](https://techdocs.gbif.org/en/openapi/v1/species#/Searching%20names) API using the target taxon as the search query. If the target matches our [list of canonical taxa](https://github.com/qcif/daff-biosecurity-wf2/blob/main/scripts/src/gbif/relatives.py#L16), the taxonomic rank specified in that list is set as an API request parameter. This prevents the rather annoying issue of the query "Bacteria" matching the genus "Bacteria" of the Diapheromeridae (a family of Arthropoda).
+1. The genus key from the target record is then used to fetch all matching records at rank "species" from the [/species/match](https://techdocs.gbif.org/en/openapi/v1/species#/Searching%20names) API endpoint.
+1. Returned speces records are filtered to exclude extinct species, and include only those where status is one of `{{ config.GBIF_ACCEPTED_STATUS }}`.
+
+### Enumerating GenBank records
+
+For each species identified, the Entrez API is used to query GenBank records that match that species at the given locus.The query is dynamically generated to include all synonyms for the locus specified in the workflow's [loci.json](./loci.json) file. the taxid is extracted from NCBI taxonomies [using taxonkit](#blast---extracting-taxonomic-metadata).
+
+For example, the following locus and taxon "Homo sapiens" (taxid `9606`):
+
+```
+# loci.json entry for "COI"
+{
+    "ambiguous_synonyms": [
+        "coi",
+        "co1",
+        "cox",
+        "cox1"
+    ],
+    "non_ambiguous_synonyms": [
+        "cytochrome oxidase subunit 1"
+    ]
+}
+```
+
+...would result in this GenBank query being rendered:
+
+```
+txid9606[Organism] AND (coi[Title]) OR (coi[GENE]) OR (co1[Title]) OR (co1[GENE]) OR (cox[Title]) OR (cox[GENE]) OR (cox1[Title]) OR (cox1[GENE]) OR (cytochrome oxidase subunit 1)
+```
+
+The response returned from Entrez includes a `count` field - this is the data that we use to enumerate records for each species.
+
+### Occurrence maps
+
+In addition to the analyses above, a geographic distribution map is also generated based on occurrence records fetched from the GBIF occurrence API. The number of occurrence records fetched is limited to {{ config.GBIF_MAX_OCCURRENCE_RECORDS }}, because some taxa (e.g. "arthropoda") have far too many occurrence records to fetch in a reasonable length of time.

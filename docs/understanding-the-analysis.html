@@ -431,7 +431,67 @@ This FASTA file is then alignment with <a href="https://mafft.cbrc.jp/alignment/
 
 <h2 id="assessment-of-database-coverage">Assessment of database coverage</h2>
 
-<h2 id="report-generation">Report generation</h2>
+<p>An analysis of taxonomic coverage of the reference database is carried out for each of the following taxa:</p>
+
+<ul>
+<li>Candidate species (only when <code>n ≤ 3</code>)</li>
+<li>Preliminary ID taxon (provided in <a href="#metadata-csv-file">metadata.csv</a>)</li>
+<li>Taxa of interest (provided in <a href="#metadata-csv-file">metadata.csv</a>; only when <code>n ≤ 10</code>)</li>
+</ul>
+
+<p>Each of these is referred to as a "target taxon" or, more concisely, "target".
+For each target, three analyses may be performed:</p>
+
+<ul>
+<li><code>5.1</code>: number of GenBank records for target taxon at the <a href="#metadata-csv-file">given locus</a> (if provided)</li>
+<li><code>5.2</code>: number of species in target genus which have 1+ GenBank records at the <a href="#metadata-csv-file">given locus</a> (if provided)</li>
+<li><code>5.3</code>: as for <code>5.2</code>, but with species limited to those which occur in the country of origin (according to GBIF occurrence records)</li>
+</ul>
+
+<p class="alert alert-info">
+    Analyses <code>5.2</code> and <code>5.3</code> are only run when the target is of rank genus or species. This is because there would be far too much data to analyse at higher ranks.
+</p>
+
+<h3 id="obtaining-related-species">Obtaining related species</h3>
+
+<p>To obtain "species in genus" in analyses <code>5.2</code> and <code>5.3</code>, we use the GBIF API:</p>
+
+<ol>
+<li>A GBIF record is retrieved from the <a href="https://techdocs.gbif.org/en/openapi/v1/species#/Searching%20names">/species/suggest</a> API using the target taxon as the search query. If the target matches our <a href="https://github.com/qcif/daff-biosecurity-wf2/blob/main/scripts/src/gbif/relatives.py#L16">list of canonical taxa</a>, the taxonomic rank specified in that list is set as an API request parameter. This prevents the rather annoying issue of the query "Bacteria" matching the genus "Bacteria" of the Diapheromeridae (a family of Arthropoda).</li>
+<li>The genus key from the target record is then used to fetch all matching records at rank "species" from the <a href="https://techdocs.gbif.org/en/openapi/v1/species#/Searching%20names">/species/match</a> API endpoint.</li>
+<li>Returned speces records are filtered to exclude extinct species, and include only those where status is one of <code>['ACCEPTED', 'DOUBTFUL']</code>.</li>
+</ol>
+
+<h3 id="enumerating-genbank-records">Enumerating GenBank records</h3>
+
+<p>For each species identified, the Entrez API is used to query GenBank records that match that species at the given locus.The query is dynamically generated to include all synonyms for the locus specified in the workflow's <a href="./loci.json">loci.json</a> file. the taxid is extracted from NCBI taxonomies <a href="#blast---extracting-taxonomic-metadata">using taxonkit</a>.</p>
+
+<p>For example, the following locus and taxon "Homo sapiens" (taxid <code>9606</code>):</p>
+
+<pre><code># loci.json entry for "COI"
+{
+    "ambiguous_synonyms": [
+        "coi",
+        "co1",
+        "cox",
+        "cox1"
+    ],
+    "non_ambiguous_synonyms": [
+        "cytochrome oxidase subunit 1"
+    ]
+}
+</code></pre>
+
+<p>...would result in this GenBank query being rendered:</p>
+
+<pre><code>txid9606[Organism] AND (coi[Title]) OR (coi[GENE]) OR (co1[Title]) OR (co1[GENE]) OR (cox[Title]) OR (cox[GENE]) OR (cox1[Title]) OR (cox1[GENE]) OR (cytochrome oxidase subunit 1)
+</code></pre>
+
+<p>The response returned from Entrez includes a <code>count</code> field - this is the data that we use to enumerate records for each species.</p>
+
+<h3 id="occurrence-maps">Occurrence maps</h3>
+
+<p>In addition to the analyses above, a geographic distribution map is also generated based on occurrence records fetched from the GBIF occurrence API. The number of occurrence records fetched is limited to 5000, because some taxa (e.g. "arthropoda") have far too many occurrence records to fetch in a reasonable length of time.</p>
 
       
       
