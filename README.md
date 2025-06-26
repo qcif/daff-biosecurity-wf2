@@ -1,5 +1,8 @@
 # Taxonomic Assignment workflow modules (DAFF Biosecurity Workflows)
 
+- [Workflow setup and configuration](https://github.com/qcif/nf-daff-biosecurity-wf2/tree/main)
+- [Documentation of the analysis](https://qcif.github.io/daff-biosecurity-wf2/understanding-the-analysis.html)
+
 These Python modules are used for intermediate data processing as part of a
 [Nextflow workflow](https://github.com/qcif/nf-daff-biosecurity-wf2/tree/main)
 for taxonomic assigment of sample DNA sequences. The purpose of this analysis
@@ -39,7 +42,6 @@ which shows CLI arguments and environment variables for each script.
     3. [Throttling API requests](#throttling-api-requests)
     4. [Flags](#flags)
     5. [Sample locus](#sample-locus)
-
 
 
 # FAQs
@@ -475,7 +477,7 @@ are not typical of web development:
 
 # Building the docs
 
-[Some documentation](./docs/) is written in markdown and rendered for display as a GitHub page. This adds a little more complexity than a GitHub Markdown page, but it allows us to render parameters directly into the HTML which helps to keep things up-to-date. If some parameters have changed, or been overridden with an [environment variable](./environment.html), you can re-render these docs and those values will be updated.
+[Some documentation](./docs/) is written in markdown and rendered for display as a GitHub page. This adds a little more complexity than a GitHub Markdown page, but it allows us to render parameters directly into the HTML which helps to keep things up-to-date. If some parameters have changed, or been overridden with an [environment variable](https://qcif.github.io/daff-biosecurity-wf2/environment.html), you can re-render these docs and those values will be updated.
 
 See [setup](#developer-setup) if you don't have a Python environment yet for this repo yet.
 
