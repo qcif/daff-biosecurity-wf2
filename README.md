@@ -32,6 +32,7 @@ which shows CLI arguments and environment variables for each script.
     6. [P4 Analysis of reference sequence publications](#p4-analysis-of-reference-sequence-publications)
     7. [P5 Analysis of database coverage](#p5-analysis-of-database-coverage)
     8. [P6 Report generation](#p6-report-generation)
+1. [Building the docs](#building-the-docs)
 1. [Application features](#application-features)
     1. [Configuration](#application-configuration)
     2. [Handling errors](#handling-errors)
@@ -472,6 +473,23 @@ are not typical of web development:
   [save-report.js](https://github.com/qcif/daff-biosecurity-wf2/blob/main/scripts/src/report/static/js/save-report.js))
 
 
+# Building the docs
+
+[Some documentation](./docs/) is written in markdown and rendered for display as a GitHub page. This adds a little more complexity than a GitHub Markdown page, but it allows us to render parameters directly into the HTML which helps to keep things up-to-date. If some parameters have changed, or been overridden with an [environment variable](./environment.html), you can re-render these docs and those values will be updated.
+
+See [setup](#developer-setup) if you don't have a Python environment yet for this repo yet.
+
+```
+# Activate your python environment
+source activate venv
+
+python scripts/dev/render_docs.py
+
+git commit -m "Update documentation"
+git push
+```
+
+This will prompt the github.io docs pages to rebuild, which takes 2-3 minutes.
 
 # Application features
 
