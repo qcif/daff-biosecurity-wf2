@@ -147,7 +147,7 @@ class Throttle:
             # Sleep for a random interval to reduce race conditions
             time.sleep(round(random.uniform(0.1, 2), 3))
             seconds_waited = int(time.time() - started_waiting)
-            if seconds_waited % 15 == 0:
+            if seconds_waited and seconds_waited % 15 == 0:
                 logger.info(
                     f"Awaiting throttle release for endpoint {self.name}"
                     f" for >{seconds_waited} seconds..."
