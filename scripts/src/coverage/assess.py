@@ -109,7 +109,7 @@ def assess_coverage(query_dir, is_bold) -> dict[str, dict[str, dict]]:
         if target in higher_taxon_targets
     ]
 
-    if not len(tasks):
+    if not (len(tasks) + len(unknown_taxa)):
         raise ValueError(
             "No tasks created for database coverage assessment. This likely"
             " indicates a bug in the code - please report this issue.")
