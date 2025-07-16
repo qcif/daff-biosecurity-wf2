@@ -157,6 +157,7 @@ class BoldSearch:
 
         hits = {}
         sequences = self._read_sequence_from_fasta(fasta_file)
+        seqids = [seq.id for seq in sequences]
         n_sequences = len(sequences)
         if not os.getenv('SKIP_ORIENTATION'):
             sequences = orientate(sequences)
@@ -187,6 +188,7 @@ class BoldSearch:
                     or sequence_hits
                 ):
                     hits[sequence_id] = {
+                        'query_index': seqids.index(sequence_id),
                         'query_id': sequence_id,
                         'query_title': sequence.description,
                         'query_length': len(sequence.seq),
