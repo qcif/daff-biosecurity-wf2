@@ -307,16 +307,7 @@ When the analysis identifies more than {{ config.MAX_CANDIDATES_FOR_ANALYSIS }} 
 Subject sequences are selected from filtered hits [extracted previously](#assigning-taxonomic-identity).
 The selection process is a little complex, as it aims to strike a balance between reasonable coverage of the genetic diversity present in BLAST/BOLD hit subjects, while also trying to minimize the number of sequences that need to go through alignment and analysis. Building trees with 100+ sequences is SLOW and the resulting tree is often ugly, so we do our best to avoid that.
 
-- Hits are collected in order of descending identity until both:
-    - The identity of the hit drops to `{{ config.CRITERIA.PHYLOGENY_MIN_HIT_IDENTITY * 100 }}%`
-    - AND at least {{ config.CRITERIA.PHYLOGENY_MIN_HIT_SEQUENCES }} hits have been collected
-
-This means that candidate hits are always sampled, and some filtered hits are usually included too.
-
-Next, if there are more than {{ config.CRITERIA.PHYLOGENY_MAX_HITS_PER_SPECIES }} hits for the species, a representative sample of hits for each species is taken:
-
-- Filtered hits for the species are ordered by identity
-- A systematic sample of {{ config.CRITERIA.PHYLOGENY_MAX_HITS_PER_SPECIES }} hits is taken, including the first and last hit
+1. Hits are collected in order of descending identity until at least {{ config.CRITERIA.PHYLOGENY_MIN_HIT_SEQUENCES }} hits have been collected. This means that candidate hits are always collected for sampling, and filtered hits are included if there aren't enough to form a good tree.
 
 The aim is that a species with 200 hits of alignment identities between 90-95% would result in a sample of hits with identities similar to the following (assuming a bimodal distribution representing two taxonomic clades, and sample size of n=6):
 

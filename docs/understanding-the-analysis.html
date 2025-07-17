@@ -456,17 +456,8 @@ The phylum given above is used to fetch a the associated phylum record from the 
 <p>Subject sequences are selected from filtered hits <a href="#assigning-taxonomic-identity">extracted previously</a>.
 The selection process is a little complex, as it aims to strike a balance between reasonable coverage of the genetic diversity present in BLAST/BOLD hit subjects, while also trying to minimize the number of sequences that need to go through alignment and analysis. Building trees with 100+ sequences is SLOW and the resulting tree is often ugly, so we do our best to avoid that.</p>
 
-<ul>
-<li>Hits are collected in order of descending identity until both:
-<ul>
-<li>The identity of the hit drops to <code>95.0%</code></li>
-<li>AND at least 10 hits have been collected</li>
-</ul></li>
-</ul>
-
-<p>This means that candidate hits are always sampled, and some filtered hits are usually included too.</p>
-
-<p>Next, if there are more than 1000 hits for the species, a representative sample of hits for each species is taken:</p>
+<ol>
+<li>Hits are collected in order of descending identity until at least 20 hits have been collected. This means that candidate hits are always collected for sampling, and filtered hits are included if there aren't enough to form a good tree.</li>
 
 <ul>
 <li>Filtered hits for the species are ordered by identity</li>

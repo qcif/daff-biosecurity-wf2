@@ -410,11 +410,7 @@ def _write_candidates_fasta(query_dir, hits, bold=False):
         hits,
         key=lambda x: x[identity_key]
     ):
-        if (
-            hit[identity_key] < config.CRITERIA.PHYLOGENY_MIN_HIT_IDENTITY
-            and len(phylogeny_hits)
-            > config.CRITERIA.PHYLOGENY_MIN_HIT_SEQUENCES
-        ):
+        if len(phylogeny_hits) > config.CRITERIA.PHYLOGENY_MIN_HIT_SEQUENCES:
             break
         phylogeny_hits.append(hit)
 
