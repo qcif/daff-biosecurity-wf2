@@ -308,15 +308,14 @@ Subject sequences are selected from filtered hits [extracted previously](#assign
 The selection process is a little complex, as it aims to strike a balance between reasonable coverage of the genetic diversity present in BLAST/BOLD hit subjects, while also trying to minimize the number of sequences that need to go through alignment and analysis. Building trees with 100+ sequences is SLOW and the resulting tree is often ugly, so we do our best to avoid that.
 
 1. Hits are collected in order of descending identity until at least {{ config.CRITERIA.PHYLOGENY_MIN_HIT_SEQUENCES }} hits have been collected. This means that candidate hits are always collected for sampling, and filtered hits are included if there aren't enough to form a good tree.
+2. Next, if there are more than {{ config.CRITERIA.PHYLOGENY_MAX_HITS_PER_SPECIES }} hits for a species, these hits are strategically sampled to ensure that sequence diversity is accurately represented:
 
-The aim is that a species with 200 hits of alignment identities between 90-95% would result in a sample of hits with identities similar to the following (assuming a bimodal distribution representing two taxonomic clades, and sample size of n=6):
+- Hits are ordered by identity
+- A systematic sample of n={{ config.CRITERIA.PHYLOGENY_MAX_HITS_PER_SPECIES }} hits is taken, which always includes the first and last hit
 
-- 90.0%
-- 90.3%
-- 90.5%
-- 94.8%
-- 94.8%
-- 95.0%
+This sampling strategy is illustrated below for clarity, assuming a species where 45 hits have been collected and a sample size of `n=5`:
+
+![systematic sampling of hits](https://github.com/qcif/daff-biosecurity-wf2/blob/main/.img/systematic-sample.png)
 
 <p class="alert alert-info">
     The workflow restricts the number of sequences to 30 per species by default, which strikes a balance between reasonable run time and representation of genetic diversity. Setting this sample size too low would result in poor quality trees that may give a false impression of genetic diversity to the user. Setting it too high would result in very long run times and large trees that are difficult to interpret. Please refer to the
