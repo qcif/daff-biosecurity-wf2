@@ -210,7 +210,12 @@ For the BLAST version of the workflow, the reference data will be a BLAST databa
 <tr>
   <td>locus</td>
   <td>yes</td>
-  <td>Must be in the <a href="./allowed-loci.html">list of allowed Loci</a> or <code>NA</code> for virus or BOLD queries</td>
+  <td>
+    Must be in the <a href="./allowed-loci.html">list of allowed Loci</a> or <code>NA</code> for virus or BOLD queries
+    (note that this can be modified by updating
+    <a href="https://github.com/qcif/taxodactyl/blob/main/assets/loci.json">
+      this file</a>).
+  </td>
 </tr>
 <tr>
   <td>preliminary_id</td>
@@ -485,7 +490,11 @@ The selection process is a little complex, as it aims to strike a balance betwee
 </ul>
 
 <p class="alert alert-info">
-    The workflow has a default value of <code>PHYLOGENY_MAX_HITS_PER_SPECIES=1000</code> so that the sampling described above is not implemented unless the workflow administrator decides to limit this number to constrain tree size. Setting this sample size too low would result in poor quality trees that may give a false impression of genetic diversity to the user.
+    The workflow restricts the number of sequences to 30 per species by default, which strikes a balance between reasonable run time and representation of genetic diversity. Setting this sample size too low would result in poor quality trees that may give a false impression of genetic diversity to the user. Setting it too high would result in very long run times and large trees that are difficult to interpret. Please refer to the
+    <a href="https://github.com/qcif/taxodactyl/blob/main/docs/params.md">
+      Nextflow docs
+    </a>
+    for adjustment of workflow parameters.
 </p>
 
 <p>A FASTA sequence is then written by extracting the nucleotide sequence from each of the selected hits, and adding the query sequence.
