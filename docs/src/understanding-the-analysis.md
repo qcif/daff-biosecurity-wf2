@@ -315,7 +315,7 @@ The selection process is a little complex, as it aims to strike a balance betwee
 
 This sampling strategy is illustrated below for clarity, assuming a species where 45 hits have been collected and a sample size of `n=5`:
 
-![systematic sampling of hits](https://github.com/qcif/daff-biosecurity-wf2/blob/main/.img/systematic-sample.png)
+![systematic sampling of hits](https://github.com/qcif/daff-biosecurity-wf2/blob/main/.img/systematic-sample.png?raw=true)
 
 <p class="alert alert-info">
     The workflow restricts the number of sequences to 30 per species by default, which strikes a balance between reasonable run time and representation of genetic diversity. Setting this sample size too low would result in poor quality trees that may give a false impression of genetic diversity to the user. Setting it too high would result in very long run times and large trees that are difficult to interpret. Please refer to the
