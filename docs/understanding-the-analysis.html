@@ -92,13 +92,13 @@
 <li><a href="#fasta-file">FASTA file</a></li>
 <li><a href="#metadata-csv-file">Metadata CSV file</a></li>
 </ol></li>
-<li><a href="#blast---parsing-the-xml-output">BLAST - parsing the XML output</a>
+<li><a href="#blast-parsing-the-xml-output">BLAST - parsing the XML output</a>
 <ol>
 <li><a href="#extracted-values">Extracted values</a></li>
 <li><a href="#calculated-values">Calculated values</a></li>
 </ol></li>
-<li><a href="#blast---extracting-taxonomic-metadata">BLAST - Extracting taxonomic metadata</a></li>
-<li><a href="#bold---submitting-sequences-to-id-engine">BOLD - submitting sequences to ID Engine</a>
+<li><a href="#blast-extracting-taxonomic-metadata">BLAST - Extracting taxonomic metadata</a></li>
+<li><a href="#bold-submitting-sequences-to-id-engine">BOLD - submitting sequences to ID Engine</a>
 <ol>
 <li><a href="#sequence-orientation">Sequence orientation</a></li>
 <li><a href="#submitting-to-id-engine">Submitting to ID Engine</a></li>
@@ -154,8 +154,8 @@
 </ol></li>
 <li>If there are multiple candidates, the report will prompt the analyst to make a genus-level assignment for the sample. To aid in this process the analyst should refer to:
 <ol>
-<li>The identities (max and median) of each candidate</li>
-<li>The phylogenetic tree</li>
+<li>The identities (top and median) of each candidate</li>
+<li>The phylogenetic tree, to see how the query sequence relates to the reference sequences. We hope to see the query sequence clustering with a monophyletic clade of one species.</li>
 </ol></li>
 </ol>
 
@@ -210,12 +210,7 @@ For the BLAST version of the workflow, the reference data will be a BLAST databa
 <tr>
   <td>locus</td>
   <td>yes</td>
-  <td>
-    Must be in the <a href="./allowed-loci.html">list of allowed Loci</a> or <code>NA</code> for virus or BOLD queries
-    (note that this can be modified by updating
-    <a href="https://github.com/qcif/taxodactyl/blob/main/assets/loci.json">
-      this file</a>).
-  </td>
+  <td>Must be in the <a href="./allowed-loci.html">list of allowed loci</a> or <code>NA</code> for virus or BOLD queries (note that this can be modified by updating <a href="https://github.com/qcif/taxodactyl/blob/main/assets/loci.json">this file</a>).</td>
 </tr>
 <tr>
   <td>preliminary_id</td>
@@ -567,7 +562,7 @@ For each target, three analyses may be performed:</p>
 
 <h3 id="enumerating-genbank-records">Enumerating GenBank records</h3>
 
-<p>For each species identified, the Entrez API is used to query GenBank records that match that species at the given locus.The query is dynamically generated to include all synonyms for the locus specified in the workflow's <a href="./loci.json">loci.json</a> file. the taxid is extracted from NCBI taxonomies <a href="#blast---extracting-taxonomic-metadata">using taxonkit</a>.</p>
+<p>For each species identified, the Entrez API is used to query GenBank records that match that species at the given locus. The query is dynamically generated to include all synonyms for the locus specified in the workflow's <a href="https://github.com/qcif/taxodactyl/blob/main/assets/loci.json">loci.json</a> file. the taxid is extracted from NCBI taxonomies <a href="#blast-extracting-taxonomic-metadata">using taxonkit</a>.</p>
 
 <p>For example, the following locus and taxon "Homo sapiens" (taxid <code>9606</code>):</p>
 

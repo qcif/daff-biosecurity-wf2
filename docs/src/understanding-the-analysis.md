@@ -13,11 +13,11 @@ While the workflow report aims to be self-documenting, there are many analytical
 1. [Input files](#input-files)
     1. [FASTA file](#fasta-file)
     1. [Metadata CSV file](#metadata-csv-file)
-1. [BLAST - parsing the XML output](#blast---parsing-the-xml-output)
+1. [BLAST - parsing the XML output](#blast-parsing-the-xml-output)
     1. [Extracted values](#extracted-values)
     1. [Calculated values](#calculated-values)
-1. [BLAST - Extracting taxonomic metadata](#blast---extracting-taxonomic-metadata)
-1. [BOLD - submitting sequences to ID Engine](#bold---submitting-sequences-to-id-engine)
+1. [BLAST - Extracting taxonomic metadata](#blast-extracting-taxonomic-metadata)
+1. [BOLD - submitting sequences to ID Engine](#bold-submitting-sequences-to-id-engine)
     1. [Sequence orientation](#sequence-orientation)
     1. [Submitting to ID Engine](#submitting-to-id-engine)
     1. [Requesting additional metadata](#requesting-additional-metadata)
@@ -97,7 +97,7 @@ This file provides metadata for each query sequence, with the following fields:
 | Field             | Required | Description                                                                                                         |
 |-------------------|----------|---------------------------------------------------------------------------------------------------------------------|
 | sample_id         | yes      | Must match the header of one FASTA sequence                                                                         |
-| locus             | yes      | Must be in the [list of allowed Loci](./allowed-loci.html) or `NA` for virus or BOLD queries                                               |
+| locus             | yes      | Must be in the [list of allowed loci](./allowed-loci.html) or `NA` for virus or BOLD queries (note that this can be modified by updating [this file](https://github.com/qcif/taxodactyl/blob/main/assets/loci.json)).
 | preliminary_id    | yes      | A suggested taxonomic identity based on sample morphology                                                           |
 | taxa_of_interest  | no       | A pipe-delimited list of taxa to be evaluated against the sample. Can be at rank species, genus, family, order, class, phylum, kingdom or domain. |
 | country           | no       | The sample country of origin                                                                                        |
@@ -328,7 +328,11 @@ The aim is that a species with 200 hits of alignment identities between 90-95% w
 - 95.0%
 
 <p class="alert alert-info">
-    The workflow has a default value of <code>PHYLOGENY_MAX_HITS_PER_SPECIES=1000</code> so that the sampling described above is not implemented unless the workflow administrator decides to limit this number to constrain tree size. Setting this sample size too low would result in poor quality trees that may give a false impression of genetic diversity to the user.
+    The workflow restricts the number of sequences to 30 per species by default, which strikes a balance between reasonable run time and representation of genetic diversity. Setting this sample size too low would result in poor quality trees that may give a false impression of genetic diversity to the user. Setting it too high would result in very long run times and large trees that are difficult to interpret. Please refer to the
+    <a href="https://github.com/qcif/taxodactyl/blob/main/docs/params.md">
+      Nextflow docs
+    </a>
+    for adjustment of workflow parameters.
 </p>
 
 A FASTA sequence is then written by extracting the nucleotide sequence from each of the selected hits, and adding the query sequence.
@@ -387,7 +391,7 @@ To obtain "species in genus" in analyses `5.2` and `5.3`, we use the GBIF API:
 
 ### Enumerating GenBank records
 
-For each species identified, the Entrez API is used to query GenBank records that match that species at the given locus. The query is dynamically generated to include all synonyms for the locus specified in the workflow's [loci.json](./loci.json) file. the taxid is extracted from NCBI taxonomies [using taxonkit](#blast---extracting-taxonomic-metadata).
+For each species identified, the Entrez API is used to query GenBank records that match that species at the given locus. The query is dynamically generated to include all synonyms for the locus specified in the workflow's [loci.json](https://github.com/qcif/taxodactyl/blob/main/assets/loci.json) file. the taxid is extracted from NCBI taxonomies [using taxonkit](#blast-extracting-taxonomic-metadata).
 
 For example, the following locus and taxon "Homo sapiens" (taxid `9606`):
 
