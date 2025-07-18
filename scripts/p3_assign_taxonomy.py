@@ -188,12 +188,12 @@ def _assign_species_id(
     # Add hit count for each candidate species
     for species in candidate_species:
         species["hit_count"] = sum(
-            1 for hit in candidate_hits
+            1 for hit in filtered_hits
             if hit["species"] == species["species"]
         )
     for species in candidate_species_strict:
         species["hit_count"] = sum(
-            1 for hit in candidate_hits_strict
+            1 for hit in filtered_hits
             if hit["species"] == species["species"]
         )
 
