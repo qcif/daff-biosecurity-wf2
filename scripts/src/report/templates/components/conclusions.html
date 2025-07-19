@@ -60,20 +60,24 @@
       {% set flags = conclusions.flags %}
       {% set taxon = metadata.preliminary_id %}
       {% set target_id = 'pmi-' + taxon | css_hash %}
-      {% set all_flags = [flags['5.1']['pmi'][taxon], flags['5.2']['pmi'][taxon], flags['5.3']['pmi'][taxon]] %}
-      {% set flag = all_flags | max(attribute='level') %}
+      {% set flag = flags['5']['pmi'][taxon] %}
 
-      <button
-        class="btn btn-{{ flag.bs_class }}"
+      <div
         data-bs-toggle="tooltip"
         data-bs-placement="bottom"
         title="{{ flag.outcome }}"
-        onclick="new bootstrap.Modal(document.getElementById('{{ target_id }}Modal')).show();"
-        type="button"
-        style="min-width: 3rem;"
+        style="display: inline-block;"
       >
-        {{ render_level_icon(flag.level) }}
-      </button>
+        <button
+          class="btn btn-{{ flag.bs_class }}"
+          data-bs-toggle="modal"
+          data-bs-target="#{{ target_id }}Modal"
+          type="button"
+          style="min-width: 3rem;"
+        >
+          {{ render_level_icon(flag.level) }}
+        </button>
+      </div>
     </td>
   </tr>
 </table>

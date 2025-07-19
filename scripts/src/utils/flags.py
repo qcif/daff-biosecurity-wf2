@@ -167,29 +167,41 @@ class Flag:
                 null_flag = null_flag.to_json()
             flags[FLAGS.DB_COVERAGE_ALL][ttype] = {'null': null_flag}
             if flags[FLAGS.DB_COVERAGE_TARGET][ttype]:
-                # Set flag 5 (max warning level) for each target taxon
+                # For each target taxon, set flag 5 to represent all 5.* flags
+                # (NA or max warning level)
                 for target in flags[FLAGS.DB_COVERAGE_TARGET][ttype]:
-                    max_flag = max([
-                        flags[FLAGS.DB_COVERAGE_TARGET][ttype][target],
-                        flags[FLAGS.DB_COVERAGE_RELATED][ttype][target],
-                        flags[FLAGS.DB_COVERAGE_RELATED_COUNTRY][ttype][
-                            target],
+                    flag_5_1 = flags[FLAGS.DB_COVERAGE_TARGET][ttype][target]
+                    flag_5_2 = flags[FLAGS.DB_COVERAGE_RELATED][ttype][target]
+                    flag_5_3 = flags[FLAGS.DB_COVERAGE_RELATED_COUNTRY][ttype][
+                        target]
+                    repr_flag_func = max
+                    if 0 in (
+                        get_level(flag_5_1),
+                        get_level(flag_5_2),
+                        get_level(flag_5_3),
+                    ):
+                        # If any of the flags are level 0, take that flag to
+                        # represent the analysis
+                        repr_flag_func = min
+                    repr_flag = repr_flag_func([
+                        flag_5_1,
+                        flag_5_2,
+                        flag_5_3,
                     ], key=lambda x: get_level(x))
-                    if level := get_level(max_flag):
-                        if (
-                            level < 2
-                            and not config.locus_was_provided_for(query)
-                        ):
-                            # If no locus provided, level should be 2
-                            # (warning) or higher, so provided a special flag
-                            max_flag = Flag(
-                                FLAGS.DB_COVERAGE_ALL,
-                                value=FLAGS.B,
-                                target=target,
-                                target_type=ttype,
-                                query=query,
-                            )
-                        flags[FLAGS.DB_COVERAGE_ALL][ttype][target] = max_flag
+                    if (
+                        get_level(repr_flag) < 2
+                        and not config.locus_was_provided_for(query)
+                    ):
+                        # If no locus provided, level should be 2
+                        # (warning) or higher, so provide a special flag
+                        repr_flag = Flag(
+                            FLAGS.DB_COVERAGE_ALL,
+                            value=FLAGS.B,
+                            target=target,
+                            target_type=ttype,
+                            query=query,
+                        )
+                    flags[FLAGS.DB_COVERAGE_ALL][ttype][target] = repr_flag
 
         return flags
 
