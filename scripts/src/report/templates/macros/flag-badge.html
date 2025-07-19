@@ -1,6 +1,6 @@
 {% from "macros/info-badge.html" import info_badge %}
 
-{% macro render_flag(flag, tooltip=none) %}
+{% macro render_flag(flag, tooltip=none, extra_outcome=none,  extra_reasoning=none) %}
 
 <div class="row align-items-center">
   <div class="col-auto pe-2">
@@ -28,10 +28,10 @@
 
   <div class="col">
     <strong>Outcome:</strong>
-    {{ flag.outcome }}.
+    {{ flag.outcome }}{{ extra_outcome }}.
     <br>
     <strong>Reasoning:</strong>
-    {{ flag.explanation }}.
+    {{ flag.explanation }}{{ extra_reasoning }}.
   </div>
 </div>
 

@@ -33,7 +33,7 @@
             ],
             "env": {
                 "KEEP_OUTPUTS": "1",  // Always retain outputs for debugging
-                "RUN_TEST_CASE": "c08",  // Optional, run a specific test case
+                "RUN_TEST_CASE": "c03",  // Optional, run a specific test case
                 "PYTHONPATH": "${workspaceFolder}/scripts",
                 "TAXONKIT_DATA": "${env:HOME}/.taxonkit",
                 "PHYLOGENY_MAX_HITS_PER_SPECIES": "10",
@@ -236,9 +236,10 @@
             "name": "P6 Workflow report",
             "program": "${workspaceFolder}/scripts/p6_report.py",
             "args": [
-                "output/query_001_LC438549",
+                // "output/query_001_LC438549",
                 // "output/query_002_ON075825",
-                // "output/query_003_PP466915"
+                // "output/query_003_PP466915",
+                "output/query_005_LC547004",
 
                 "--versions_yml", "tests/test-data/versions.yml",
                 "--params_json", "tests/test-data/params.json",

@@ -206,16 +206,26 @@ def _get_taxonomic_result(query_ix, flags):
     path = config.get_query_dir(query_ix) / config.TAXONOMY_ID_CSV
     flag_1 = flags[FLAGS.POSITIVE_ID]
     if flag_1.value == FLAGS.A:
+        # Should only be 'success' if also flag 4A
+        sources_verified = all([
+            flag.level == 1
+            for flag in flags[FLAGS.SOURCES].values()
+        ])
         with path.open() as f:
             reader = csv.DictReader(f)
             hit = next(reader)
         return {
             'confirmed': True,
             'species': hit['species'],
+            'bs_class': 'success' if sources_verified else 'warning',
+            'level': 1 if sources_verified else 2,
+            'sources_verified': sources_verified,
         }
     return {
         'confirmed': False,
         'species': None,
+        'bs_class': flag_1.bs_class,
+        'level': flag_1.level,
     }
 
 
