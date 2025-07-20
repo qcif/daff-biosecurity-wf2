@@ -23,6 +23,6 @@ RUN wget http://eddylab.org/software/hmmer/hmmer-3.4.tar.gz \
     && cd .. \
     && rm -rf hmmer-3.4/
 
-COPY . /app
+COPY . /app/scripts
 
-RUN pip install -r /app/requirements.txt
+RUN pip install -r /app/scripts/requirements.txt
