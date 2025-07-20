@@ -1,4 +1,6 @@
 # Project files
+output/
+venv/
 completed_test*.json
 
 # Byte-compiled / optimized / DLL files
