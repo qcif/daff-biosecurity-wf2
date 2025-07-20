@@ -7,7 +7,7 @@
             "module": "unittest",
             "args": [
                 "discover",
-                "-s", "tests",
+                "-s", "scripts/tests",
                 "-p", "test*.py",
                 // "-p", "test_genbank.py",  // run a specific test
                 "-b",
@@ -26,8 +26,8 @@
             "module": "unittest",
             "args": [
                 "discover",
-                "-s", "tests/integration",
-                "-p", "test_integration.py",
+                "-s", "scripts/tests/integration",
+                "-p", "scripts/test_integration.py",
                 "-f",  // fail fast
                 "-v",  // show stdout instead of dots
             ],
@@ -49,7 +49,7 @@
             "module": "unittest",
             "args": [
                 "discover",
-                "-s", "tests/integration",
+                "-s", "scripts/tests/integration",
                 "-p", "test_integration_bold.py",
                 "-f",  // fail fast
                 "-v",  // show stdout instead of dots
@@ -69,7 +69,7 @@
             "name": "P1 BLAST Parser",
             "program": "${workspaceFolder}/scripts/p1_parse_blast.py",
             "args": [
-                "tests/test-data/output.xml",
+                "scripts/tests/test-data/output.xml",
             ],
             "preLaunchTask": "clear-log-files"
         },
@@ -79,7 +79,7 @@
             "name": "P1 BOLD search",
             "program": "${workspaceFolder}/scripts/p1_bold_search.py",
             "args": [
-                // "tests/test-data/queries.fasta",
+                // "scripts/tests/test-data/queries.fasta",
                 // "--output_dir", "output/bold",
 
                 "output/issues/131/query.fasta",
@@ -241,8 +241,8 @@
                 // "output/query_003_PP466915",
                 "output/query_005_LC547004",
 
-                "--versions_yml", "tests/test-data/versions.yml",
-                "--params_json", "tests/test-data/params.json",
+                "--versions_yml", "scripts/tests/test-data/versions.yml",
+                "--params_json", "scripts/tests/test-data/params.json",
 
                 // For testing issue cases:
                 // "output/issues/44/query_001_VE25-1406_COI",
@@ -252,7 +252,7 @@
                 "REPORT_DEBUG": "1",
                 "FACILITY_NAME": "Cairns Airport",
                 "ANALYST_NAME": "John Doe",
-                // "INPUT_FASTA_FILEPATH": "tests/test-data/queries.fasta",
+                // "INPUT_FASTA_FILEPATH": "scripts/tests/test-data/queries.fasta",
 
                 // For testing issue cases:
                 // "INPUT_FASTA_FILEPATH": "output/issues/44/query.fasta",
@@ -268,8 +268,8 @@
                 // "output/bold/query_001_LC438549",
                 // "--output_dir", "output/bold",
                 "--bold",
-                "--versions_yml", "tests/test-data/versions.yml",
-                "--params_json", "tests/test-data/params.json",
+                "--versions_yml", "scripts/tests/test-data/versions.yml",
+                "--params_json", "scripts/tests/test-data/params.json",
 
                 "output/issues/112/old_work/query_004_MG240613_4",
                 "--output_dir", "output/issues/112/old_work",

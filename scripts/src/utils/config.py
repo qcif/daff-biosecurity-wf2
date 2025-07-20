@@ -27,8 +27,8 @@ ROOT_DIR = Path(__file__).parents[3]
 MAP_FILENAME_TEMPLATE = "map_{taxon_str}.png"
 REPORT_FILENAME = "report_{prefix}{sample_id}_{timestamp}.html"
 QUERY_DIR_PREFIX = 'query_'
-DEFAULT_FASTA_INPUT = ROOT_DIR / 'tests/test-data/queries.fasta'
-DEFAULT_METADATA_INPUT = ROOT_DIR / 'tests/test-data/metadata.csv'
+DEFAULT_FASTA_INPUT = ROOT_DIR / 'scripts/tests/test-data/queries.fasta'
+DEFAULT_METADATA_INPUT = ROOT_DIR / 'scripts/tests/test-data/metadata.csv'
 
 
 class class_property:
