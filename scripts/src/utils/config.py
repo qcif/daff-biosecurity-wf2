@@ -10,6 +10,7 @@ import os
 import shutil
 import tempfile
 from datetime import datetime, timedelta
+from functools import cached_property
 from logging.config import dictConfig
 from pathlib import Path
 
@@ -22,9 +23,20 @@ from .utils import path_safe_str
 
 logger = logging.getLogger(__name__)
 
+ROOT_DIR = Path(__file__).parents[3]
 MAP_FILENAME_TEMPLATE = "map_{taxon_str}.png"
 REPORT_FILENAME = "report_{prefix}{sample_id}_{timestamp}.html"
 QUERY_DIR_PREFIX = 'query_'
+DEFAULT_FASTA_INPUT = ROOT_DIR / 'scripts/tests/test-data/queries.fasta'
+DEFAULT_METADATA_INPUT = ROOT_DIR / 'scripts/tests/test-data/metadata.csv'
+
+
+class class_property:
+    def __init__(self, fget):
+        self.fget = fget
+
+    def __get__(self, instance, owner):
+        return self.fget(owner)
 
 
 class Config:
@@ -45,6 +57,8 @@ class Config:
                                 'assigned_taxonomy.csv')
     CANDIDATES_FASTA = os.getenv("CANDIDATES_FASTA_FILENAME",
                                  'candidates.fasta')
+    PHYLOGENY_FASTA = os.getenv("PHYLOGENY_FASTA_FILENAME",
+                                'phylogeny.fasta')
     CANDIDATES_CSV = os.getenv("CANDIDATES_CSV_FILENAME", 'candidates.csv')
     CANDIDATES_JSON = os.getenv("CANDIDATES_JSON_FILENAME", 'candidates.json')
     CANDIDATES_COUNT_FILE = os.getenv("CANDIDATES_COUNT_FILENAME",
@@ -68,6 +82,7 @@ class Config:
     BLAST_MAX_TARGET_SEQS = int(os.getenv("BLAST_MAX_TARGET_SEQS", 2000))
 
     # BOLD-specific
+    BOLD_DATABASE = os.getenv("BOLD_DATABASE", "COX1_SPECIES_PUBLIC")
     BOLD_FLAG = 'BOLD'
     BOLD_TAXON_COUNT_JSON = os.getenv("BOLD_TAXON_COUNT_JSON",
                                       "bold_taxon_counts.json")
@@ -114,6 +129,7 @@ class Config:
         FACILITY_NAME = os.getenv('FACILITY_NAME', "Not provided")
         ANALYST_NAME = os.getenv('ANALYST_NAME', "Not provided")
         METADATA_CSV_HEADER = {
+            # Values indicate column names in the input CSV file
             "sample_id": "sample_id",
             "locus": "locus",
             "preliminary_id": "preliminary_id",
@@ -126,21 +142,22 @@ class Config:
             "locus",
             "preliminary_id",
         )
-        FASTA_FILEPATH = Path(
-            os.getenv(
-                "INPUT_FASTA_FILEPATH",
-                Path(__file__).parent.parent.parent.parent
-                / 'tests/test-data/queries.fasta')
-        )
-        METADATA_PATH = Path(
-            os.getenv(
-                "INPUT_METADATA_CSV_FILEPATH",
-                Path(__file__).parent.parent.parent.parent
-                / 'tests/test-data/metadata.csv')
-        )
         FASTA_MAX_LENGTH_NT = 3000
         FASTA_MIN_LENGTH_NT = 20
         FASTA_MAX_SEQUENCES = 150
+
+        @class_property
+        def FASTA_FILEPATH(cls):
+            return Path(
+                os.getenv("INPUT_FASTA_FILEPATH", DEFAULT_FASTA_INPUT)
+            )
+
+        @class_property
+        def METADATA_PATH(cls):
+            return Path(
+                os.getenv("INPUT_METADATA_CSV_FILEPATH",
+                          DEFAULT_METADATA_INPUT)
+            )
 
     class CRITERIA:
         ALIGNMENT_MIN_NT = int(os.getenv('MIN_NT', 300))
@@ -148,6 +165,8 @@ class Config:
         ALIGNMENT_MIN_IDENTITY = float(os.getenv('MIN_IDENTITY', 0.935))
         ALIGNMENT_MIN_IDENTITY_STRICT = float(
             os.getenv('MIN_IDENTITY_STRICT', 0.985))
+        MEDIAN_IDENTITY_WARNING_FACTOR = float(
+            os.getenv('MEDIAN_IDENTITY_WARNING_FACTOR', 0.95))
         MAX_CANDIDATES_FOR_ANALYSIS = int(
             os.getenv('MAX_CANDIDATES_FOR_ANALYSIS', 3))
         SOURCES_MIN_COUNT = int(os.getenv('MIN_SOURCE_COUNT', 5))
@@ -157,6 +176,12 @@ class Config:
         DB_COV_RELATED_MIN_B = int(os.getenv('DB_COV_RELATED_MIN_B', 10))
         DB_COV_COUNTRY_MISSING_A = int(
             os.getenv('DB_COV_COUNTRY_MISSING_A', 1))
+        PHYLOGENY_MIN_HIT_IDENTITY = float(
+            os.getenv('PHYLOGENY_MIN_HIT_IDENTITY', 0.95))
+        PHYLOGENY_MIN_HIT_SEQUENCES = int(
+            os.getenv('PHYLOGENY_MIN_HIT_SEQUENCES', 20))
+        PHYLOGENY_MAX_HITS_PER_SPECIES = int(
+            os.getenv('PHYLOGENY_MAX_HITS_PER_SPECIES', 30))
 
     class OUTPUTS:
         TOI_DETECTED_HEADER = [
@@ -317,9 +342,14 @@ class Config:
         """Return the timestamp as a string."""
         return self.start_time.strftime("%Y%m%d_%H%M%S")
 
-    @property
+    @cached_property
     def metadata(self) -> dict[str, dict]:
-        """Read metadata from CSV file."""
+        """Read metadata from CSV file.
+
+        This returns a dictionary which maps sample IDs to metadata
+        dictionaries. Arbitrary columns will be read in from the CSV file,
+        and the keys will be the raw column names.
+        """
         def _get_value_for_key(key, row, colname):
             value = row[colname].strip()
             if 'interest' in key.lower():
@@ -330,21 +360,27 @@ class Config:
                 ]
             return value
 
-        if getattr(self, '_metadata', None):
-            return self._metadata
-        self._metadata = {}
+        data = {}
         with self.INPUTS.METADATA_PATH.open() as f:
-            header = self.INPUTS.METADATA_CSV_HEADER
-            for row in csv.DictReader(f):
+            reader = csv.DictReader(f)
+            # header = self.INPUTS.METADATA_CSV_HEADER
+            header = self.INPUTS.METADATA_CSV_HEADER.copy()
+            header.update({
+                x: x
+                for x in reader.fieldnames
+                if x not in self.INPUTS.METADATA_CSV_HEADER.keys()
+                and x not in self.INPUTS.METADATA_CSV_HEADER.values()
+            })
+            for row in reader:
                 sample_id = row.pop(
                     header["sample_id"]
                 ).split('.')[0].split(' ')[0]
-                self._metadata[sample_id] = {
+                data[sample_id] = {
                     key: _get_value_for_key(key, row, colname)
                     for key, colname in header.items()
                     if key != "sample_id"
                 }
-        return self._metadata
+        return data
 
     def _get_metadata_for_query(self, query, field) -> str:
         sample_id = self.get_sample_id(query)
@@ -415,7 +451,13 @@ class Config:
                 flag['level'] = flag.get('level', {})
                 flag['explanation'][row['value']] = row['explanation']
                 flag['outcome'][row['value']] = row['outcome']
-                flag['level'][row['value']] = int(row['level'])
+                try:
+                    flag['level'][row['value']] = int(row['level'])
+                except ValueError:
+                    raise ValueError(
+                        f"flags.csv: level value must be a valid integer - got"
+                        f" '{row['level']}' for flag {row['id']}{row['value']}"
+                    )
                 data[row['id']] = flag
         return data
 

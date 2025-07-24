@@ -31,9 +31,9 @@ MIN_HTTP_CODE_ERROR = 400
 
 class BoldSearch:
     """Fetch metadata for given taxa from the BOLD API."""
-    def __init__(self, fasta_file: Path):
+    def __init__(self, fasta_file: Path, db: str = BOLD_DATABASE):
         self.fasta_file = fasta_file
-        raw_hits = self._bold_sequence_search(fasta_file)
+        raw_hits = self._bold_sequence_search(fasta_file, db)
         if not any(raw_hits.values()):
             logger.info("No hits from BOLD ID Engine for FASTA query.")
         self.hits = self._fetch_hit_metadata(raw_hits)
@@ -158,6 +158,7 @@ class BoldSearch:
 
         hits = {}
         sequences = self._read_sequence_from_fasta(fasta_file)
+        seqids = [seq.id for seq in sequences]
         n_sequences = len(sequences)
         if not os.getenv('SKIP_ORIENTATION'):
             sequences = orientate(sequences)
@@ -188,6 +189,7 @@ class BoldSearch:
                     or sequence_hits
                 ):
                     hits[sequence_id] = {
+                        'query_index': seqids.index(sequence_id),
                         'query_id': sequence_id,
                         'query_title': sequence.description,
                         'query_length': len(sequence.seq),

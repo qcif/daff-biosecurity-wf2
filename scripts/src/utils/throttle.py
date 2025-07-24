@@ -32,7 +32,7 @@ class ENDPOINTS:
 
 
 class Throttle:
-    """Use SQLite2 database to coordinate throttling of API requests.
+    """Use SQLite3 database to coordinate throttling of API requests.
 
     This is necessary to avoid hitting API rate limits, or overwhelming the
     server. Each endpoint (identified by name) is throttled independently to
@@ -78,7 +78,7 @@ class Throttle:
         self._initialize_db()
 
     def __enter__(self):
-        self.await_release()
+        self._await_release()
 
     def __exit__(self, exc_type, exc_value, traceback):
         pass
@@ -99,14 +99,14 @@ class Throttle:
             conn.execute("PRAGMA journal_mode=WAL;")
             conn.commit()
 
-    def await_release(self):
+    def _await_release(self):
         """Query sqlite DB for permission to send a request.
 
         The DB table keeps track of requests sent across processes by writing
-        a timestamp for each request. If the number of requests in the last
-        second exceeds the limit, the request is blocked until the sliding
-        window is clear.
+        a timestamp for each request sent. This is used to determine if we are
+        within the allowed request limits before sendind the next request.
         """
+        started_waiting = time.time()
         while True:
             try:
                 if not self.db_path.exists():
@@ -121,49 +121,8 @@ class Throttle:
                     try:
                         # Lock the database for writing
                         conn.execute("BEGIN IMMEDIATE")
-
                         now = int(time.time() * 1000)
-                        window_start = now - self.window_length_ms
-
-                        # Remove expired timestamps older than window length
-                        conn.execute(
-                            f"DELETE FROM {self.name}"
-                            f" WHERE {self.FIELD_NAME} < ?",
-                            (window_start,))
-
-                        # Count requests in the window
-                        rps_observed = None
-                        rpm_observed = None
-
-                        if self.per_second_limit:
-                            args = [
-                                f"SELECT COUNT(*) FROM {self.name}",
-                            ]
-                            if self.per_minute_limit:
-                                # The window is for rpm, so need to narrow
-                                # query to RPS window size
-                                args[0] += f" WHERE {self.FIELD_NAME} >= ?"
-                                rps_window_start = (
-                                    now - self.PER_SECOND_BLOCK_MS
-                                )
-                                args.append((rps_window_start,))
-                            rps_observed = conn.execute(*args).fetchone()[0]
-
-                        if self.per_minute_limit:
-                            rpm_observed = conn.execute(
-                                f"SELECT COUNT(*) FROM {self.name}"
-                            ).fetchone()[0]
-
-                        within_per_second_limit = (
-                            self.per_second_limit
-                            and rps_observed < self.rps
-                        )
-                        within_per_minute_limit = (
-                            self.per_minute_limit
-                            and rpm_observed < self.rpm
-                        )
-
-                        if within_per_minute_limit and within_per_second_limit:
+                        if self._within_request_limits(now, conn):
                             # Insert current timestamp atomically
                             conn.execute(
                                 f"INSERT INTO {self.name} ({self.FIELD_NAME})"
@@ -187,6 +146,60 @@ class Throttle:
 
             # Sleep for a random interval to reduce race conditions
             time.sleep(round(random.uniform(0.1, 2), 3))
+            seconds_waited = int(time.time() - started_waiting)
+            if seconds_waited and seconds_waited % 15 == 0:
+                logger.info(
+                    f"Awaiting throttle release for endpoint {self.name}"
+                    f" for >{seconds_waited} seconds..."
+                )
+
+    def _within_request_limits(self, now, conn):
+        """Check if the request limits are within the allowed range.
+        This method uses a sliding window of timestamps to determine
+        if the number of requests in the last second or minute exceeds the
+        limits specified for the endpoint.
+        """
+        window_start = now - self.window_length_ms
+
+        # Remove expired timestamps older than window length
+        conn.execute(
+            f"DELETE FROM {self.name}"
+            f" WHERE {self.FIELD_NAME} < ?",
+            (window_start,))
+
+        # Count requests in the window
+        rps_observed = None
+        rpm_observed = None
+
+        if self.per_second_limit:
+            args = [
+                f"SELECT COUNT(*) FROM {self.name}",
+            ]
+            if self.per_minute_limit:
+                # The window is for rpm, so need to narrow
+                # query to RPS window size
+                args[0] += f" WHERE {self.FIELD_NAME} >= ?"
+                rps_window_start = (
+                    now - self.PER_SECOND_BLOCK_MS
+                )
+                args.append((rps_window_start,))
+            rps_observed = conn.execute(*args).fetchone()[0]
+
+        if self.per_minute_limit:
+            rpm_observed = conn.execute(
+                f"SELECT COUNT(*) FROM {self.name}"
+            ).fetchone()[0]
+
+        within_per_second_limit = (
+            not self.per_second_limit
+            or rps_observed < self.rps
+        )
+        within_per_minute_limit = (
+            not self.per_minute_limit
+            or rpm_observed < self.rpm
+        )
+
+        return within_per_second_limit and within_per_minute_limit
 
     def with_retry(self, func, args=[], kwargs={}):
         retries = config.MAX_API_RETRIES

@@ -109,7 +109,7 @@ def assess_coverage(query_dir, is_bold) -> dict[str, dict[str, dict]]:
         if target in higher_taxon_targets
     ]
 
-    if not len(tasks):
+    if not (len(tasks) + len(unknown_taxa)):
         raise ValueError(
             "No tasks created for database coverage assessment. This likely"
             " indicates a bug in the code - please report this issue.")
@@ -192,7 +192,7 @@ def _set_flags(db_coverage, query_dir, higher_taxon_targets):
                 f"Could not set DB coverage flags 5.* for target '{target}'"
                 f" ({target_type}) - species counts are None but expected"
                 " a dict. This indicates an error has occurred above.")
-            flag_value = FLAGS.NA
+            flag_value = FLAGS.ERROR
         elif not isinstance(count, int):
             raise ValueError(
                 f"Unexpected count value for target"
@@ -224,7 +224,7 @@ def _set_flags(db_coverage, query_dir, higher_taxon_targets):
                 f"Could not set DB coverage flags 5.* for target '{target}'"
                 f" ({target_type}) - species counts are None but expected"
                 " a dict. This indicates an error has occurred above.")
-            flag_value = FLAGS.NA
+            flag_value = FLAGS.ERROR
         elif isinstance(species_counts, str):
             raise ValueError(
                 f"Unexpected str count value for related"
@@ -266,7 +266,7 @@ def _set_flags(db_coverage, query_dir, higher_taxon_targets):
                 f"Could not set DB coverage flags 5.* for target '{target}'"
                 f" ({target_type}) - species counts are None but expected"
                 " a dict. This indicates an error has occurred above.")
-            flag_value = FLAGS.NA
+            flag_value = FLAGS.ERROR
         else:
             total_species = len(species_counts)
             represented_species = len([
