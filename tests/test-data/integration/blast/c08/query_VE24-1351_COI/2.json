@@ -1,8 +1,0 @@
-{
-  "location": 5.01,
-  "message": "No GBIF record found for target taxon 'Lycoriella mali'. This target could not be evaluated.",
-  "exception": "No GBIF record found for 'Lycoriella mali'. Taxonomic records cannot be retrieved for this species name - please check that this species name is correct.",
-  "context": {
-    "target": "Lycoriella mali"
-  }
-}

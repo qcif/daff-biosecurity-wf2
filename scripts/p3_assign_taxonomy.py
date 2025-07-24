@@ -59,13 +59,18 @@ def main():
     config.configure(args.output_dir, query_dir=args.query_dir)
     result = config.read_hits_json(args.query_dir)
     if args.bold:
-        candidate_hits, candidate_hits_strict = _filter_candidates_bold(
-            result['hits'])
+        filtered_hits = result['hits']
+        candidate_hits, candidate_hits_strict = _filter_hits_bold(
+            filtered_hits)
     else:
-        candidate_hits, candidate_hits_strict = _filter_candidates(
-            result['hits'])
+        (
+            filtered_hits,
+            candidate_hits,
+            candidate_hits_strict,
+        ) = _filter_hits(result['hits'])
     candidate_species = _assign_species_id(
         args.query_dir,
+        filtered_hits,
         candidate_hits,
         candidate_hits_strict,
         bold=args.bold,
@@ -89,17 +94,17 @@ def _parse_args():
     return parser.parse_args()
 
 
-def _filter_candidates(hits):
+def _filter_hits(hits):
     taxonomies = config.read_taxonomy_file()
-    candidate_hits = [
+    filtered_hits = [
         hit for hit in hits
         if (
             hit["alignment_length"] >= config.CRITERIA.ALIGNMENT_MIN_NT
             or hit["query_coverage"]
             >= config.CRITERIA.ALIGNMENT_MIN_Q_COVERAGE
-        ) and hit["identity"] >= config.CRITERIA.ALIGNMENT_MIN_IDENTITY
+        )
     ]
-    for hit in candidate_hits:
+    for hit in filtered_hits:
         tax = taxonomies.get(hit["accession"])
         if tax:
             hit['taxonomy'] = tax
@@ -113,14 +118,18 @@ def _filter_candidates(hits):
                 f"Taxonomy record not found for {hit['accession']} -"
                 " this hit could not be included in the candidate"
                 " species list.")
+    candidate_hits = [
+        hit for hit in filtered_hits
+        if hit["identity"] >= config.CRITERIA.ALIGNMENT_MIN_IDENTITY
+    ]
     candidate_hits_strict = [
         hit for hit in candidate_hits
         if hit["identity"] >= config.CRITERIA.ALIGNMENT_MIN_IDENTITY_STRICT
     ]
-    return candidate_hits, candidate_hits_strict
+    return filtered_hits, candidate_hits, candidate_hits_strict
 
 
-def _filter_candidates_bold(hits):
+def _filter_hits_bold(hits):
     candidate_hits = [
         hit for hit in hits
         if hit["similarity"] >= config.CRITERIA.ALIGNMENT_MIN_IDENTITY
@@ -134,11 +143,40 @@ def _filter_candidates_bold(hits):
 
 def _assign_species_id(
     query_dir,
+    filtered_hits,
     candidate_hits,
     candidate_hits_strict,
     bold=False,
 ):
     """Attempt species ID from BLAST/BOLD hits.json data."""
+    def _get_counts(hits):
+        """Get counts of hits and species."""
+        return {
+            'hits': len(hits),
+            'species': len(deduplicate(
+                [hit['species'] for hit in hits if hit['species']],
+                key=lambda x: x.lower(),
+            )),
+        }
+
+    def _get_median_bs_class(median_identity, top_identity):
+        """Get the median identity class based on the top identity."""
+        identity_threshold = (
+            config.CRITERIA.ALIGNMENT_MIN_IDENTITY_STRICT
+            if top_identity >= config.CRITERIA.ALIGNMENT_MIN_IDENTITY_STRICT
+            else config.CRITERIA.ALIGNMENT_MIN_IDENTITY
+        )
+        if median_identity >= identity_threshold:
+            return "success"
+        elif (
+            median_identity
+            >= identity_threshold
+            * config.CRITERIA.MEDIAN_IDENTITY_WARNING_FACTOR
+        ):
+            return "warning"
+        else:
+            return "danger"
+
     query_ix = config.get_query_ix(query_dir)
     candidate_species = deduplicate([
         hit for hit in candidate_hits
@@ -150,17 +188,65 @@ def _assign_species_id(
     # Add hit count for each candidate species
     for species in candidate_species:
         species["hit_count"] = sum(
-            1 for hit in candidate_hits
+            1 for hit in filtered_hits
             if hit["species"] == species["species"]
         )
     for species in candidate_species_strict:
         species["hit_count"] = sum(
-            1 for hit in candidate_hits_strict
+            1 for hit in filtered_hits
             if hit["species"] == species["species"]
         )
 
     selected_species = candidate_species_strict or candidate_species
+    selected_species_names = [s['species'] for s in selected_species]
     selected_hits = candidate_hits_strict or candidate_hits
+    selected_hit_ids = [hit['hit_id'] for hit in selected_hits]
+    selected_species_hits = [
+        hit for hit in filtered_hits
+        if hit['species'] in selected_species_names
+    ]
+    for hit in selected_species_hits:
+        hit['is_candidate_hit'] = (
+            True
+            if hit['hit_id'] in selected_hit_ids
+            else False
+        )
+
+    for hit in selected_species:
+        hit_identities = [
+            h['identity'] for h in selected_species_hits
+            if h['species'] == hit['species']
+        ]
+        hit['median_identity'] = sorted(hit_identities)[
+            len(hit_identities) // 2
+        ]
+        hit['median_bs_class'] = _get_median_bs_class(
+            hit['median_identity'],
+            hit['identity'],
+        )
+
+    moderate_match_ids = [
+        hit['hit_id'] for hit in candidate_hits
+    ]
+    strong_match_ids = [
+        hit['hit_id'] for hit in candidate_hits_strict
+    ]
+    no_match_hits = [
+        hit for hit in filtered_hits
+        if hit['hit_id'] not in moderate_match_ids
+    ]
+    moderate_hits = [
+        hit for hit in candidate_hits
+        if hit['hit_id'] not in strong_match_ids
+    ]
+    strong_hits = candidate_hits_strict
+
+    hit_counts = {
+        'filtered': _get_counts(no_match_hits),
+        'moderate': _get_counts(moderate_hits),
+        'strong': _get_counts(strong_hits),
+    }
+
     _write_candidate_flags(
         query_dir,
         candidate_species_strict,
@@ -168,15 +254,68 @@ def _assign_species_id(
     )
     _write_candidates(
         query_dir,
-        selected_hits,
+        hit_counts,
         selected_species,
+        selected_species_hits,
         bold=bold,
     )
     if len(selected_species) > config.CRITERIA.MAX_CANDIDATES_FOR_ANALYSIS:
-        _write_boxplot(query_dir, selected_hits, bold)
+        _write_boxplot(query_dir, selected_species_hits, bold)
     taxonomic_id = _write_taxonomic_id(query_dir, candidate_species_strict)
     _write_pmi_match(taxonomic_id, query_ix, query_dir)
     return selected_species
+
+
+def _get_accessions_for_phylogeny(
+    phylo_hits: list[dict],
+    id_key: str,
+    identity_key: str,
+) -> list[str]:
+    """Remove surplus sequences if there are too many per species.
+    Sample hits in a systematic manner (by identity) to ensure a sample
+    that is representative of sequence diversity.
+    """
+    def _systematic_sample(seq, n, key=None):
+        """Return `n` elements spaced as evenly as possible through `seq`."""
+        data = sorted(seq, key=key)
+        N = len(data)
+        if n <= 0:
+            return []
+        if n >= N:
+            return data[:]               # every item
+        if n == 1:
+            return [data[(N - 1) // 2]]  # middle element
+
+        step = (N - 1) / (n - 1)        # ideal distance between picks
+        idx = [round(i * step) for i in range(n - 1)] + [N - 1]
+        return [data[i] for i in idx]
+
+    accessions = []
+    max_hits = config.CRITERIA.PHYLOGENY_MAX_HITS_PER_SPECIES
+    phylo_species = {
+        hit['species'] for hit in phylo_hits
+    }
+    hits_by_species = {
+        species: [
+            hit for hit in phylo_hits
+            if hit['species'] == species
+        ]
+        for species in phylo_species
+    }
+    for hits in hits_by_species.values():
+        if len(hits) > max_hits:
+            # Take a sample representative of sequence diversity
+            accessions += [
+                hit[id_key]
+                for hit in _systematic_sample(
+                    hits,
+                    max_hits,
+                    key=lambda x: x[identity_key],
+                )
+            ]
+        else:
+            accessions += [hit[id_key] for hit in hits]
+    return accessions
 
 
 def _write_taxonomic_id(query_dir, candidate_species_strict):
@@ -209,34 +348,41 @@ def _write_candidate_flags(query_dir, candidates_strict, candidates):
 
 def _write_candidates(
     query_dir: Path,
-    candidate_hits: list[dict],
+    hit_counts: dict[str, dict[str, int]],
     candidate_species: list[str],
+    candidate_species_hits: list[dict],
     bold: bool = False,
 ):
     """Write candidates hits and species to file."""
-    _write_candidates_json(query_dir, candidate_hits, candidate_species)
-    _write_candidates_csv(query_dir, candidate_hits, bold)
-    _write_candidates_fasta(query_dir, candidate_hits, bold)
+    _write_candidates_json(
+        query_dir,
+        hit_counts,
+        candidate_species_hits,
+        candidate_species,
+    )
+    _write_candidates_csv(query_dir, candidate_species_hits, bold)
+    _write_candidates_fasta(query_dir, candidate_species_hits, bold)
     _write_candidates_count(query_dir, candidate_species)
 
 
-def _write_candidates_json(query_dir, hits, species):
+def _write_candidates_json(query_dir, hit_counts, hits, species):
     path = query_dir / config.CANDIDATES_JSON
     with path.open("w") as f:
         json.dump({
             "hits": hits,
             "species": species,
+            "hit_counts": hit_counts,
         }, f, indent=2)
     logger.info(f"Written candidate hits/species to {path}")
 
 
-def _write_candidates_csv(query_dir, candidate_hits, bold=False):
+def _write_candidates_csv(query_dir, hits, bold=False):
     header = CANDIDATE_CSV_HEADER_BOLD if bold else CANDIDATE_CSV_HEADER
     path = query_dir / config.CANDIDATES_CSV
     with path.open("w") as f:
         writer = csv.writer(f)
         writer.writerow(header)
-        for hit in candidate_hits:
+        for hit in hits:
             writer.writerow([
                 hit.get(key, "")
                 for key in header
@@ -244,19 +390,50 @@ def _write_candidates_csv(query_dir, candidate_hits, bold=False):
     logger.info(f"Written candidate species to {path}")
 
 
-def _write_candidates_fasta(query_dir, candidate_hits, bold=False):
-    """Write FASTA sequences for each candidate species to file."""
-    hit_key = "hit_id" if bold else "accession"
+def _write_candidates_fasta(query_dir, hits, bold=False):
+    """Write FASTA sequences for each candidate species to file.
+
+    Writes two FASTA files:
+    - candidates.fasta: Contains all candidate sequences
+    - phylogeny.fasta: Contains a subset of candidate sequences for phylogeny
+    """
+    id_key = "hit_id" if bold else "accession"
+    identity_key = "similarity" if bold else "identity"
     path = query_dir / config.CANDIDATES_FASTA
+    phylo_path = query_dir / config.PHYLOGENY_FASTA
     fastas = config.read_hits_fasta(query_dir)
-    accessions = [hit[hit_key] for hit in candidate_hits]
+    accessions = [
+        hit[id_key] for hit in hits
+    ]
+    phylogeny_hits = []
+    for hit in sorted(
+        hits,
+        key=lambda x: x[identity_key]
+    ):
+        if len(phylogeny_hits) > config.CRITERIA.PHYLOGENY_MIN_HIT_SEQUENCES:
+            break
+        phylogeny_hits.append(hit)
+
+    phylogeny_accessions = _get_accessions_for_phylogeny(
+        phylogeny_hits,
+        id_key,
+        identity_key,
+    )
+
     candidate_fastas = [
         fasta for fasta in fastas
         if fasta.id in accessions
     ]
+    phylogeny_fastas = [
+        fasta for fasta in fastas
+        if fasta.id in phylogeny_accessions
+    ]
     with open(path, "w") as f:
         SeqIO.write(candidate_fastas, f, "fasta")
     logger.info(f"Written candidate FASTA to {path}")
+    with open(phylo_path, "w") as f:
+        SeqIO.write(phylogeny_fastas, f, "fasta")
+    logger.info(f"Written phylogeny FASTA to {phylo_path}")
 
 
 def _write_candidates_count(query_dir, candidate_species):
@@ -343,7 +520,7 @@ def _detect_taxa_of_interest(candidate_species, query_dir):
             'taxon': taxon,
             'species': hit['species'],
             'accession': hit['accession'],
-            'identity': hit['identity'],
+            'identity': str(100 * hit['identity']) + '%',
         }
         for hit in candidate_species
         for rank, taxon in hit["taxonomy"].items()

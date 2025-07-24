@@ -13,7 +13,7 @@ import yaml
 from jinja2 import Environment, FileSystemLoader
 
 from src.utils import config, serialize
-from src.utils.errors import ErrorLog
+from src.utils.errors import ErrorLog, LOCATIONS
 from src.utils.flags import FLAGS, Flag, TARGETS, level_to_bs_class
 
 from .filters.css_hash import css_hash
@@ -135,6 +135,7 @@ def _get_report_context(query_ix, bold, params_json, versions_yml):
         'bold': bold,
         # rendering functions:
         'url_from_accession': config.url_from_accession,
+        'error_locations': LOCATIONS,
     }
 
 
@@ -182,9 +183,8 @@ def _get_metadata(query_ix):
     """Return mock metadata for the report."""
     sample_id = config.get_sample_id(query_ix)
     return {
-        **config.metadata[sample_id],
         'sample_id': sample_id,
-        'locus_provided': config.locus_was_provided_for(query_ix),
+        **config.metadata[sample_id],
     }
 
 
@@ -206,16 +206,26 @@ def _get_taxonomic_result(query_ix, flags):
     path = config.get_query_dir(query_ix) / config.TAXONOMY_ID_CSV
     flag_1 = flags[FLAGS.POSITIVE_ID]
     if flag_1.value == FLAGS.A:
+        # Should only be 'success' if also flag 4A
+        sources_verified = all([
+            flag.level == 1
+            for flag in flags[FLAGS.SOURCES].values()
+        ])
         with path.open() as f:
             reader = csv.DictReader(f)
             hit = next(reader)
         return {
             'confirmed': True,
             'species': hit['species'],
+            'bs_class': 'success' if sources_verified else 'warning',
+            'level': 1 if sources_verified else 2,
+            'sources_verified': sources_verified,
         }
     return {
         'confirmed': False,
         'species': None,
+        'bs_class': flag_1.bs_class,
+        'level': flag_1.level,
     }
 
 

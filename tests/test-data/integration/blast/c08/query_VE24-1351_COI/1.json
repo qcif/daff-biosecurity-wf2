@@ -1,8 +1,0 @@
-{
-  "location": 5.02,
-  "message": "Taxonkit failed to produce taxids for some target taxa. Database coverage for these taxa is assumed to be zero, since this likely means they are not represented in the reference database.",
-  "exception": "None",
-  "context": {
-    "targets": []
-  }
-}

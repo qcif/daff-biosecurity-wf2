@@ -18,6 +18,9 @@ code {
 .font-small {
   font-size: 0.8rem;
 }
+.font-normal {
+  font-size: 1rem;
+}
 .font-large {
   font-size: 1.25rem;
 }
@@ -140,6 +143,10 @@ table.sortable th[aria-sort="descending"]::before {
 }
 thead.no-wrap th {
   white-space: nowrap;
+}
+.error-badge {
+  position: relative;
+  cursor: pointer;
 }
 
 /* BLAST hits */

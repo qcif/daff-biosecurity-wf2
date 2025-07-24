@@ -28,6 +28,8 @@ def serialize(obj):
         return obj.to_json()
     if type(obj).__name__ == 'method':
         return f'method:{obj.__name__}'
+    if isinstance(obj, Path):
+        return f"Path({obj})"
     raise TypeError(f"Object of type {type(obj).__name__} is not JSON"
                     " serializable")
 

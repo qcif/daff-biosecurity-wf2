@@ -183,7 +183,7 @@ def taxids(species_list: list[str]) -> dict[str, str]:
         )
         logger.warning(msg)
         errors.write(
-            errors.LOCATIONS.DATABASE_COVERAGE_TAXONKIT_ERROR,
+            errors.LOCATIONS.DB_COVERAGE_TAXONKIT_ERROR,
             msg,
             query_dir=config.get_query_dir(),
             context={'target': species},

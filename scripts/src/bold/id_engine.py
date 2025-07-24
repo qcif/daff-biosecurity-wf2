@@ -5,11 +5,9 @@ API Docs: https://v4.boldsystems.org/index.php/resources/api
 
 import csv
 import logging
-import os
+import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-import subprocess
-from xml.etree import ElementTree
 
 from Bio import SeqIO
 from Bio.Seq import Seq
@@ -18,7 +16,7 @@ import requests
 
 from src.gbif.taxonomy import fetch_kingdom
 from src.utils import errors
-from src.utils.orient import orientate
+# from src.utils.orient import orientate
 from src.utils.throttle import ENDPOINTS, Throttle
 
 logger = logging.getLogger(__name__)
@@ -32,12 +30,13 @@ MIN_HTTP_CODE_ERROR = 400
 class BoldSearch:
     """Fetch metadata for given taxa from the BOLD API."""
     def __init__(
-            self,
-            fasta_file: Path,
-            database: int,
-            mode: int,
-            thresholds=None):
-        self.fasta_file = fasta_file
+        self,
+        fasta_file: Path,
+        database: int,
+        mode: int,
+        thresholds=None,
+    ):
+        self.fasta_file = fasta_file  # TODO: orientate
         self.database = database
         self.mode = mode
         self.thresholds = thresholds
@@ -143,10 +142,39 @@ class BoldSearch:
                 text=True,
                 encoding="utf-8")
             logger.debug(f"BOLDigger3 raw output:\n{result.stdout}")
-            logger.debug(f"Parsed BOLDigger3 results: {
-                self._parse_bold_tsv(result.stdout)
-                }")
+            logger.debug(
+                "Parsed BOLDigger3 results:"
+                f" {self._parse_bold_tsv(result.stdout)}")
+
+            # TODO:
+            # hits[sequence_id] = {
+            #     'query_index': seqids.index(sequence_id),
+            #     'query_id': sequence_id,
+            #     'query_title': sequence.description,
+            #     'query_length': len(sequence.seq),
+            #     'query_frame': sequence.annotations.get(
+            #         "frame"
+            #     ),
+            #     'query_strand': (
+            #         '+'
+            #         if sequence.annotations.get(
+            #             "forward", True
+            #         )
+            #         else '-'
+            #     ),
+            #     'query_sequence': str(sequence.seq),
+            #     'query_orientation': (
+            #         'HMMSearch'
+            #         if sequence.annotations.get(
+            #             "oriented"
+            #         )
+            #         else 'BOLD ID Engine'
+            #     ),
+            #     'hits': sequence_hits,
+            # }
+
             return self._parse_bold_tsv(result.stdout)
+
         except Exception as e:
             logger.error(f"Error running BOLDigger3: {e}")
             return {}
@@ -288,7 +316,6 @@ class BoldSearch:
         if response.status_code <= MIN_HTTP_CODE_ERROR:
             lines = response.text.splitlines()
             if not lines:  # Check if 'lines' is empty
-                # TODO: this should probably be a fatal error
                 msg = "Empty response received from BOLD API"
                 logger.error(msg)
                 errors.write(
@@ -306,7 +333,6 @@ class BoldSearch:
                 f"Records fetched successfully: {len(records)} records."
             )
         else:
-            # TODO: this should probably be a fatal error
             msg = (
                 f"Error HTTP {response.status_code} from the BOLD API when"
                 f" running ID Engine: {response.text}"

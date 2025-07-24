@@ -43,7 +43,7 @@ def get_targets(query_dir):
             f" by setting the 'DB_COVERAGE_TOI_LIMIT' environment variable.")
         logger.warning(f"{msg}")
         errors.write(
-            errors.LOCATIONS.DATABASE_COVERAGE,
+            errors.LOCATIONS.DB_COVERAGE,
             msg,
             query_dir=query_dir,
         )
@@ -65,7 +65,7 @@ def get_taxids(targets, query_dir):
             logger.warning(
                 f"{msg} ({target})")
             errors.write(
-                errors.LOCATIONS.DATABASE_COVERAGE_TAXONKIT_ERROR,
+                errors.LOCATIONS.DB_COVERAGE_TAXONKIT_ERROR,
                 msg,
                 query_dir=query_dir,
                 context={"target": target},
@@ -85,7 +85,7 @@ def fetch_target_taxa(targets, query_dir):
             logger.warning(
                 f"{msg}")
             errors.write(
-                errors.LOCATIONS.DATABASE_COVERAGE_NO_GBIF_RECORD,
+                errors.LOCATIONS.DB_COVERAGE_NO_GBIF_RECORD,
                 msg,
                 exc=exc,
                 query_dir=query_dir,

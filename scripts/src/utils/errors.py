@@ -2,6 +2,7 @@
 
 import json
 from pathlib import Path
+from typing import Union
 
 from .config import Config
 
@@ -34,15 +35,25 @@ class LOCATIONS:
     specific report locations within that phase.
     """
     BLAST = 1.0
+    BOLD = 1.1
     BOLD_ID_ENGINE = 1.10
     BOLD_TAXA = 1.11
     SOURCE_DIVERSITY_ACCESSION_ERROR = 4.01
-    DATABASE_COVERAGE = 5.0
-    DATABASE_COVERAGE_NO_GBIF_RECORD = 5.01
-    DATABASE_COVERAGE_TAXONKIT_ERROR = 5.02
+    DB_COVERAGE = 5
+    DB_COVERAGE_NO_GBIF_RECORD = 5.01
+    DB_COVERAGE_TAXONKIT_ERROR = 5.02
     DB_COVERAGE_TARGET = 5.1
     DB_COVERAGE_RELATED = 5.2
     DB_COVERAGE_RELATED_COUNTRY = 5.3
+
+    @classmethod
+    def to_json(cls):
+        """Convert the location to a JSON serializable format."""
+        return {
+            k: v
+            for k, v in cls.__dict__.items()
+            if not k.startswith('_') and isinstance(v, (float, int))
+        }
 
 
 def write(
@@ -98,6 +109,15 @@ class ErrorLog:
     def __bool__(self):
         return bool(self.errors)
 
+    def __add__(self, other: 'ErrorLog'):
+        """Combine two error logs."""
+        if not isinstance(other, ErrorLog):
+            raise TypeError("Can only add ErrorLog instances.")
+        return ErrorLog(
+            query_dir=self.query_dir,
+            errors=self.errors + other.errors
+        )
+
     def _read(self):
         """Read all error files from given error directory."""
         errors = []
@@ -111,8 +131,11 @@ class ErrorLog:
         self,
         location: float = None,
         location_not: float = None,
-        location_min: float = 0.0,
-        location_max: float = 999.9,
+        location_gt: float = None,
+        location_gte: float = None,
+        location_lt: float = None,
+        location_lte: float = None,
+        location_in: Union[float, int] = None,
         context: dict = None,
     ) -> 'ErrorLog':
         """List requested errors from the error log."""
@@ -127,18 +150,33 @@ class ErrorLog:
                 x for x in errors
                 if x['location'] != location_not
             ]
-        if location_min is not None:
+        if location_gte is not None:
             errors = [
                 x for x in errors
-                if x['location'] >= location_min
+                if x['location'] >= location_gte
             ]
-        if location_max is not None:
+        if location_gt is not None:
             errors = [
                 x for x in errors
-                if x['location'] <= location_max
+                if x['location'] > location_gt
+            ]
+        if location_lte is not None:
+            errors = [
+                x for x in errors
+                if x['location'] <= location_lte
+            ]
+        if location_lt is not None:
+            errors = [
+                x for x in errors
+                if x['location'] < location_lt
+            ]
+        if location_in is not None:
+            errors = [
+                x for x in errors
+                if str(x['location']).startswith(str(location_in))
             ]
         if context:
-            # Exclude errors that have the context key and do not match
+            # Exclude errors that have the context key(s) but do not match
             # the given value
             errors = [
                 x for x in errors

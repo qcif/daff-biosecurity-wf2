@@ -1,9 +1,0 @@
-pygbif
-biopython==1.*
-jinja2
-filelock
-pycountry
-fsspec
-geopandas
-pyyaml
-boldigger3
